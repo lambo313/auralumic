@@ -1,0 +1,745 @@
+{
+  "badges": [
+    {
+      "id": "tarot-bronze",
+      "name": "Tarot Reader Bronze",
+      "attribute": "Tarot",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "tarot-bronze.svg",
+      "description": "Completed 25 tarot readings with good ratings"
+    },
+    {
+      "id": "runes-bronze",
+      "name": "Runes Reader Bronze",
+      "attribute": "Runes",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "runes-bronze.svg",
+      "description": "Completed 25 rune readings with good ratings"
+    },
+    {
+      "id": "runes-silver",
+      "name": "Runes Reader Silver",
+      "attribute": "Runes",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "runes-silver.svg",
+      "description": "Mastered rune readings with excellent feedback"
+    },
+    {
+      "id": "runes-gold",
+      "name": "Runes Reader Gold",
+      "attribute": "Runes",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "runes-gold.svg",
+      "description": "Elite rune reader with exceptional track record"
+    },
+    {
+      "id": "dream-analysis-bronze",
+      "name": "Dream Analyst Bronze",
+      "attribute": "Dream Analysis",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "dream-analysis-bronze.svg",
+      "description": "Demonstrated dream interpretation abilities"
+    },
+    {
+      "id": "dream-analysis-silver",
+      "name": "Dream Analyst Silver",
+      "attribute": "Dream Analysis",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "dream-analysis-silver.svg",
+      "description": "Advanced dream interpretation practitioner"
+    },
+    {
+      "id": "dream-analysis-gold",
+      "name": "Dream Analyst Gold",
+      "attribute": "Dream Analysis",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "dream-analysis-gold.svg",
+      "description": "Master dream interpreter with proven expertise"
+    },
+    {
+      "id": "tarot-silver",
+      "name": "Tarot Reader Silver",
+      "attribute": "Tarot",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "tarot-silver.svg",
+      "description": "Mastered tarot readings with excellent feedback"
+    },
+    {
+      "id": "tarot-gold",
+      "name": "Tarot Reader Gold",
+      "attribute": "Tarot",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "tarot-gold.svg",
+      "description": "Elite tarot reader with exceptional track record"
+    },
+    {
+      "id": "clairvoyant-bronze",
+      "name": "Clairvoyant Bronze",
+      "attribute": "Clairvoyant",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "clairvoyant-bronze.svg",
+      "description": "Demonstrated clairvoyant abilities"
+    },
+    {
+      "id": "clairvoyant-silver",
+      "name": "Clairvoyant Silver",
+      "attribute": "Clairvoyant",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "clairvoyant-silver.svg",
+      "description": "Advanced clairvoyant practitioner"
+    },
+    {
+      "id": "clairvoyant-gold",
+      "name": "Clairvoyant Gold",
+      "attribute": "Clairvoyant",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "clairvoyant-gold.svg",
+      "description": "Master clairvoyant with proven expertise"
+    },
+    {
+      "id": "compassionate-bronze",
+      "name": "Compassionate Guide Bronze",
+      "attribute": "Compassionate",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "compassionate-bronze.svg",
+      "description": "Consistently demonstrates empathy and understanding"
+    },
+    {
+      "id": "compassionate-silver",
+      "name": "Compassionate Guide Silver",
+      "attribute": "Compassionate",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "compassionate-silver.svg",
+      "description": "Known for exceptional emotional support"
+    },
+    {
+      "id": "compassionate-gold",
+      "name": "Compassionate Guide Gold",
+      "attribute": "Compassionate",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "compassionate-gold.svg",
+      "description": "Master of compassionate guidance"
+    },
+    {
+      "id": "straightforward-bronze",
+      "name": "Straightforward Guide Bronze",
+      "attribute": "Straightforward",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "straightforward-bronze.svg",
+      "description": "Consistently delivers clear, direct readings"
+    },
+    {
+      "id": "straightforward-silver",
+      "name": "Straightforward Guide Silver",
+      "attribute": "Straightforward",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "straightforward-silver.svg",
+      "description": "Known for exceptional clarity and directness"
+    },
+    {
+      "id": "straightforward-gold",
+      "name": "Straightforward Guide Gold",
+      "attribute": "Straightforward",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "straightforward-gold.svg",
+      "description": "Master of direct and clear guidance"
+    },
+    {
+      "id": "channeling-bronze",
+      "name": "Channeling Bronze",
+      "attribute": "Channeling",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "channeling-bronze.svg",
+      "description": "Demonstrated channeling abilities"
+    },
+    {
+      "id": "channeling-silver",
+      "name": "Channeling Silver",
+      "attribute": "Channeling",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "channeling-silver.svg",
+      "description": "Advanced channeling practitioner"
+    },
+    {
+      "id": "channeling-gold",
+      "name": "Channeling Gold",
+      "attribute": "Channeling",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "channeling-gold.svg",
+      "description": "Master channeler with proven expertise"
+    },
+    {
+      "id": "empath-bronze",
+      "name": "Empath Bronze",
+      "attribute": "Empath",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "empath-bronze.svg",
+      "description": "Demonstrated empathic abilities"
+    },
+    {
+      "id": "empath-silver",
+      "name": "Empath Silver",
+      "attribute": "Empath",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "empath-silver.svg",
+      "description": "Advanced empathic practitioner"
+    },
+    {
+      "id": "empath-gold",
+      "name": "Empath Gold",
+      "attribute": "Empath",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "empath-gold.svg",
+      "description": "Master empath with proven expertise"
+    },
+    {
+      "id": "clairaudient-bronze",
+      "name": "Clairaudient Bronze",
+      "attribute": "Clairaudient",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "clairaudient-bronze.svg",
+      "description": "Demonstrated clairaudient abilities"
+    },
+    {
+      "id": "clairaudient-silver",
+      "name": "Clairaudient Silver",
+      "attribute": "Clairaudient",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "clairaudient-silver.svg",
+      "description": "Advanced clairaudient practitioner"
+    },
+    {
+      "id": "clairaudient-gold",
+      "name": "Clairaudient Gold",
+      "attribute": "Clairaudient",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "clairaudient-gold.svg",
+      "description": "Master clairaudient with proven expertise"
+    },
+    {
+      "id": "scrying-bronze",
+      "name": "Scrying Bronze",
+      "attribute": "Scrying",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "scrying-bronze.svg",
+      "description": "Demonstrated scrying abilities"
+    },
+    {
+      "id": "scrying-silver",
+      "name": "Scrying Silver",
+      "attribute": "Scrying",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "scrying-silver.svg",
+      "description": "Advanced scrying practitioner"
+    },
+    {
+      "id": "scrying-gold",
+      "name": "Scrying Gold",
+      "attribute": "Scrying",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "scrying-gold.svg",
+      "description": "Master of scrying with proven expertise"
+    },
+    {
+      "id": "medium-bronze",
+      "name": "Medium Bronze",
+      "attribute": "Medium",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "medium-bronze.svg",
+      "description": "Demonstrated mediumship abilities"
+    },
+    {
+      "id": "medium-silver",
+      "name": "Medium Silver",
+      "attribute": "Medium",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "medium-silver.svg",
+      "description": "Advanced mediumship practitioner"
+    },
+    {
+      "id": "medium-gold",
+      "name": "Medium Gold",
+      "attribute": "Medium",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "medium-gold.svg",
+      "description": "Master medium with proven expertise"
+    },
+    {
+      "id": "crystal-energy-bronze",
+      "name": "Crystal Energy Bronze",
+      "attribute": "Crystal Energy",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "crystal-energy-bronze.svg",
+      "description": "Demonstrated crystal reading abilities"
+    },
+    {
+      "id": "crystal-energy-silver",
+      "name": "Crystal Energy Silver",
+      "attribute": "Crystal Energy",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "crystal-energy-silver.svg",
+      "description": "Advanced crystal energy practitioner"
+    },
+    {
+      "id": "crystal-energy-gold",
+      "name": "Crystal Energy Gold",
+      "attribute": "Crystal Energy",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "crystal-energy-gold.svg",
+      "description": "Master of crystal energy readings"
+    },
+    {
+      "id": "astrology-bronze",
+      "name": "Astrology Bronze",
+      "attribute": "Astrology",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "astrology-bronze.svg",
+      "description": "Demonstrated astrological reading abilities"
+    },
+    {
+      "id": "astrology-silver",
+      "name": "Astrology Silver",
+      "attribute": "Astrology",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "astrology-silver.svg",
+      "description": "Advanced astrology practitioner"
+    },
+    {
+      "id": "astrology-gold",
+      "name": "Astrology Gold",
+      "attribute": "Astrology",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "astrology-gold.svg",
+      "description": "Master astrologer with proven expertise"
+    },
+    {
+      "id": "pendulum-bronze",
+      "name": "Pendulum Bronze",
+      "attribute": "Pendulum",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "pendulum-bronze.svg",
+      "description": "Demonstrated pendulum reading abilities"
+    },
+    {
+      "id": "pendulum-silver",
+      "name": "Pendulum Silver",
+      "attribute": "Pendulum",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "pendulum-silver.svg",
+      "description": "Advanced pendulum practitioner"
+    },
+    {
+      "id": "pendulum-gold",
+      "name": "Pendulum Gold",
+      "attribute": "Pendulum",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "pendulum-gold.svg",
+      "description": "Master of pendulum readings"
+    },
+    {
+      "id": "oracle-cards-bronze",
+      "name": "Oracle Cards Bronze",
+      "attribute": "Oracle Cards",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "oracle-cards-bronze.svg",
+      "description": "Demonstrated oracle card reading abilities"
+    },
+    {
+      "id": "oracle-cards-silver",
+      "name": "Oracle Cards Silver",
+      "attribute": "Oracle Cards",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "oracle-cards-silver.svg",
+      "description": "Advanced oracle cards practitioner"
+    },
+    {
+      "id": "oracle-cards-gold",
+      "name": "Oracle Cards Gold",
+      "attribute": "Oracle Cards",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "oracle-cards-gold.svg",
+      "description": "Master of oracle card readings"
+    },
+    {
+      "id": "i-ching-bronze",
+      "name": "I-Ching Bronze",
+      "attribute": "I-Ching",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "i-ching-bronze.svg",
+      "description": "Demonstrated I-Ching reading abilities"
+    },
+    {
+      "id": "i-ching-silver",
+      "name": "I-Ching Silver",
+      "attribute": "I-Ching",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "i-ching-silver.svg",
+      "description": "Advanced I-Ching practitioner"
+    },
+    {
+      "id": "i-ching-gold",
+      "name": "I-Ching Gold",
+      "attribute": "I-Ching",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "i-ching-gold.svg",
+      "description": "Master of I-Ching readings"
+    },
+    {
+      "id": "numerology-bronze",
+      "name": "Numerology Bronze",
+      "attribute": "Numerology",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "numerology-bronze.svg",
+      "description": "Demonstrated numerology abilities"
+    },
+    {
+      "id": "numerology-silver",
+      "name": "Numerology Silver",
+      "attribute": "Numerology",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "numerology-silver.svg",
+      "description": "Advanced numerology practitioner"
+    },
+    {
+      "id": "numerology-gold",
+      "name": "Numerology Gold",
+      "attribute": "Numerology",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "numerology-gold.svg",
+      "description": "Master numerologist with proven expertise"
+    },
+    {
+      "id": "no-tools-bronze",
+      "name": "Pure Intuition Bronze",
+      "attribute": "No Tools",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "no-tools-bronze.svg",
+      "description": "Demonstrated pure intuitive reading abilities"
+    },
+    {
+      "id": "no-tools-silver",
+      "name": "Pure Intuition Silver",
+      "attribute": "No Tools",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "no-tools-silver.svg",
+      "description": "Advanced pure intuitive practitioner"
+    },
+    {
+      "id": "no-tools-gold",
+      "name": "Pure Intuition Gold",
+      "attribute": "No Tools",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "no-tools-gold.svg",
+      "description": "Master of pure intuitive readings"
+    },
+    {
+      "id": "inspirational-bronze",
+      "name": "Inspirational Guide Bronze",
+      "attribute": "Inspirational",
+      "tier": "Bronze",
+      "requirements": {
+        "readingsCompleted": 25,
+        "averageRating": 4.0,
+        "timeframe": "30 days"
+      },
+      "icon": "inspirational-bronze.svg",
+      "description": "Consistently provides uplifting guidance"
+    },
+    {
+      "id": "inspirational-silver",
+      "name": "Inspirational Guide Silver",
+      "attribute": "Inspirational",
+      "tier": "Silver",
+      "requirements": {
+        "readingsCompleted": 100,
+        "averageRating": 4.5,
+        "timeframe": "90 days"
+      },
+      "icon": "inspirational-silver.svg",
+      "description": "Known for exceptional motivational guidance"
+    },
+    {
+      "id": "inspirational-gold",
+      "name": "Inspirational Guide Gold",
+      "attribute": "Inspirational",
+      "tier": "Gold",
+      "requirements": {
+        "readingsCompleted": 500,
+        "averageRating": 4.8,
+        "timeframe": "180 days"
+      },
+      "icon": "inspirational-gold.svg",
+      "description": "Master of inspirational guidance"
+    }
+  ]
+}

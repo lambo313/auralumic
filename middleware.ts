@@ -1,0 +1,76 @@
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+
+// Define route matchers for different access levels
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/webhook(.*)',
+  '/api/payments/webhook(.*)'
+])
+
+const isAdminRoute = createRouteMatcher([
+  '/admin/(.*)',
+  '/api/admin/(.*)'
+])
+
+const isReaderRoute = createRouteMatcher([
+  '/reader/(.*)',
+])
+
+const isClientRoute = createRouteMatcher([
+  '/client/(.*)',
+])
+
+const isDashboardRoute = createRouteMatcher([
+  '/dashboard/(.*)',
+  '/(dashboard)/(.*)'  // Support both patterns during transition
+])
+
+export default clerkMiddleware(async (auth, req) => {
+  // Admin routes require admin role
+  if (isAdminRoute(req)) {
+    const { userId } = await auth()
+    if (!userId) {
+      const signInUrl = new URL('/sign-in', req.url)
+      signInUrl.searchParams.set('redirect_url', req.url)
+      return Response.redirect(signInUrl)
+    }
+    
+    // For admin routes, we'll let the React components handle role checking
+    // since the middleware has limited access to user metadata
+    return
+  }
+
+  // Reader routes require reader role
+  if (isReaderRoute(req)) {
+    await auth.protect()
+    return
+  }
+
+  // Client routes require client role
+  if (isClientRoute(req)) {
+    await auth.protect()
+    return
+  }
+
+  // Dashboard routes require authentication
+  if (isDashboardRoute(req)) {
+    await auth.protect()
+    return
+  }
+
+  // Protect all other routes except public ones
+  if (!isPublicRoute(req)) {
+    await auth.protect()
+  }
+})
+
+export const config = {
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
+}

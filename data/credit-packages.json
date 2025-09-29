@@ -1,0 +1,32 @@
+{
+  "packages": [
+    {
+      "id": "starter",
+      "name": "Starter Package",
+      "credits": 100,
+      "price": 9.99,
+      "description": "Perfect for trying out readings"
+    },
+    {
+      "id": "basic",
+      "name": "Basic Package",
+      "credits": 500,
+      "price": 39.99,
+      "description": "Most popular for regular users"
+    },
+    {
+      "id": "premium",
+      "name": "Premium Package",
+      "credits": 1200,
+      "price": 79.99,
+      "description": "Best value for active users"
+    },
+    {
+      "id": "professional",
+      "name": "Professional Package",
+      "credits": 3000,
+      "price": 159.99,
+      "description": "Ideal for business use"
+    }
+  ]
+}

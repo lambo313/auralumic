@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "id": "user1",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "client"
+    }
+  ],
+  "readers": [
+    {
+      "id": "reader1",
+      "name": "Joe Smith",
+      "email": "joe@example.com",
+      "specialties": ["tarot", "astrology"],
+      "experience": "advanced"
+    }
+  ],
+  "readings": [
+    {
+      "id": "reading1",
+      "clientId": "user1",
+      "readerId": "reader1",
+      "status": "completed",
+      "category": "love",
+      "credits": 100
+    }
+  ]
+}

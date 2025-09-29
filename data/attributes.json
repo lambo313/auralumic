@@ -1,0 +1,108 @@
+{
+  "Abilities": [
+    {
+      "id": "dream-analysis",
+      "name": "Dream Analysis",
+      "description": "Interpretation and analysis of dream symbolism and meanings"
+    },
+    {
+      "id": "channeling",
+      "name": "Channeling",
+      "description": "Receiving and transmitting messages from spiritual entities"
+    },
+    {
+      "id": "empath",
+      "name": "Empath",
+      "description": "Ability to sense and feel others' emotions and energies"
+    },
+    {
+      "id": "clairaudient",
+      "name": "Clairaudient",
+      "description": "Ability to hear psychic and spiritual information"
+    },
+    {
+      "id": "clairvoyant",
+      "name": "Clairvoyant",
+      "description": "Ability to see psychic and spiritual information"
+    },
+    {
+      "id": "scrying",
+      "name": "Scrying",
+      "description": "Use of reflective surfaces for divination"
+    },
+    {
+      "id": "medium",
+      "name": "Medium",
+      "description": "Communication with spirits and the deceased"
+    },
+    {
+      "id": "clairsentient",
+      "name": "Clairsentient",
+      "description": "Ability to sense psychic and spiritual information"
+    }
+  ],
+  "Tools": [
+    {
+      "id": "runes",
+      "name": "Runes",
+      "description": "Ancient Germanic alphabet used for divination"
+    },
+    {
+      "id": "crystal-energy",
+      "name": "Crystal Energy",
+      "description": "Use of crystals for healing and divination"
+    },
+    {
+      "id": "astrology",
+      "name": "Astrology",
+      "description": "Study of celestial bodies' influence on human affairs"
+    },
+    {
+      "id": "no-tools",
+      "name": "No Tools",
+      "description": "Pure intuitive reading without physical tools"
+    },
+    {
+      "id": "pendulum",
+      "name": "Pendulum",
+      "description": "Tool for dowsing and receiving yes/no answers"
+    },
+    {
+      "id": "oracle-cards",
+      "name": "Oracle Cards",
+      "description": "Specialized cards for spiritual guidance"
+    },
+    {
+      "id": "i-ching",
+      "name": "I-Ching",
+      "description": "Ancient Chinese divination system"
+    },
+    {
+      "id": "numerology",
+      "name": "Numerology",
+      "description": "Study of numbers' spiritual significance"
+    },
+    {
+      "id": "tarot",
+      "name": "Tarot",
+      "description": "Traditional card-based divination system"
+    }
+  ],
+  "Styles": [
+    {
+      "id": "compassionate",
+      "name": "Compassionate",
+      "description": "Gentle, empathetic approach focused on emotional support"
+    },
+    {
+      "id": "inspirational",
+      "name": "Inspirational",
+      "description": "Uplifting approach focused on motivation and positive outcomes"
+    },
+    {
+      "id": "straightforward",
+      "name": "Straightforward",
+      "description": "Direct, clear approach focused on honest communication"
+    }
+  ]
+}
