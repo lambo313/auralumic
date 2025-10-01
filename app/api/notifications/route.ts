@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/database";
 import Notification from "@/models/Notification";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const { userId } = await auth();
     if (!userId) {

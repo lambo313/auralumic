@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/services/api";
 import { useRouter } from "next/navigation";
+import attributesData from "@/data/attributes.json";
 import { uploadFile, FILE_UPLOAD_CONFIG, isValidFileType, isValidFileSize } from "@/lib/upload";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,7 +39,7 @@ const readerApplicationSchema = z.object({
 type ReaderApplicationData = z.infer<typeof readerApplicationSchema>;
 
 export function ReaderApplicationForm() {
-  const attributes = require('@/data/attributes.json');
+  const attributes = attributesData;
   const { user, isSignedIn } = useAuth();
   const [selectedAbilities, setSelectedAbilities] = useState<string[]>([]);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);

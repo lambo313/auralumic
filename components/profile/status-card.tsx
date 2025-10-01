@@ -162,7 +162,7 @@ export function StatusCard({
                     
                     {suggestion.message && (
                       <div className="text-xs italic text-muted-foreground bg-muted/30 p-2 rounded">
-                        "{suggestion.message}"
+                        &quot;{suggestion.message}&quot;
                       </div>
                     )}
                   </div>

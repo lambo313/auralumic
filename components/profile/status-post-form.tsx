@@ -59,7 +59,7 @@ export function StatusPostForm({ onSubmit, isSubmitting }: StatusPostFormProps) 
         <CardContent className="p-4">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Plus className="h-5 w-5" />
-            <p>Share your current situation or what's on your mind...</p>
+            <p>Share your current situation or what&apos;s on your mind...</p>
           </div>
         </CardContent>
       </Card>
@@ -75,11 +75,11 @@ export function StatusPostForm({ onSubmit, isSubmitting }: StatusPostFormProps) 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Content */}
           <div className="space-y-2">
-            <Label>What's on your mind?</Label>
+            <Label>What&apos;s on your mind?</Label>
             <Textarea
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Share what you're going through, what questions you have, or what guidance you're seeking..."
+              placeholder="Share what you&apos;re going through, what questions you have, or what guidance you&apos;re seeking..."
               className="min-h-24"
               required
             />

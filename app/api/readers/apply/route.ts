@@ -134,9 +134,9 @@ export async function POST(request: Request) {
       message: "Reader application submitted successfully",
       applicationId: readerApplication._id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Mongoose validation errors
-    if (error.name === "ValidationError") {
+    if (error instanceof Error && error.name === "ValidationError") {
       return new NextResponse(error.message, { status: 400 });
     }
     console.error("[READER_APPLICATION_POST]", error);

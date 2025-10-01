@@ -53,7 +53,7 @@ export function useReadings(): ReadingsData {
               acc.archived.push(reading);
             } else if (reading.status === 'accepted') {
               acc.accepted.push(reading);
-            } else if (reading.status === 'pending') {
+            } else if (reading.status === 'requested') {
               acc.requested.push(reading);
             }
             return acc;

@@ -61,7 +61,7 @@ export async function DELETE(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const { categoryId } = await params;
+    await params;
 
     // In a real app, you would delete from database
     return NextResponse.json({ message: "Category deleted successfully" });

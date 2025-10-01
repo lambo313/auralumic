@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
 type SearchQuery = {

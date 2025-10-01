@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
 import { sendNotification } from "@/services/notification-service"
+import { NotificationType } from "@/models/Notification"
 
 export async function POST(
   request: Request,
@@ -14,7 +15,6 @@ export async function POST(
     if (!session || !session.userId) {
       return new NextResponse("Unauthorized", { status: 401 })
     }
-    const userId = session.userId
 
     await dbConnect()
     const reader = await Reader.findById(id)
@@ -30,7 +30,7 @@ export async function POST(
     // Send notification to reader
     await sendNotification({
       userId: reader.userId._id,
-      type: "reading_declined", // Using reading_declined as it's the closest match
+      type: NotificationType.READING_DECLINED,
       message: "Your reader application has not been approved at this time. You may submit a new application after addressing the feedback provided.",
       data: {
         readerId: reader._id,

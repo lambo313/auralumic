@@ -3,7 +3,7 @@ import { getUserRole } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { disputeId: string } }
+  { params }: { params: Promise<{ disputeId: string }> }
 ) {
   try {
     const userRole = await getUserRole();
@@ -23,7 +23,7 @@ export async function POST(
       );
     }
 
-    const { disputeId } = params;
+    const { disputeId } = await params;
     const body = await request.json();
     const { resolution } = body;
 

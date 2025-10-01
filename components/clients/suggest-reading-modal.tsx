@@ -141,7 +141,7 @@ export function SuggestReadingModal({ isOpen, onClose, client, statusId }: Sugge
           </div>
           <div className="pl-13">
             <p className="text-sm text-muted-foreground italic">
-              "{currentStatus.content}"
+              &quot;{currentStatus.content}&quot;
             </p>
           </div>
         </div>

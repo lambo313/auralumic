@@ -47,12 +47,29 @@ export function ClientProfileForm({ user: initialData }: ClientProfileFormProps)
   async function onSubmit(data: ClientProfileFormValues) {
     try {
       setIsSubmitting(true);
-      // TODO: API call to update client profile
+      
+      // API call to update client profile
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: data.name,
+          location: data.location,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
       toast({
         title: "Profile updated",
         description: "Your client profile has been updated successfully.",
       });
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",

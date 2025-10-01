@@ -38,7 +38,7 @@ const mockUserStatuses: Status[] = [
         suggestedType: "tarot",
         estimatedDuration: 45,
         suggestedPrice: 65,
-        message: "I sense there's a deeper purpose trying to emerge in your life. Let's explore what the cards reveal about your authentic career path.",
+        message: "I sense there&apos;s a deeper purpose trying to emerge in your life. Let&apos;s explore what the cards reveal about your authentic career path.",
         isAccepted: false,
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
@@ -151,7 +151,7 @@ function ClientProfilePage() {
             <div>
               <h2 className="text-xl font-semibold mb-2">My Status Updates</h2>
               <p className="text-sm text-muted-foreground">
-                Share what's on your mind and receive personalized reading suggestions from our readers.
+                Share what&apos;s on your mind and receive personalized reading suggestions from our readers.
               </p>
             </div>
             

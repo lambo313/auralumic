@@ -1,6 +1,5 @@
 import { ReadingCard } from "./reading-card"
-
-import type { Reading } from '@/types/readings';
+import type { Reading } from "@/types/readings"
 
 interface ReadingListProps {
   readings: Reading[];
@@ -44,28 +43,44 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
 
   return (
     <div className="space-y-4">
-      {readings.map((reading) => (
-        <ReadingCard
-          key={reading.id}
-          reading={{
-            ...reading,
-            description: reading.notes || '',
-            client: { id: reading.clientId, name: 'Client' },
-            reader: { id: reading.readerId, name: 'Reader' }
-          }}
-          userRole="client"
-          onViewDetails={() => {
-            const pathname = window.location.pathname;
-            if (pathname.includes('/client/')) {
-              window.location.href = `/client/reading/${reading.id}`;
-            } else if (pathname.includes('/reader/')) {
-              window.location.href = `/reader/reading/${reading.id}`;
-            } else {
-              window.location.href = `/dashboard/reading/${reading.id}`; // fallback
-            }
-          }}
-        />
-      ))}
+      {readings.map((reading) => {
+        // Map ReadingStatus to the expected status values for ReadingCard
+        const mapStatus = (status: string) => {
+          switch (status) {
+            case 'requested': return 'pending' as const;
+            case 'in_progress': return 'accepted' as const;
+            default: return status as 'pending' | 'accepted' | 'declined' | 'completed';
+          }
+        };
+
+        return (
+          <ReadingCard
+            key={reading.id}
+            reading={{
+              id: reading.id,
+              topic: reading.topic,
+              description: reading.question || '',
+              status: mapStatus(reading.status),
+              duration: reading.readingOption.timeSpan.duration,
+              credits: reading.credits,
+              createdAt: reading.createdAt,
+              client: { id: reading.clientId, name: 'Client' },
+              reader: { id: reading.readerId, name: 'Reader' }
+            }}
+            userRole="client"
+            onViewDetails={() => {
+              const pathname = window.location.pathname;
+              if (pathname.includes('/client/')) {
+                window.location.href = `/client/reading/${reading.id}`;
+              } else if (pathname.includes('/reader/')) {
+                window.location.href = `/reader/reading/${reading.id}`;
+              } else {
+                window.location.href = `/dashboard/reading/${reading.id}`; // fallback
+              }
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -87,7 +87,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
         duration: parseInt(formData.duration),
         creditCost: creditCost,
         description: formData.description,
-        scheduledDate: scheduledFor,
+        scheduledDate: scheduledFor || undefined,
         timeZone: formData.timeZone,
         status: 'pending'
       };
@@ -129,7 +129,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           <div className="flex items-center gap-3">
             <div className="relative">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={reader.avatarUrl} alt={reader.username} />
+                <AvatarImage src={reader.profileImage} alt={reader.username} />
                 <AvatarFallback>
                   <User className="h-6 w-6" />
                 </AvatarFallback>
@@ -143,12 +143,12 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="ml-1 text-sm">{reader.rating?.toFixed(1)}</span>
-                  <span className="ml-1 text-sm text-muted-foreground">({reader.reviewCount})</span>
+                  <span className="ml-1 text-sm">{reader.stats.averageRating?.toFixed(1)}</span>
+                  <span className="ml-1 text-sm text-muted-foreground">({reader.reviews.length})</span>
                 </div>
                 <span className="text-muted-foreground">•</span>
-                <Badge variant={reader.isVerified ? "default" : "secondary"}>
-                  {reader.isVerified ? "Verified" : "Unverified"}
+                <Badge variant={reader.isApproved ? "default" : "secondary"}>
+                  {reader.isApproved ? "Verified" : "Unverified"}
                 </Badge>
               </div>
             </div>
@@ -157,16 +157,16 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           {reader.tagline && (
             <div className="pl-15">
               <p className="text-sm text-muted-foreground italic">
-                "{reader.tagline}"
+                &quot;{reader.tagline}&quot;
               </p>
             </div>
           )}
 
-          {reader.specialties && reader.specialties.length > 0 && (
+          {reader.attributes.abilities && reader.attributes.abilities.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {reader.specialties.map((specialty, index) => (
+              {reader.attributes.abilities.map((ability, index) => (
                 <Badge key={index} variant="outline">
-                  {specialty}
+                  {ability}
                 </Badge>
               ))}
             </div>

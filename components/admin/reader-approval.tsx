@@ -66,9 +66,9 @@ export function ReaderApproval() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">{reader.name}</h3>
+                    <h3 className="font-semibold">{reader.username}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {reader.email}
+                      {reader.location}
                     </p>
                   </div>
                   <div className="flex gap-2">

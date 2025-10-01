@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -31,11 +31,7 @@ export function DisputeResolver() {
   const [resolution, setResolution] = useState("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadDisputes();
-  }, []);
-
-  async function loadDisputes() {
+  const loadDisputes = useCallback(async () => {
     try {
       const data = await adminService.getDisputes();
       if (Array.isArray(data)) {
@@ -58,7 +54,11 @@ export function DisputeResolver() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
+
+  useEffect(() => {
+    loadDisputes();
+  }, [loadDisputes]);
 
   const handleResolve = async (disputeId: string) => {
     if (!resolution.trim()) {

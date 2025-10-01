@@ -2,10 +2,10 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import { z } from "zod"
-import { validateCredits, calculateCreditCost } from "@/lib/credit-validation"
+import { validateCredits } from "@/lib/credit-validation"
 import { AvailabilityService } from "@/services/availability-service"
 import { sendNotification } from "@/services/notification-service"
-import Reading, { ReadingStatus, Topic } from "@/models/Reading"
+import Reading, { ReadingStatus } from "@/models/Reading"
 import { ScheduledReading } from "@/models/ScheduledReading"
 import { NotificationType } from "@/models/Notification"
 
@@ -125,11 +125,10 @@ export async function POST(request: Request) {
       });
     }
 
-    // Send notification to reader using NEW_COMMENT as closest available type
-    // TODO: Add READING_REQUEST to NotificationType enum in the model
+    // Send notification to reader
     await sendNotification({
       userId: body.readerId,
-      type: NotificationType.NEW_COMMENT,
+      type: NotificationType.READING_REQUEST,
       message: "You have a new reading request",
       data: {
         readingId: reading._id.toString(),

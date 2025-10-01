@@ -66,6 +66,12 @@ interface ReadingWithDetails extends Reading {
   clientAvatar?: string;
   rating?: number;
   review?: string;
+  type?: string;
+  duration?: number;
+  notes?: string;
+  timeZone?: string;
+  scheduledFor?: Date;
+  completedAt?: Date;
 }
 
 interface ReadingStats {
@@ -112,70 +118,98 @@ export function ReadingManagement() {
           readerId: "reader1",
           clientId: "client1",
           status: "completed",
-          scheduledFor: new Date("2024-09-25T14:00:00Z"),
-          completedAt: new Date("2024-09-25T15:00:00Z"),
-          type: "Tarot Reading",
+          scheduledDate: new Date("2024-09-25T14:00:00Z"),
+          completedDate: new Date("2024-09-25T15:00:00Z"),
           topic: "Love and Relationships",
-          duration: 60,
+          readingOption: {
+            type: "video_message",
+            basePrice: 100,
+            timeSpan: { duration: 60, label: "1 hour", multiplier: 1 },
+            finalPrice: 150
+          },
           credits: 150,
-          notes: "Detailed reading about future romantic prospects",
-          timeZone: "UTC",
           createdAt: new Date("2024-09-20T10:00:00Z"),
           updatedAt: new Date("2024-09-25T15:00:00Z"),
           readerName: "Sarah Moon",
           clientName: "Emily Johnson",
           rating: 5,
-          review: "Amazing reading! Very insightful and accurate."
+          review: "Amazing reading! Very insightful and accurate.",
+          type: "Tarot Reading",
+          duration: 60,
+          notes: "Detailed reading about future romantic prospects",
+          timeZone: "UTC",
+          scheduledFor: new Date("2024-09-25T14:00:00Z"),
+          completedAt: new Date("2024-09-25T15:00:00Z")
         },
         {
           id: "2",
           readerId: "reader2",
           clientId: "client2",
-          status: "pending",
-          scheduledFor: new Date("2024-09-29T16:00:00Z"),
-          type: "Astrology Chart",
+          status: "requested",
+          scheduledDate: new Date("2024-09-29T16:00:00Z"),
           topic: "Career Guidance",
-          duration: 45,
+          readingOption: {
+            type: "phone_call",
+            basePrice: 80,
+            timeSpan: { duration: 45, label: "45 minutes", multiplier: 1.5 },
+            finalPrice: 120
+          },
           credits: 120,
-          notes: "Birth chart analysis for career decisions",
-          timeZone: "UTC",
           createdAt: new Date("2024-09-26T09:00:00Z"),
           updatedAt: new Date("2024-09-26T09:00:00Z"),
           readerName: "Marcus Stars",
-          clientName: "David Chen"
+          clientName: "David Chen",
+          type: "Astrology Chart",
+          duration: 45,
+          notes: "Birth chart analysis for career decisions",
+          timeZone: "UTC",
+          scheduledFor: new Date("2024-09-29T16:00:00Z")
         },
         {
           id: "3",
           readerId: "reader1",
           clientId: "client3",
           status: "accepted",
-          scheduledFor: new Date("2024-09-30T10:00:00Z"),
-          type: "Oracle Cards",
+          scheduledDate: new Date("2024-09-30T10:00:00Z"),
           topic: "Life Purpose",
-          duration: 30,
+          readingOption: {
+            type: "live_video",
+            basePrice: 60,
+            timeSpan: { duration: 30, label: "30 minutes", multiplier: 1.3 },
+            finalPrice: 80
+          },
           credits: 80,
-          notes: "Seeking clarity on life direction and purpose",
-          timeZone: "UTC",
           createdAt: new Date("2024-09-27T14:30:00Z"),
           updatedAt: new Date("2024-09-28T08:00:00Z"),
           readerName: "Sarah Moon",
-          clientName: "Lisa Anderson"
+          clientName: "Lisa Anderson",
+          type: "Oracle Cards",
+          duration: 30,
+          notes: "Seeking clarity on life direction and purpose",
+          timeZone: "UTC",
+          scheduledFor: new Date("2024-09-30T10:00:00Z")
         },
         {
           id: "4",
           readerId: "reader3",
           clientId: "client4",
           status: "declined",
-          type: "Psychic Reading",
           topic: "Family Issues",
-          duration: 60,
+          readingOption: {
+            type: "video_message",
+            basePrice: 100,
+            timeSpan: { duration: 60, label: "1 hour", multiplier: 1.5 },
+            finalPrice: 150
+          },
           credits: 150,
-          notes: "Concerns about family relationships and dynamics",
-          timeZone: "UTC",
           createdAt: new Date("2024-09-24T11:15:00Z"),
           updatedAt: new Date("2024-09-24T16:30:00Z"),
           readerName: "Luna Mystic",
-          clientName: "Robert Wilson"
+          clientName: "Robert Wilson",
+          type: "Psychic Reading",
+          duration: 60,
+          notes: "Concerns about family relationships and dynamics",
+          timeZone: "UTC"
         }
       ];
       setReadings(mockReadings);
@@ -213,7 +247,7 @@ export function ReadingManagement() {
 
   const getStatusColor = (status: ReadingStatus) => {
     switch (status) {
-      case "pending":
+      case "requested":
         return "bg-yellow-500";
       case "accepted":
         return "bg-blue-500";
@@ -228,7 +262,7 @@ export function ReadingManagement() {
 
   const getStatusVariant = (status: ReadingStatus) => {
     switch (status) {
-      case "pending":
+      case "requested":
         return "secondary";
       case "accepted":
         return "default";
@@ -246,7 +280,7 @@ export function ReadingManagement() {
       reading.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
       reading.readerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       reading.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reading.type.toLowerCase().includes(searchTerm.toLowerCase());
+      (reading.type && reading.type.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = statusFilter === "all" || reading.status === statusFilter;
     
@@ -413,19 +447,19 @@ export function ReadingManagement() {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | ReadingStatus)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="requested">Requested</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="declined">Declined</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+              <Select value={dateRange} onValueChange={(value) => setDateRange(value as "all" | "today" | "week" | "month")}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Date Range" />
                 </SelectTrigger>
@@ -526,7 +560,7 @@ export function ReadingManagement() {
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
             {filteredReadings
-              .filter(reading => reading.status === "pending" || reading.status === "accepted")
+              .filter(reading => reading.status === "requested" || reading.status === "accepted")
               .map((reading) => (
                 <Card key={reading.id}>
                   <CardHeader>
@@ -565,7 +599,7 @@ export function ReadingManagement() {
                       <div>
                         <Label className="text-sm font-medium">Scheduled</Label>
                         <div className="text-sm mt-1">
-                          {reading.scheduledFor ? formatDate(reading.scheduledFor) : "Not scheduled"}
+                          {reading.scheduledDate ? formatDate(reading.scheduledDate) : "Not scheduled"}
                         </div>
                       </div>
                     </div>
@@ -738,10 +772,10 @@ function ReadingDetailsDialog({
             </div>
           )}
 
-          {reading.scheduledFor && (
+          {reading.scheduledDate && (
             <div>
               <Label className="text-sm font-medium">Scheduled For</Label>
-              <p className="text-sm mt-1">{formatDate(reading.scheduledFor)}</p>
+              <p className="text-sm mt-1">{formatDate(reading.scheduledDate)}</p>
             </div>
           )}
 
@@ -774,10 +808,13 @@ function ReadingDetailsDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="requested">Requested</SelectItem>
                 <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="declined">Declined</SelectItem>
+                <SelectItem value="disputed">Disputed</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -798,7 +835,7 @@ function ReadingDetailsDialog({
 
 function getStatusVariant(status: ReadingStatus) {
   switch (status) {
-    case "pending":
+    case "requested":
       return "secondary" as const;
     case "accepted":
       return "default" as const;

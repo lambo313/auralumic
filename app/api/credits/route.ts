@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
 })
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth()
     const userId = session?.userId

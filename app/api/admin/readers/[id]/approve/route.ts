@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
 import { sendNotification } from "@/services/notification-service"
+import { NotificationType } from "@/models/Notification"
 
 export async function POST(
   request: Request,
@@ -33,7 +34,7 @@ export async function POST(
     // Send notification to reader
     await sendNotification({
       userId: reader.userId._id,
-      type: "reading_accepted", // Using reading_accepted as it's the closest match
+      type: NotificationType.READING_ACCEPTED,
       message: "Your reader application has been approved! You can now start accepting reading requests.",
       data: {
         readerId: reader._id

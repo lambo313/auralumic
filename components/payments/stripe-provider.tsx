@@ -10,7 +10,7 @@ interface StripeProviderProps {
   children: React.ReactNode;
   options?: {
     clientSecret: string;
-    appearance?: any;
+    appearance?: Record<string, unknown>;
   };
 }
 

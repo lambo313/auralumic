@@ -17,7 +17,7 @@ const INITIAL_BOOKING_DATA: ReadingRequest = {
   duration: 30,
   creditCost: 0,
   description: "",
-  scheduledDate: null,
+  scheduledDate: undefined,
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   status: "pending",
 }

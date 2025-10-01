@@ -16,7 +16,7 @@ export async function GET(
 
     const reader = await Reader.findOne({ userId: id })
       .select('-__v')
-      .lean() as any
+      .lean() as Record<string, unknown>
 
     if (!reader) {
       return new NextResponse("Reader not found", { status: 404 })

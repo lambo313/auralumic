@@ -4,8 +4,10 @@ import { Separator } from "../ui/separator";
 import { useCredits } from "@/hooks/use-credits";
 import { useRouter } from "next/navigation";
 
+import { User } from "@/types";
+
 interface ClientStatsDashboardProps {
-  user: any;
+  user: User;
 }
 
 export function ClientStatsDashboard({ user }: ClientStatsDashboardProps) {
@@ -41,7 +43,7 @@ export function ClientStatsDashboard({ user }: ClientStatsDashboardProps) {
         <h3 className="font-semibold mb-2">Favorite Readers</h3>
         {favoriteReaders.length > 0 ? (
           <ul className="list-disc pl-5">
-            {favoriteReaders.map((reader: any) => (
+            {favoriteReaders.map((reader: { id: string; name: string }) => (
               <li key={reader.id}>{reader.name}</li>
             ))}
           </ul>
@@ -54,10 +56,10 @@ export function ClientStatsDashboard({ user }: ClientStatsDashboardProps) {
         <h3 className="font-semibold mb-2">Pending Reviews</h3>
         {pendingReviews.length > 0 ? (
           <ul className="list-disc pl-5">
-            {pendingReviews.map((reading: any) => (
-              <li key={reading.id}>
-                {reading.title}
-                <Button size="sm" className="ml-2" onClick={() => router.push(`/client/reading/${reading.id}/review`)}>
+                  {pendingReviews.map((review: { id: string; title: string }) => (
+              <li key={review.id}>
+                {review.title}
+                <Button size="sm" className="ml-2" onClick={() => router.push(`/client/reading/${review.id}/review`)}>
                   Complete Review
                 </Button>
               </li>

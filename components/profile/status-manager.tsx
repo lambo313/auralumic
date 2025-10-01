@@ -93,7 +93,7 @@ export function StatusManager({
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">Share Your Current Situation</h2>
           <p className="text-sm text-muted-foreground">
-            Let readers know what's on your mind to receive personalized reading suggestions.
+            Let readers know what&apos;s on your mind to receive personalized reading suggestions.
           </p>
           <StatusPostForm onSubmit={onPostStatus} isSubmitting={isPostingStatus} />
         </div>

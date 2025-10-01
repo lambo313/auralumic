@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { withSafeRendering } from "@/components/ui/with-safe-rendering";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { BookingDialog } from "@/components/readings/booking-dialog";
 import type { User, Reader } from "@/types/index";
 import { getMockReaderById } from "@/components/readers/mock-reader-data";
 import { readerService } from "@/services/reader-service";
@@ -47,8 +48,8 @@ function useProfile(id: string | null) {
             setError(null);
           }
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch profile");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to fetch profile");
         setProfile(null);
       } finally {
         setLoading(false);
@@ -68,6 +69,7 @@ function ClientProfileViewPage() {
   const { user, role } = useAuth();
   const { profile, loading, error } = useProfile(id);
   const isOwnProfile = !id || (user && id === user.id) ? true : false;
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
 
   return (
     <main className="container py-6">
@@ -92,7 +94,7 @@ function ClientProfileViewPage() {
         </Card>
       ) : profile ? (
         <div className="space-y-8">
-          <ProfileHeader user={profile as any} isOwnProfile={Boolean(isOwnProfile)} />
+          <ProfileHeader user={profile as User | Reader} isOwnProfile={Boolean(isOwnProfile)} />
           <Separator />
           {/* Sleek ReaderProfile display for reader profiles */}
           {!isOwnProfile && profile && (!('role' in profile) || profile.role === "reader") ? (
@@ -100,24 +102,24 @@ function ClientProfileViewPage() {
               const reader = profile as Reader;
               const readerProfileData = {
                 id: reader.id,
-                name: reader.username ?? `${(reader as any).firstName ?? ""} ${(reader as any).lastName ?? ""}`.trim(),
+                name: reader.username ?? `${(reader as Reader & { firstName?: string }).firstName ?? ""} ${(reader as Reader & { lastName?: string }).lastName ?? ""}`.trim(),
                 avatarUrl: reader.profileImage ?? "/assets/readers/default.jpg",
                 bio: reader.experience ?? reader.additionalInfo ?? "",
-                specialties: (reader as any).specialties ?? [],
-                rating: (reader as any).rating ?? 0,
-                reviewCount: (reader as any).reviewCount ?? 0,
-                status: (reader as any).status ?? "available",
-                completedReadings: (reader as any).completedReadings ?? 0,
-                languages: (reader as any).languages ?? ["English"],
-                isVerified: (reader as any).isVerified ?? false,
+                specialties: (reader as Reader & { specialties?: string[] }).specialties ?? [],
+                rating: (reader as Reader & { rating?: number }).rating ?? 0,
+                reviewCount: (reader as Reader & { reviewCount?: number }).reviewCount ?? 0,
+                status: (reader as Reader & { status?: "available" | "busy" | "offline" }).status ?? "available",
+                completedReadings: (reader as Reader & { completedReadings?: number }).completedReadings ?? 0,
+                languages: (reader as Reader & { languages?: string[] }).languages ?? ["English"],
+                isVerified: (reader as Reader & { isVerified?: boolean }).isVerified ?? false,
                 joinDate: reader.createdAt ? new Date(reader.createdAt) : new Date(),
-                testimonials: (reader as any).testimonials ?? [],
+                testimonials: (reader as Reader & { testimonials?: Array<{ id: string; text: string; rating: number; clientName: string; date: Date }> }).testimonials ?? [],
               };
               // Only show request button if logged in as client
               const showRequestButton = role === "client";
               const handleRequestReading = () => {
-                // TODO: Implement request reading logic (e.g., open modal, call API)
-                alert("Request Reading for " + readerProfileData.name);
+                // Open the booking dialog for this reader
+                setIsBookingDialogOpen(true);
               };
               return (
                 <div className="mt-6">
@@ -145,6 +147,16 @@ function ClientProfileViewPage() {
             Please sign in to view your profile
           </p>
         </Card>
+      )}
+
+      {/* Booking Dialog */}
+      {profile && !isOwnProfile && (!('role' in profile) || profile.role === "reader") && (
+        <BookingDialog
+          readerId={profile.id}
+          readerName={profile.username || "Reader"}
+          isOpen={isBookingDialogOpen}
+          onClose={() => setIsBookingDialogOpen(false)}
+        />
       )}
     </main>
   );

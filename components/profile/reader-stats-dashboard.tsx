@@ -2,23 +2,25 @@ import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
+import { Reader } from "@/types";
+
 interface ReaderStatsDashboardProps {
-  user: any;
+  user: Reader;
 }
 
 export function ReaderStatsDashboard({ user }: ReaderStatsDashboardProps) {
   // Placeholder: Replace with actual stats logic
   const stats = {
     totalReadings: user?.stats?.totalReadings ?? 0,
-    completedReadings: user?.stats?.completedReadings ?? 0,
+    completedReadings: user?.stats?.totalReadings ?? 0, // Use totalReadings as proxy
     averageRating: user?.stats?.averageRating ?? 0,
     totalEarnings: user?.stats?.totalEarnings ?? 0,
     completionRate: user?.stats?.completionRate ?? 0,
-    repeatClientCount: user?.stats?.repeatClientCount ?? 0,
-    repeatClientRate: user?.stats?.repeatClientRate ?? 0,
-    profileViews: user?.stats?.profileViews ?? 0,
-    bookingRequests: user?.stats?.bookingRequests ?? 0,
-    acceptedBookings: user?.stats?.acceptedBookings ?? 0,
+    repeatClientCount: 0, // Not available in current stats
+    repeatClientRate: 0, // Not available in current stats
+    profileViews: 0, // Not available in current stats
+    bookingRequests: 0, // Not available in current stats
+    acceptedBookings: user?.stats?.totalReadings ?? 0, // Use totalReadings as proxy
     pendingReviews: [],
     badges: user?.badges ?? [],
   };
@@ -69,8 +71,8 @@ export function ReaderStatsDashboard({ user }: ReaderStatsDashboardProps) {
         <h3 className="font-semibold mb-2">Badges</h3>
         {stats.badges.length > 0 ? (
           <ul className="list-disc pl-5">
-            {stats.badges.map((badge: any) => (
-              <li key={badge.id}>{badge.name} ({badge.tier})</li>
+                    {stats.badges.map((badge: string, index: number) => (
+              <li key={index}>{badge}</li>
             ))}
           </ul>
         ) : (
@@ -82,9 +84,9 @@ export function ReaderStatsDashboard({ user }: ReaderStatsDashboardProps) {
         <h3 className="font-semibold mb-2">Pending Reviews</h3>
         {stats.pendingReviews.length > 0 ? (
           <ul className="list-disc pl-5">
-            {stats.pendingReviews.map((reading: any) => (
-              <li key={reading.id}>
-                {reading.title}
+                    {stats.pendingReviews.map((review: unknown, index: number) => (
+              <li key={index}>
+                Pending Review #{index + 1}
                 <Button size="sm" className="ml-2" onClick={() => {}}>
                   Complete Review
                 </Button>

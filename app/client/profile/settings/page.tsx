@@ -1,14 +1,11 @@
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AccountSettings } from "@/components/profile/account-settings"
-import { NotificationSettings } from "@/components/profile/notification-settings"
-import { SecuritySettings } from "@/components/profile/security-settings"
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function ClientSettingsPage() {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   return (
     <div className="container max-w-4xl py-6 space-y-6">
@@ -23,22 +20,52 @@ export default async function ClientSettingsPage() {
         
         <TabsContent value="account">
           <Card>
-            <AccountSettings />
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+              <CardDescription>
+                Manage your account preferences and settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Account settings functionality will be implemented soon.
+              </p>
+            </CardContent>
           </Card>
         </TabsContent>
         
         <TabsContent value="notifications">
           <Card>
-            <NotificationSettings />
+            <CardHeader>
+              <CardTitle>Notification Settings</CardTitle>
+              <CardDescription>
+                Manage how you receive notifications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Notification settings functionality will be implemented soon.
+              </p>
+            </CardContent>
           </Card>
         </TabsContent>
         
         <TabsContent value="security">
           <Card>
-            <SecuritySettings />
+            <CardHeader>
+              <CardTitle>Security Settings</CardTitle>
+              <CardDescription>
+                Manage your security preferences and privacy settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Security settings functionality will be implemented soon.
+              </p>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

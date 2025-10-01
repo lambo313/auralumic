@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { uploadFile, FILE_UPLOAD_CONFIG, isValidFileType, isValidFileSize } from "@/lib/upload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import attributesData from "@/data/attributes.json";
 
 // Reuse schema from ReaderApplicationForm
 const readerProfileSchema = z.object({
@@ -56,7 +57,7 @@ interface ReaderProfileFormProps {
 
 export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   // Load attributes
-  const attributes = require('@/data/attributes.json');
+  const attributes = attributesData;
   const [selectedAbilities, setSelectedAbilities] = useState<string[]>([]);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -134,7 +135,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const username = readerForm.watch("username");
   const debouncedUsername = useDebounce(username, 500);
 
-  const checkUsernameAvailability = async (username: string) => {
+  const checkUsernameAvailability = useCallback(async (username: string) => {
     setUsernameStatus({ available: null, message: "", checking: true });
     
     // If the username is the same as the current user's username, it's available
@@ -163,7 +164,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
         checking: false
       });
     }
-  };
+  }, [reader.username]);
 
   useEffect(() => {
     if (debouncedUsername && debouncedUsername.length >= 3) {
@@ -171,7 +172,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
     } else {
       setUsernameStatus({ available: null, message: "", checking: false });
     }
-  }, [debouncedUsername]);
+  }, [debouncedUsername, checkUsernameAvailability]);
 
   // Toggle logic
   const toggleAbility = (name: string) => {
@@ -512,7 +513,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             ))}
           </div>
           <FormDescription>
-            Select the days you are generally available. (You'll be able to set specific hours later)
+            Select the days you are generally available. (You&apos;ll be able to set specific hours later)
           </FormDescription>
         </div>
         {/* Timezone dropdown */}
@@ -539,7 +540,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             <FormItem>
               <FormLabel>Additional Information</FormLabel>
               <FormControl>
-                <Textarea placeholder="Anything else you'd like us to know?" {...field} />
+                <Textarea placeholder="Anything else you&apos;d like us to know?" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

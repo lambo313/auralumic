@@ -15,13 +15,23 @@ export default function ProfileSetupPage() {
 
   const clientProfile: User = {
     id: user.id,
+    clerkId: user.id,
     email: user.emailAddresses[0]?.emailAddress || "",
-    firstName: user.firstName || undefined,
-    lastName: user.lastName || undefined,
-    name: user.fullName || undefined,
+    username: user.username || undefined,
     role: role || "client",
+    credits: 0,
+    preferences: {
+      theme: 'auto',
+      notifications: {
+        email: true,
+        push: true,
+        inApp: true
+      }
+    },
+    hasCompletedOnboarding: false,
     createdAt: new Date(user.createdAt || Date.now()),
     updatedAt: new Date(user.updatedAt || Date.now()),
+    lastLogin: new Date(),
     bio: user.publicMetadata.bio as string | undefined,
     location: user.publicMetadata.location as string | undefined,
     website: user.publicMetadata.website as string | undefined

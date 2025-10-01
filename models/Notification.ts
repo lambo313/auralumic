@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 export enum NotificationType {
+  READING_REQUEST = 'reading_request',
   READING_ACCEPTED = 'reading_accepted',
   READING_DECLINED = 'reading_declined',
   READING_COMPLETED = 'reading_completed',

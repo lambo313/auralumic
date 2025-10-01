@@ -100,7 +100,7 @@ export function ClientConnect() {
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+          <Select value={statusFilter} onValueChange={(value: "all" | "active" | "no-status") => setStatusFilter(value)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>

@@ -30,6 +30,8 @@ export interface ReadingRequest {
   topic: string;
   description: string;
   duration: number;
-  scheduledDate: Date;
+  scheduledDate?: Date;
   timeZone: string;
+  creditCost: number;
+  status: string;
 }

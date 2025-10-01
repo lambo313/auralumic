@@ -5,7 +5,7 @@ import { User, UserRole } from '@/models/User';
 import Reader from '@/models/Reader';
 import Reading, { ReadingStatus } from '@/models/Reading';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Verify admin authentication
     const { userId } = await auth();
