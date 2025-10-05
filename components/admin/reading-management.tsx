@@ -313,13 +313,6 @@ export function ReadingManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Reading Management</h3>
-          <p className="text-sm text-muted-foreground">Monitor and manage all platform readings</p>
-        </div>
-      </div>
-
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">

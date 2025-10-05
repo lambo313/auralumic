@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
 import Review from "@/models/Review"
+import { getMockReaderById } from "@/components/readers/mock-reader-data"
 
 export async function GET(
   request: Request,
@@ -16,9 +17,24 @@ export async function GET(
 
     const reader = await Reader.findOne({ userId: id })
       .select('-__v')
-      .lean() as Record<string, unknown>
+      .lean() as Record<string, unknown> | null
 
+    // If no reader found in database, try mock data
     if (!reader) {
+      const mockReader = getMockReaderById(id)
+      if (mockReader) {
+        // Check if mock reader is approved
+        if (!mockReader.isApproved) {
+          return new NextResponse("Reader not found", { status: 404 })
+        }
+        // Convert mock reader to API format
+        return NextResponse.json({
+          ...mockReader,
+          createdAt: mockReader.createdAt.toISOString(),
+          lastActive: mockReader.lastActive.toISOString(),
+          updatedAt: mockReader.updatedAt?.toISOString() || mockReader.createdAt.toISOString()
+        })
+      }
       return new NextResponse("Reader not found", { status: 404 })
     }
 

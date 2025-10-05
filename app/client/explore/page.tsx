@@ -8,8 +8,8 @@ export default function ClientExplorePage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Explore Readers</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">Explore Readers</h1>
+        <p className="page-description">
           Discover psychic readers by their abilities, tools, and style
         </p>
       </div>

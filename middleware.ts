@@ -42,8 +42,23 @@ export default clerkMiddleware(async (auth, req) => {
     return
   }
 
-  // Reader routes require reader role
+  // Reader profile view pages (/reader/profile/:id) are accessible to all authenticated users
+  // Reader management pages (/reader/profile/edit, /reader/dashboard, etc.) require reader role
   if (isReaderRoute(req)) {
+    const pathname = req.nextUrl.pathname
+    
+    // Check if it's a reader profile view page (e.g., /reader/profile/user_123)
+    // Allow access if it matches /reader/profile/{id} but not /reader/profile/edit
+    const profileViewMatch = pathname.match(/^\/reader\/profile\/[^\/]+$/)
+    const isEditPage = pathname === '/reader/profile/edit'
+    
+    if (profileViewMatch && !isEditPage) {
+      // Profile view pages are accessible to all authenticated users
+      await auth.protect()
+      return
+    }
+    
+    // All other reader routes require authentication (role checking done in components)
     await auth.protect()
     return
   }

@@ -35,6 +35,7 @@ export function useAuth() {
             setRole(userBaseRole || "client");
           }
           console.log("[useAuth] baseRole from DB:", userBaseRole);
+          console.log("[useAuth] persistedRole from localStorage:", persistedRole);
         } catch (err) {
           console.error("[useAuth] Failed to fetch user role from database:", err);
           setBaseRole(null);

@@ -7,8 +7,8 @@ function ReaderExplorePage() {
   return (
     <main className="container py-6 space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Explore Clients</h1>
-        <p className="text-muted-foreground">
+        <h1 className="page-title">Explore Clients</h1>
+        <p className="page-description">
           Discover clients seeking readings and suggest personalized sessions based on their current status and needs.
         </p>
       </div>

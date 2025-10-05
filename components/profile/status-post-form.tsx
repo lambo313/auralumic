@@ -55,7 +55,7 @@ export function StatusPostForm({ onSubmit, isSubmitting }: StatusPostFormProps) 
 
   if (!isExpanded) {
     return (
-      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setIsExpanded(true)}>
+      <Card className="cursor-pointer hover:shadow-aura-md transition-shadow" onClick={() => setIsExpanded(true)}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Plus className="h-5 w-5" />

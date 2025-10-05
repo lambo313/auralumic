@@ -160,32 +160,45 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
   return (
     <div
       className={cn(
-        "hidden border-r border-border bg-card backdrop-blur-sm md:fixed md:inset-y-0 md:left-0 md:z-50 md:flex md:w-64 md:flex-col",
+        "hidden border-r border-border bg-card backdrop-blur-sm md:fixed md:inset-y-0 md:left-0 md:z-50 md:flex md:w-64 md:flex-col shadow-aura-md",
         className
       )}
     >
       <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-        <div className="flex items-center justify-between px-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center group cursor-pointer">
             <div className="relative">
-              <img
-                className="h-16 w-auto transition-all duration-300 group-hover:scale-110"
-                src="/assets/logo/logo.svg"
-                alt="Auralumic"
-                style={{
-                  filter: theme === "dark" 
-                    ? "brightness(0) invert(1)" 
-                    : "none"
-                }}
-              />
+              {theme === "dark" ? (
+                <img
+                  className="h-16 w-auto transition-all duration-300 group-hover:scale-110"
+                  src="/assets/logo/logo.svg"
+                  alt="Auralumic"
+                  style={{
+                    filter: "brightness(0.95)",
+                    WebkitFilter: "brightness(0.95)"
+                  }}
+                />
+              ) : (
+                <img
+                  className="h-16 w-auto transition-all duration-300 group-hover:scale-110"
+                  src="/assets/logo/logo.svg"
+                  alt="Auralumic"
+                  style={{
+                    filter: "brightness(0.15)",
+                    WebkitFilter: "brightness(0.15)"
+                  }}
+                />
+              )}
             </div>
-            <div className="flex flex-col -ml-6">
+            <div className="flex flex-col -ml-5">
               <h1 className="text-xl font-bold bg-gradient-to-r from-aura-accent-1 to-aura-accent-1/80 bg-clip-text text-transparent tracking-tight transition-all duration-300 group-hover:scale-105 group-hover:tracking-wide">
                 Auralumic
               </h1>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="mr-4">
+            <ThemeToggle />
+          </div>
         </div>
         <nav className="mt-8 flex-1 space-y-2 px-3">
           {navigation.map((item) => {
@@ -196,8 +209,8 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
                 asChild
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start h-[54px] rounded-xl transition-all duration-200 hover:bg-primary/10 hover:scale-[1.02] hover:shadow-sm group",
-                  isActive && "bg-primary/15 border border-primary/20 shadow-sm"
+                  "w-full justify-start h-[54px] rounded-xl transition-all duration-200 hover:bg-primary/10 hover:scale-[1.02] hover:shadow-aura-sm group",
+                  isActive && "bg-primary/15 border border-primary/20 shadow-aura-sm"
                 )}
               >
                 <a href={item.href} className="flex items-center space-x-4 px-4 w-full">
@@ -208,7 +221,7 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
                     )} />
                     {/* {item.badge && item.badge > 0 && (
                       <Badge
-                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground shadow-md animate-pulse"
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground shadow-aura-md animate-pulse"
                       >
                         {item.badge}
                       </Badge>

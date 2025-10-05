@@ -2,15 +2,41 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/database";
 import { User, UserRole } from "@/models/User";
+import fs from 'fs';
+import path from 'path';
 
-// Mock categories data - in a real app, you'd have a Category model
-const mockCategories = [
-  { id: "1", name: "Love & Relationships", description: "Matters of the heart", isActive: true },
-  { id: "2", name: "Career & Work", description: "Professional guidance", isActive: true },
-  { id: "3", name: "Spiritual Growth", description: "Personal development", isActive: true },
-  { id: "4", name: "Life Path", description: "Life direction and purpose", isActive: true },
-  { id: "5", name: "Past Life", description: "Past life insights", isActive: false }
-];
+const CATEGORIES_FILE_PATH = path.join(process.cwd(), 'data', 'categories.json');
+
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  isActive: boolean;
+}
+
+interface CategoriesData {
+  categories: Category[];
+}
+
+function readCategoriesFile(): CategoriesData {
+  try {
+    const fileContent = fs.readFileSync(CATEGORIES_FILE_PATH, 'utf8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error('Error reading categories file:', error);
+    return { categories: [] };
+  }
+}
+
+function writeCategoriesFile(data: CategoriesData): void {
+  try {
+    fs.writeFileSync(CATEGORIES_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error writing categories file:', error);
+    throw new Error('Failed to save categories');
+  }
+}
 
 export async function GET() {
   try {
@@ -27,7 +53,8 @@ export async function GET() {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    return NextResponse.json({ categories: mockCategories });
+    const categoriesData = readCategoriesFile();
+    return NextResponse.json({ categories: categoriesData.categories });
   } catch (error) {
     console.error("[ADMIN_CATEGORIES_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
@@ -49,19 +76,23 @@ export async function POST(request: Request) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const { name, description, isActive } = await request.json();
+    const { name, description, icon, isActive } = await request.json();
 
     if (!name || !description) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
-    // In a real app, you would save to database
-    const newCategory = {
-      id: String(Date.now()),
+    const categoriesData = readCategoriesFile();
+    const newCategory: Category = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
       name,
       description,
+      icon: icon || 'default',
       isActive: isActive ?? true
     };
+
+    categoriesData.categories.push(newCategory);
+    writeCategoriesFile(categoriesData);
 
     return NextResponse.json({ category: newCategory }, { status: 201 });
   } catch (error) {

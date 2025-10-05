@@ -124,8 +124,8 @@ function ClientProfilePage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Profile Settings</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">Profile Settings</h1>
+        <p className="page-description">
           Manage your profile information and preferences
         </p>
       </div>

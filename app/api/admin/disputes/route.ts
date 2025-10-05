@@ -26,8 +26,11 @@ const mockDisputes = [
 export async function GET() {
   try {
     const userRole = await getUserRole();
+    
+    console.log('[Admin Disputes API] User role:', userRole);
 
     if (!userRole) {
+      console.log('[Admin Disputes API] No user role found - unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -36,12 +39,14 @@ export async function GET() {
 
     // Check if user has admin role
     if (userRole.role !== 'admin') {
+      console.log('[Admin Disputes API] User role is not admin:', userRole.role);
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }
 
+    console.log('[Admin Disputes API] Admin access granted, returning disputes');
     // Return only open disputes for now
     const openDisputes = mockDisputes.filter(dispute => dispute.status === 'OPEN');
 

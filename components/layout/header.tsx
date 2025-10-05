@@ -1,57 +1,110 @@
 'use client';
 
 import Link from 'next/link'
-import { UserButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { NotificationCenter } from '@/components/notifications/notification-center'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAuth } from '@/hooks/use-auth'
+import { useTheme } from '@/context/theme-context'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { MoreVertical, Shield, Settings, HelpCircle } from 'lucide-react'
+import { cn } from "@/lib/utils"
 
-export function Header() {
+interface HeaderProps {
+  baseRole: "reader" | "client" | "admin"
+  showAdminFeatures: boolean
+  className?: string
+}
+
+export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) {
   const { role } = useAuth();
-  
-  // Determine base path based on role
-  const getBasePath = () => {
-    if (role === "admin") return "/admin";
-    if (role === "reader") return "/reader/dashboard";
-    return "/client/dashboard"; // default to client
-  };
-
-  const basePath = getBasePath();
+  const { theme } = useTheme();
 
   return (
-    <header className="border-b">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="text-2xl font-bold">
-          Auralumic
+    <header className={cn(
+      "fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-md",
+      className
+    )}>
+      <div className="container flex h-16 items-center justify-between pr-6">
+        {/* Logo and App Name - Left aligned */}
+        <Link href="/" className="flex items-center group cursor-pointer">
+          <div className="relative">
+            {theme === "dark" ? (
+              <img
+                className="h-12 w-auto transition-all duration-300 group-hover:scale-110"
+                src="/assets/logo/logo.svg"
+                alt="Auralumic"
+                style={{
+                    filter: "brightness(0.95)",
+                    WebkitFilter: "brightness(0.95)"
+                  }}
+              />
+            ) : (
+              <img
+                className="h-12 w-auto transition-all duration-300 group-hover:scale-110"
+                src="/assets/logo/logo.svg"
+                alt="Auralumic"
+                style={{
+                  filter: "brightness(0.15)",
+                  WebkitFilter: "brightness(0.15)"
+                }}
+              />
+            )}
+          </div>
+          <div className="flex flex-col -ml-4">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-aura-accent-1 to-aura-accent-1/80 bg-clip-text text-transparent tracking-tight transition-all duration-300 group-hover:scale-105 group-hover:tracking-wide">
+              Auralumic
+            </h1>
+          </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href={basePath} className="text-sm font-medium">
-            Dashboard
-          </Link>
-          {role === "client" && (
-            <Link href="/client/explore" className="text-sm font-medium">
-              Explore
-            </Link>
-          )}
-          <Link href={role === "admin" ? "/admin/dashboard" : role === "reader" ? "/reader/notifications" : "/client/notifications"} className="text-sm font-medium">
-            Notifications
-          </Link>
-          <Link href={role === "admin" ? "/admin/readings" : role === "reader" ? "/reader/readings" : "/client/readings"} className="text-sm font-medium">
-            Readings
-          </Link>
-          <Link href={role === "admin" ? "/admin/users" : role === "reader" ? "/reader/profile" : "/client/profile"} className="text-sm font-medium">
-            {role === "admin" ? "Users" : "Profile"}
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-4">
-          <NotificationCenter />
-          <Button asChild variant="outline">
-            <Link href={basePath}>Dashboard</Link>
-          </Button>
-          <UserButton afterSignOutUrl="/" />
-        </div>
+        {/* Dropdown Menu - Right aligned */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem asChild>
+              <div className="flex items-center justify-between w-full">
+                <span>Theme</span>
+                <ThemeToggle />
+              </div>
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            
+            {showAdminFeatures && baseRole === "admin" && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin/dashboard" className="flex items-center gap-2 w-full">
+                  <Shield className="h-4 w-4" />
+                  <span>Admin Center</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center gap-2 w-full">
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem asChild>
+              <Link href="/help" className="flex items-center gap-2 w-full">
+                <HelpCircle className="h-4 w-4" />
+                <span>Help</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

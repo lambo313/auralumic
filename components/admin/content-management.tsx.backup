@@ -1,0 +1,2449 @@
+"use client";"use client";"use client";
+
+
+
+import { useState, useEffect } from "react";
+
+import {
+
+  Card,import { useState, useEffect } from "react";import { useState, useEffect } from "react";
+
+  CardContent,
+
+  CardDescription,import {import {
+
+  CardHeader,
+
+  CardTitle,  Card,  Card,
+
+} from "@/components/ui/card";
+
+import { Button } from "@/components/ui/button";  CardContent,  CardContent,
+
+import { Input } from "@/components/ui/input";
+
+import { Label } from "@/components/ui/label";  CardDescription,  CardDescription,
+
+import { Textarea } from "@/components/ui/textarea";
+
+import {  CardHeader,  CardHeader,
+
+  Select,
+
+  SelectContent,  CardTitle,  CardTitle,
+
+  SelectItem,
+
+  SelectTrigger,} from "@/components/ui/card";} from "@/components/ui/card";
+
+  SelectValue,
+
+} from "@/components/ui/select";import { Button } from "@/components/ui/button";import { Button } from "@/components/ui/button";
+
+import {
+
+  Dialog,import { Input } from "@/components/ui/input";import { Input } from "@/components/ui/input";
+
+  DialogContent,
+
+  DialogDescription,import { Label } from "@/components/ui/label";import { Label } from "@/components/ui/label";
+
+  DialogFooter,
+
+  DialogHeader,import { Textarea } from "@/components/ui/textarea";import { Textarea } from "@/components/ui/textarea";
+
+  DialogTitle,
+
+  DialogTrigger,import {import {
+
+} from "@/components/ui/dialog";
+
+import {  Select,  Select,
+
+  Table,
+
+  TableBody,  SelectContent,  SelectContent,
+
+  TableCell,
+
+  TableHead,  SelectItem,  SelectItem,
+
+  TableHeader,
+
+  TableRow,  SelectTrigger,  SelectTrigger,
+
+} from "@/components/ui/table";
+
+import { Badge } from "@/components/ui/badge";  SelectValue,  SelectValue,
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Plus, Edit, Trash2, Award, Settings, Users } from "lucide-react";} from "@/components/ui/select";} from "@/components/ui/select";
+
+import attributesData from "@/data/attributes.json";
+
+import badgesData from "@/data/badges.json";import {import {
+
+import categoriesData from "@/data/categories.json";
+
+  Dialog,  Dialog,
+
+interface Attribute {
+
+  id: string;  DialogContent,  DialogContent,
+
+  name: string;
+
+  description: string;  DialogDescription,  DialogDescription,
+
+}
+
+  DialogFooter,  DialogFooter,
+
+interface BadgeData {
+
+  id: string;  DialogHeader,  DialogHeader,
+
+  name: string;
+
+  attribute: string;  DialogTitle,  DialogTitle,
+
+  tier: "Bronze" | "Silver" | "Gold";
+
+  requirements: {  DialogTrigger,  DialogTrigger,
+
+    readingsCompleted: number;
+
+    averageRating?: number;} from "@/components/ui/dialog";} from "@/components/ui/dialog";
+
+    timeframe?: string;
+
+  };import {import {
+
+  icon: string;
+
+  description: string;  Table,  Table,
+
+}
+
+  TableBody,  TableBody,
+
+interface Category {
+
+  id: string;  TableCell,  TableCell,
+
+  name: string;
+
+  description: string;  TableHead,  TableHead,
+
+  icon: string;
+
+}  TableHeader,  TableHeader,
+
+
+
+export function ContentManagement() {  TableRow,  TableRow,
+
+  const [attributes, setAttributes] = useState<{
+
+    Abilities: Attribute[];} from "@/components/ui/table";} from "@/components/ui/table";
+
+    Tools: Attribute[];
+
+    Styles: Attribute[];import { Badge } from "@/components/ui/badge";import { Badge } from "@/components/ui/badge";
+
+  }>({
+
+    Abilities: [],import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+    Tools: [],
+
+    Styles: []import { Plus, Edit, Trash2, Award, Settings, Users } from "lucide-react";import { Plus, Edit, Trash2, Award, Settings, Users } from "lucide-react";
+
+  });
+
+  import attributesData from "@/data/attributes.json";import attributesData from "@/data/attributes.json";
+
+  const [badges, setBadges] = useState<BadgeData[]>([]);
+
+  const [categories, setCategories] = useState<Category[]>([]);import badgesData from "@/data/badges.json";import badgesData from "@/data/badges.json";
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [editingAttribute, setEditingAttribute] = useState<{import categoriesData from "@/data/categories.json";import categoriesData from "@/data/categories.json";
+
+    type: "Abilities" | "Tools" | "Styles";
+
+    attribute: Attribute | null;
+
+  }>({ type: "Abilities", attribute: null });
+
+  const [editingBadge, setEditingBadge] = useState<BadgeData | null>(null);interface Attribute {interface Attribute {
+
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  id: string;  id: string;
+
+  type AttributesData = {
+
+    Abilities: Attribute[];  name: string;  name: string;
+
+    Tools: Attribute[];
+
+    Styles: Attribute[];  description: string;  description: string;
+
+  };
+
+  }}
+
+  useEffect(() => {
+
+    // Load initial data
+
+    setAttributes(attributesData as AttributesData);
+
+    interface BadgeData {interface BadgeData {
+
+    // Transform badges data to ensure proper typing
+
+    const transformedBadges: BadgeData[] = badgesData.badges.map(badge => ({  id: string;  id: string;
+
+      ...badge,
+
+      tier: badge.tier as "Bronze" | "Silver" | "Gold"  name: string;  name: string;
+
+    }));
+
+    setBadges(transformedBadges);  attribute: string;  attribute: string;
+
+    
+
+    // Load categories from API  tier: "Bronze" | "Silver" | "Gold";  tier: "Bronze" | "Silver" | "Gold";
+
+    loadCategories();
+
+  }, []);  requirements: {  requirements: {
+
+
+
+  const loadCategories = async () => {    readingsCompleted: number;    readingsCompleted: number;
+
+    try {
+
+      const response = await fetch('/api/admin/categories');    averageRating?: number;    averageRating?: number;
+
+      if (response.ok) {
+
+        const data = await response.json();    timeframe?: string;    timeframe?: string;
+
+        setCategories(data.categories);
+
+      } else {  };  };
+
+        // Fallback to local data if API fails
+
+        setCategories(categoriesData.categories);  icon: string;  icon: string;
+
+      }
+
+    } catch (error) {  description: string;  description: string;
+
+      console.error('Error loading categories:', error);
+
+      // Fallback to local data}}
+
+      setCategories(categoriesData.categories);
+
+    }
+
+  };
+
+interface Category {interface Category {
+
+  const handleAttributeSubmit = async (data: { name: string; description: string }) => {
+
+    setIsLoading(true);  id: string;  id: string;
+
+    try {
+
+      if (editingAttribute.attribute) {  name: string;  name: string;
+
+        // Update existing attribute
+
+        const updatedAttribute = { ...editingAttribute.attribute, ...data };  description: string;  description: string;
+
+        setAttributes(prev => ({
+
+          ...prev,  icon: string;  icon: string;
+
+          [editingAttribute.type]: prev[editingAttribute.type].map(attr =>
+
+            attr.id === editingAttribute.attribute!.id ? updatedAttribute : attr}}
+
+          )
+
+        }));
+
+      } else {
+
+        // Add new attributeexport function ContentManagement() {export function ContentManagement() {
+
+        const newAttribute: Attribute = {
+
+          id: data.name.toLowerCase().replace(/\s+/g, '-'),  const [attributes, setAttributes] = useState<{  const [attributes, setAttributes] = useState<{
+
+          name: data.name,
+
+          description: data.description,    Abilities: Attribute[];    Abilities: Attribute[];
+
+        };
+
+        setAttributes(prev => ({    Tools: Attribute[];    Tools: Attribute[];
+
+          ...prev,
+
+          [editingAttribute.type]: [...prev[editingAttribute.type], newAttribute]    Styles: Attribute[];    Styles: Attribute[];
+
+        }));
+
+      }  }>({  }>({
+
+      setEditingAttribute({ type: "Abilities", attribute: null });
+
+    } catch (error) {    Abilities: [],    Abilities: [],
+
+      console.error("Error saving attribute:", error);
+
+    } finally {    Tools: [],    Tools: [],
+
+      setIsLoading(false);
+
+    }    Styles: []    Styles: []
+
+  };
+
+  });  });
+
+  const handleBadgeSubmit = async (data: Omit<BadgeData, 'id'>) => {
+
+    setIsLoading(true);    
+
+    try {
+
+      if (editingBadge) {  const [badges, setBadges] = useState<BadgeData[]>([]);  const [badges, setBadges] = useState<BadgeData[]>([]);
+
+        // Update existing badge
+
+        const updatedBadge = { ...editingBadge, ...data };  const [categories, setCategories] = useState<Category[]>([]);  const [categories, setCategories] = useState<Category[]>([]);
+
+        setBadges(prev => prev.map(badge => badge.id === editingBadge.id ? updatedBadge : badge));
+
+      } else {  const [isLoading, setIsLoading] = useState(false);  const [isLoading, setIsLoading] = useState(false);
+
+        // Add new badge
+
+        const newBadge: BadgeData = {  const [editingAttribute, setEditingAttribute] = useState<{  const [editingAttribute, setEditingAttribute] = useState<{
+
+          id: `${data.attribute.toLowerCase().replace(/\s+/g, '-')}-${data.tier.toLowerCase()}`,
+
+          ...data,    type: "Abilities" | "Tools" | "Styles";    type: "Abilities" | "Tools" | "Styles";
+
+        };
+
+        setBadges(prev => [...prev, newBadge]);    attribute: Attribute | null;    attribute: Attribute | null;
+
+      }
+
+      setEditingBadge(null);  }>({ type: "Abilities", attribute: null });  }>({ type: "Abilities", attribute: null });
+
+    } catch (error) {
+
+      console.error("Error saving badge:", error);  const [editingBadge, setEditingBadge] = useState<BadgeData | null>(null);  const [editingBadge, setEditingBadge] = useState<BadgeData | null>(null);
+
+    } finally {
+
+      setIsLoading(false);  const [editingCategory, setEditingCategory] = useState<Category | null>(null);  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+    }
+
+  };
+
+
+
+  const handleCategorySubmit = async (data: Omit<Category, 'id'>) => {  type AttributesData = {  type AttributesData = {
+
+    setIsLoading(true);
+
+    try {    Abilities: Attribute[];    Abilities: Attribute[];
+
+      if (editingCategory) {
+
+        // Update existing category    Tools: Attribute[];    Tools: Attribute[];
+
+        const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+
+          method: 'PUT',    Styles: Attribute[];    Styles: Attribute[];
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify(data),  };  };
+
+        });
+
+          useEffect(() => {
+
+        if (response.ok) {
+
+          const { category } = await response.json();  useEffect(() => {    // Load initial data
+
+          setCategories(prev => prev.map(cat => cat.id === editingCategory.id ? category : cat));
+
+        } else {    // Load initial data    setAttributes(attributesData as AttributesData);
+
+          throw new Error('Failed to update category');
+
+        }    setAttributes(attributesData as AttributesData);    
+
+      } else {
+
+        // Add new category        // Transform badges data to ensure proper typing
+
+        const response = await fetch('/api/admin/categories', {
+
+          method: 'POST',    // Transform badges data to ensure proper typing    const transformedBadges: BadgeData[] = badgesData.badges.map(badge => ({
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify(data),    const transformedBadges: BadgeData[] = badgesData.badges.map(badge => ({      ...badge,
+
+        });
+
+              ...badge,      tier: badge.tier as "Bronze" | "Silver" | "Gold"
+
+        if (response.ok) {
+
+          const { category } = await response.json();      tier: badge.tier as "Bronze" | "Silver" | "Gold"    }));
+
+          setCategories(prev => [...prev, category]);
+
+        } else {    }));    setBadges(transformedBadges);
+
+          throw new Error('Failed to create category');
+
+        }    setBadges(transformedBadges);    
+
+      }
+
+      setEditingCategory(null);        // Load categories from API
+
+    } catch (error) {
+
+      console.error("Error saving category:", error);    // Load categories from API    loadCategories();
+
+    } finally {
+
+      setIsLoading(false);    loadCategories();  }, []);
+
+    }
+
+  };  }, []);
+
+
+
+  const deleteAttribute = (type: "Abilities" | "Tools" | "Styles", id: string) => {  const loadCategories = async () => {
+
+    setAttributes(prev => ({
+
+      ...prev,  const loadCategories = async () => {    try {
+
+      [type]: prev[type].filter(attr => attr.id !== id)
+
+    }));    try {      const response = await fetch('/api/admin/categories');
+
+  };
+
+      const response = await fetch('/api/admin/categories');      if (response.ok) {
+
+  const deleteBadge = (id: string) => {
+
+    setBadges(prev => prev.filter(badge => badge.id !== id));      if (response.ok) {        const data = await response.json();
+
+  };
+
+        const data = await response.json();        setCategories(data.categories);
+
+  const deleteCategory = async (id: string) => {
+
+    try {        setCategories(data.categories);      } else {
+
+      const response = await fetch(`/api/admin/categories/${id}`, {
+
+        method: 'DELETE',      } else {        // Fallback to local data if API fails
+
+      });
+
+              // Fallback to local data if API fails        setCategories(categoriesData.categories);
+
+      if (response.ok) {
+
+        setCategories(prev => prev.filter(cat => cat.id !== id));        setCategories(categoriesData.categories);      }
+
+      } else {
+
+        throw new Error('Failed to delete category');      }    } catch (error) {
+
+      }
+
+    } catch (error) {    } catch (error) {      console.error('Error loading categories:', error);
+
+      console.error('Error deleting category:', error);
+
+    }      console.error('Error loading categories:', error);      // Fallback to local data
+
+  };
+
+      // Fallback to local data      setCategories(categoriesData.categories);
+
+  return (
+
+    <div className="space-y-6">      setCategories(categoriesData.categories);    }
+
+      <Tabs defaultValue="categories" className="space-y-6">
+
+        <TabsList className="grid w-full grid-cols-3">    }  };
+
+          <TabsTrigger value="categories" className="flex items-center gap-2">
+
+            <Settings className="h-4 w-4" />  };
+
+            Categories
+
+          </TabsTrigger>  const handleAttributeSubmit = async (data: { name: string; description: string }) => {
+
+          <TabsTrigger value="attributes" className="flex items-center gap-2">
+
+            <Users className="h-4 w-4" />  const handleAttributeSubmit = async (data: { name: string; description: string }) => {    setIsLoading(true);
+
+            Attributes
+
+          </TabsTrigger>    setIsLoading(true);    try {
+
+          <TabsTrigger value="badges" className="flex items-center gap-2">
+
+            <Award className="h-4 w-4" />    try {      if (editingAttribute.attribute) {
+
+            Badges
+
+          </TabsTrigger>      if (editingAttribute.attribute) {        // Update existing attribute
+
+        </TabsList>
+
+        // Update existing attribute        const updatedAttribute = { ...editingAttribute.attribute, ...data };
+
+        {/* Categories Tab */}
+
+        <TabsContent value="categories" className="space-y-4">        const updatedAttribute = { ...editingAttribute.attribute, ...data };        setAttributes(prev => ({
+
+          <Card className="">
+
+            <CardHeader className="">        setAttributes(prev => ({          ...prev,
+
+              <div className="flex items-center justify-between">
+
+                <div>          ...prev,          [editingAttribute.type]: prev[editingAttribute.type].map(attr =>
+
+                  <CardTitle>Reading Categories</CardTitle>
+
+                  <CardDescription>          [editingAttribute.type]: prev[editingAttribute.type].map(attr =>            attr.id === editingAttribute.attribute!.id ? updatedAttribute : attr
+
+                    Manage categories for public readings and posts
+
+                  </CardDescription>            attr.id === editingAttribute.attribute!.id ? updatedAttribute : attr          )
+
+                </div>
+
+                <CategoryDialog          )        }));
+
+                  category={null}
+
+                  onSubmit={handleCategorySubmit}        }));      } else {
+
+                  isLoading={isLoading}
+
+                  trigger={      } else {        // Add new attribute
+
+                    <Button>
+
+                      <Plus className="h-4 w-4 mr-2" />        // Add new attribute        const newAttribute: Attribute = {
+
+                      Add Category
+
+                    </Button>        const newAttribute: Attribute = {          id: data.name.toLowerCase().replace(/\s+/g, '-'),
+
+                  }
+
+                />          id: data.name.toLowerCase().replace(/\s+/g, '-'),          name: data.name,
+
+              </div>
+
+            </CardHeader>          name: data.name,          description: data.description,
+
+            <CardContent>
+
+              <Table>          description: data.description,        };
+
+                <TableHeader>
+
+                  <TableRow>        };        setAttributes(prev => ({
+
+                    <TableHead>Name</TableHead>
+
+                    <TableHead>Description</TableHead>        setAttributes(prev => ({          ...prev,
+
+                    <TableHead>Icon</TableHead>
+
+                    <TableHead className="text-right">Actions</TableHead>          ...prev,          [editingAttribute.type]: [...prev[editingAttribute.type], newAttribute]
+
+                  </TableRow>
+
+                </TableHeader>          [editingAttribute.type]: [...prev[editingAttribute.type], newAttribute]        }));
+
+                <TableBody>
+
+                  {categories.map((category) => (        }));      }
+
+                    <TableRow key={category.id}>
+
+                      <TableCell className="font-medium">{category.name}</TableCell>      }      setEditingAttribute({ type: "Abilities", attribute: null });
+
+                      <TableCell>{category.description}</TableCell>
+
+                      <TableCell>      setEditingAttribute({ type: "Abilities", attribute: null });    } catch (error) {
+
+                        <Badge variant="outline">
+
+                          {category.icon}    } catch (error) {      console.error("Error saving attribute:", error);
+
+                        </Badge>
+
+                      </TableCell>      console.error("Error saving attribute:", error);    } finally {
+
+                      <TableCell className="text-right">
+
+                        <div className="flex items-center justify-end gap-2">    } finally {      setIsLoading(false);
+
+                          <CategoryDialog
+
+                            category={category}      setIsLoading(false);    }
+
+                            onSubmit={handleCategorySubmit}
+
+                            isLoading={isLoading}    }  };
+
+                            trigger={
+
+                              <Button variant="outline" size="sm">  };
+
+                                <Edit className="h-4 w-4" />
+
+                              </Button>  const handleBadgeSubmit = async (data: Omit<BadgeData, 'id'>) => {
+
+                            }
+
+                          />  const handleBadgeSubmit = async (data: Omit<BadgeData, 'id'>) => {    setIsLoading(true);
+
+                          <Button
+
+                            variant="outline"    setIsLoading(true);    try {
+
+                            size="sm"
+
+                            onClick={() => deleteCategory(category.id)}    try {      if (editingBadge) {
+
+                          >
+
+                            <Trash2 className="h-4 w-4" />      if (editingBadge) {        // Update existing badge
+
+                          </Button>
+
+                        </div>        // Update existing badge        const updatedBadge = { ...editingBadge, ...data };
+
+                      </TableCell>
+
+                    </TableRow>        const updatedBadge = { ...editingBadge, ...data };        setBadges(prev => prev.map(badge => badge.id === editingBadge.id ? updatedBadge : badge));
+
+                  ))}
+
+                </TableBody>        setBadges(prev => prev.map(badge => badge.id === editingBadge.id ? updatedBadge : badge));      } else {
+
+              </Table>
+
+            </CardContent>      } else {        // Add new badge
+
+          </Card>
+
+        </TabsContent>        // Add new badge        const newBadge: BadgeData = {
+
+
+
+        {/* Attributes Tab */}        const newBadge: BadgeData = {          id: `${data.attribute.toLowerCase().replace(/\s+/g, '-')}-${data.tier.toLowerCase()}`,
+
+        <TabsContent value="attributes" className="space-y-4">
+
+          {(Object.keys(attributes) as Array<keyof typeof attributes>).map((type) => (          id: `${data.attribute.toLowerCase().replace(/\s+/g, '-')}-${data.tier.toLowerCase()}`,          ...data,
+
+            <Card key={type} className="">
+
+              <CardHeader>          ...data,        };
+
+                <div className="flex items-center justify-between">
+
+                  <div>        };        setBadges(prev => [...prev, newBadge]);
+
+                    <CardTitle>{type}</CardTitle>
+
+                    <CardDescription>        setBadges(prev => [...prev, newBadge]);      }
+
+                      Manage {type.toLowerCase()} available to readers
+
+                    </CardDescription>      }      setEditingBadge(null);
+
+                  </div>
+
+                  <AttributeDialog      setEditingBadge(null);    } catch (error) {
+
+                    type={type}
+
+                    attribute={null}    } catch (error) {      console.error("Error saving badge:", error);
+
+                    onSubmit={handleAttributeSubmit}
+
+                    isLoading={isLoading}      console.error("Error saving badge:", error);    } finally {
+
+                    trigger={
+
+                      <Button onClick={() => setEditingAttribute({ type, attribute: null })}>    } finally {      setIsLoading(false);
+
+                        <Plus className="h-4 w-4 mr-2" />
+
+                        Add {type.slice(0, -1)}      setIsLoading(false);    }
+
+                      </Button>
+
+                    }    }  };
+
+                  />
+
+                </div>  };
+
+              </CardHeader>
+
+              <CardContent>  const handleCategorySubmit = async (data: Omit<Category, 'id'>) => {
+
+                <Table>
+
+                  <TableHeader>  const handleCategorySubmit = async (data: Omit<Category, 'id'>) => {    setIsLoading(true);
+
+                    <TableRow>
+
+                      <TableHead>Name</TableHead>    setIsLoading(true);    try {
+
+                      <TableHead>Description</TableHead>
+
+                      <TableHead className="text-right">Actions</TableHead>    try {      if (editingCategory) {
+
+                    </TableRow>
+
+                  </TableHeader>      if (editingCategory) {        // Update existing category
+
+                  <TableBody>
+
+                    {attributes[type].map((attribute) => (        // Update existing category        const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+
+                      <TableRow key={attribute.id}>
+
+                        <TableCell className="font-medium">{attribute.name}</TableCell>        const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {          method: 'PUT',
+
+                        <TableCell>{attribute.description}</TableCell>
+
+                        <TableCell className="text-right">          method: 'PUT',          headers: { 'Content-Type': 'application/json' },
+
+                          <div className="flex items-center justify-end gap-2">
+
+                            <AttributeDialog          headers: { 'Content-Type': 'application/json' },          body: JSON.stringify(data),
+
+                              type={type}
+
+                              attribute={attribute}          body: JSON.stringify(data),        });
+
+                              onSubmit={handleAttributeSubmit}
+
+                              isLoading={isLoading}        });        
+
+                              trigger={
+
+                                <Button                if (response.ok) {
+
+                                  variant="outline"
+
+                                  size="sm"        if (response.ok) {          const { category } = await response.json();
+
+                                  onClick={() => setEditingAttribute({ type, attribute })}
+
+                                >          const { category } = await response.json();          setCategories(prev => prev.map(cat => cat.id === editingCategory.id ? category : cat));
+
+                                  <Edit className="h-4 w-4" />
+
+                                </Button>          setCategories(prev => prev.map(cat => cat.id === editingCategory.id ? category : cat));        } else {
+
+                              }
+
+                            />        } else {          throw new Error('Failed to update category');
+
+                            <Button
+
+                              variant="outline"          throw new Error('Failed to update category');        }
+
+                              size="sm"
+
+                              onClick={() => deleteAttribute(type, attribute.id)}        }      } else {
+
+                            >
+
+                              <Trash2 className="h-4 w-4" />      } else {        // Add new category
+
+                            </Button>
+
+                          </div>        // Add new category        const response = await fetch('/api/admin/categories', {
+
+                        </TableCell>
+
+                      </TableRow>        const response = await fetch('/api/admin/categories', {          method: 'POST',
+
+                    ))}
+
+                  </TableBody>          method: 'POST',          headers: { 'Content-Type': 'application/json' },
+
+                </Table>
+
+              </CardContent>          headers: { 'Content-Type': 'application/json' },          body: JSON.stringify(data),
+
+            </Card>
+
+          ))}          body: JSON.stringify(data),        });
+
+        </TabsContent>
+
+        });        
+
+        {/* Badges Tab */}
+
+        <TabsContent value="badges" className="space-y-4">                if (response.ok) {
+
+          <Card className="">
+
+            <CardHeader>        if (response.ok) {          const { category } = await response.json();
+
+              <div className="flex items-center justify-between">
+
+                <div>          const { category } = await response.json();          setCategories(prev => [...prev, category]);
+
+                  <CardTitle>Achievement Badges</CardTitle>
+
+                  <CardDescription>          setCategories(prev => [...prev, category]);        } else {
+
+                    Manage badges that readers can earn based on performance
+
+                  </CardDescription>        } else {          throw new Error('Failed to create category');
+
+                </div>
+
+                <BadgeDialog          throw new Error('Failed to create category');        }
+
+                  badge={null}
+
+                  attributes={attributes}        }      }
+
+                  onSubmit={handleBadgeSubmit}
+
+                  isLoading={isLoading}      }      setEditingCategory(null);
+
+                  trigger={
+
+                    <Button className="min-w-[8rem]">      setEditingCategory(null);    } catch (error) {
+
+                      <Plus className="h-4 w-4 mr-2" />
+
+                      Add Badge    } catch (error) {      console.error("Error saving category:", error);
+
+                    </Button>
+
+                  }      console.error("Error saving category:", error);    } finally {
+
+                />
+
+              </div>    } finally {      setIsLoading(false);
+
+            </CardHeader>
+
+            <CardContent>      setIsLoading(false);    }
+
+              <Table>
+
+                <TableHeader>    }  };
+
+                  <TableRow>
+
+                    <TableHead>Name</TableHead>  };
+
+                    <TableHead>Attribute</TableHead>
+
+                    <TableHead>Tier</TableHead>  const deleteAttribute = (type: "Abilities" | "Tools" | "Styles", id: string) => {
+
+                    <TableHead>Requirements</TableHead>
+
+                    <TableHead className="text-right">Actions</TableHead>  const deleteAttribute = (type: "Abilities" | "Tools" | "Styles", id: string) => {    setAttributes(prev => ({
+
+                  </TableRow>
+
+                </TableHeader>    setAttributes(prev => ({      ...prev,
+
+                <TableBody>
+
+                  {badges.map((badge) => (      ...prev,      [type]: prev[type].filter(attr => attr.id !== id)
+
+                    <TableRow key={badge.id}>
+
+                      <TableCell className="font-medium">{badge.name}</TableCell>      [type]: prev[type].filter(attr => attr.id !== id)    }));
+
+                      <TableCell>{badge.attribute}</TableCell>
+
+                      <TableCell>    }));  };
+
+                        <Badge
+
+                          variant={  };
+
+                            badge.tier === "Gold"
+
+                              ? "default"  const deleteBadge = (id: string) => {
+
+                              : badge.tier === "Silver"
+
+                              ? "secondary"  const deleteBadge = (id: string) => {    setBadges(prev => prev.filter(badge => badge.id !== id));
+
+                              : "outline"
+
+                          }    setBadges(prev => prev.filter(badge => badge.id !== id));  };
+
+                        >
+
+                          {badge.tier}  };
+
+                        </Badge>
+
+                      </TableCell>  const deleteCategory = async (id: string) => {
+
+                      <TableCell>
+
+                        <div className="text-sm">  const deleteCategory = async (id: string) => {    try {
+
+                          {badge.requirements.readingsCompleted} readings
+
+                          {badge.requirements.averageRating && (    try {      const response = await fetch(`/api/admin/categories/${id}`, {
+
+                            <>, {badge.requirements.averageRating}★ avg</>
+
+                          )}      const response = await fetch(`/api/admin/categories/${id}`, {        method: 'DELETE',
+
+                        </div>
+
+                      </TableCell>        method: 'DELETE',      });
+
+                      <TableCell className="text-right">
+
+                        <div className="flex items-center justify-end gap-2">      });      
+
+                          <BadgeDialog
+
+                            badge={badge}            if (response.ok) {
+
+                            attributes={attributes}
+
+                            onSubmit={handleBadgeSubmit}      if (response.ok) {        setCategories(prev => prev.filter(cat => cat.id !== id));
+
+                            isLoading={isLoading}
+
+                            trigger={        setCategories(prev => prev.filter(cat => cat.id !== id));      } else {
+
+                              <Button variant="outline" size="sm">
+
+                                <Edit className="h-4 w-4" />      } else {        throw new Error('Failed to delete category');
+
+                              </Button>
+
+                            }        throw new Error('Failed to delete category');      }
+
+                          />
+
+                          <Button      }    } catch (error) {
+
+                            variant="outline"
+
+                            size="sm"    } catch (error) {      console.error('Error deleting category:', error);
+
+                            onClick={() => deleteBadge(badge.id)}
+
+                          >      console.error('Error deleting category:', error);    }
+
+                            <Trash2 className="h-4 w-4" />
+
+                          </Button>    }  };
+
+                        </div>
+
+                      </TableCell>  };
+
+                    </TableRow>
+
+                  ))}  return (
+
+                </TableBody>
+
+              </Table>  return (    <div className="space-y-6">
+
+            </CardContent>
+
+          </Card>    <div className="space-y-6">      <Tabs defaultValue="categories" className="space-y-6">
+
+        </TabsContent>
+
+      </Tabs>      <Tabs defaultValue="categories" className="space-y-6">        <TabsList className="grid w-full grid-cols-3">
+
+    </div>
+
+  );        <TabsList className="grid w-full grid-cols-3">          <TabsTrigger value="categories" className="flex items-center gap-2">
+
+}
+
+          <TabsTrigger value="categories" className="flex items-center gap-2">            <Settings className="h-4 w-4" />
+
+// Dialog Components
+
+function CategoryDialog({            <Settings className="h-4 w-4" />            Categories
+
+  category,
+
+  onSubmit,            Categories          </TabsTrigger>
+
+  isLoading,
+
+  trigger,          </TabsTrigger>          <TabsTrigger value="attributes" className="flex items-center gap-2">
+
+}: {
+
+  category: Category | null;          <TabsTrigger value="attributes" className="flex items-center gap-2">            <Users className="h-4 w-4" />
+
+  onSubmit: (data: Omit<Category, 'id'>) => void;
+
+  isLoading: boolean;            <Users className="h-4 w-4" />            Attributes
+
+  trigger: React.ReactNode;
+
+}) {            Attributes          </TabsTrigger>
+
+  const [open, setOpen] = useState(false);
+
+  const [formData, setFormData] = useState({          </TabsTrigger>          <TabsTrigger value="badges" className="flex items-center gap-2">
+
+    name: category?.name || "",
+
+    description: category?.description || "",          <TabsTrigger value="badges" className="flex items-center gap-2">            <Award className="h-4 w-4" />
+
+    icon: category?.icon || "default",
+
+  });            <Award className="h-4 w-4" />            Badges
+
+
+
+  const handleSubmit = (e: React.FormEvent) => {            Badges          </TabsTrigger>
+
+    e.preventDefault();
+
+    onSubmit(formData);          </TabsTrigger>        </TabsList>
+
+    setOpen(false);
+
+    if (!category) {        </TabsList>
+
+      setFormData({ name: "", description: "", icon: "default" });
+
+    }        {/* Categories Tab */}
+
+  };
+
+        {/* Categories Tab */}        <TabsContent value="categories" className="space-y-4">
+
+  return (
+
+    <Dialog open={open} onOpenChange={setOpen}>        <TabsContent value="categories" className="space-y-4">          <Card className="">
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogContent>          <Card className="">            <CardHeader className="">
+
+        <DialogHeader>
+
+          <DialogTitle>{category ? "Edit Category" : "Add Category"}</DialogTitle>            <CardHeader className="">              <div className="flex items-center justify-between">
+
+          <DialogDescription>
+
+            {category ? "Update the category details" : "Create a new reading category"}              <div className="flex items-center justify-between">                <div>
+
+          </DialogDescription>
+
+        </DialogHeader>                <div>                  <CardTitle>Reading Categories</CardTitle>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          <div>                  <CardTitle>Reading Categories</CardTitle>                  <CardDescription>
+
+            <Label htmlFor="name">Name</Label>
+
+            <Input                  <CardDescription>                    Manage categories for public readings and posts
+
+              id="name"
+
+              value={formData.name}                    Manage categories for public readings and posts                  </CardDescription>
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              required                  </CardDescription>                </div>
+
+            />
+
+          </div>                </div>                <CategoryDialog
+
+          <div>
+
+            <Label htmlFor="description">Description</Label>                <CategoryDialog                  category={null}
+
+            <Textarea
+
+              id="description"                  category={null}                  onSubmit={handleCategorySubmit}
+
+              value={formData.description}
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}                  onSubmit={handleCategorySubmit}                  isLoading={isLoading}
+
+              required
+
+            />                  isLoading={isLoading}                  trigger={
+
+          </div>
+
+          <div>                  trigger={                    <Button>
+
+            <Label htmlFor="icon">Icon</Label>
+
+            <Input                    <Button>                      <Plus className="h-4 w-4 mr-2" />
+
+              id="icon"
+
+              value={formData.icon}                      <Plus className="h-4 w-4 mr-2" />                      Add Category
+
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+
+              placeholder="e.g., calendar, stars, chakra"                      Add Category                    </Button>
+
+              required
+
+            />                    </Button>                  }
+
+          </div>
+
+          <DialogFooter>                  }                />
+
+            <Button type="submit" disabled={isLoading}>
+
+              {category ? "Update" : "Create"}                />              </div>
+
+            </Button>
+
+          </DialogFooter>              </div>            </CardHeader>
+
+        </form>
+
+      </DialogContent>            </CardHeader>            <CardContent>
+
+    </Dialog>
+
+  );            <CardContent>              <Table>
+
+}
+
+              <Table>                <TableHeader>
+
+function AttributeDialog({
+
+  type,                <TableHeader>                  <TableRow>
+
+  attribute,
+
+  onSubmit,                  <TableRow>                    <TableHead>Name</TableHead>
+
+  isLoading,
+
+  trigger,                    <TableHead>Name</TableHead>                    <TableHead>Description</TableHead>
+
+}: {
+
+  type: "Abilities" | "Tools" | "Styles";                    <TableHead>Description</TableHead>                    <TableHead>Status</TableHead>
+
+  attribute: Attribute | null;
+
+  onSubmit: (data: { name: string; description: string }) => void;                    <TableHead>Icon</TableHead>                    <TableHead className="text-right">Actions</TableHead>
+
+  isLoading: boolean;
+
+  trigger: React.ReactNode;                    <TableHead className="text-right">Actions</TableHead>                  </TableRow>
+
+}) {
+
+  const [open, setOpen] = useState(false);                  </TableRow>                </TableHeader>
+
+  const [formData, setFormData] = useState({
+
+    name: attribute?.name || "",                </TableHeader>                <TableBody>
+
+    description: attribute?.description || "",
+
+  });                <TableBody>                  {categories.map((category) => (
+
+
+
+  const handleSubmit = (e: React.FormEvent) => {                  {categories.map((category) => (                    <TableRow key={category.id}>
+
+    e.preventDefault();
+
+    onSubmit(formData);                    <TableRow key={category.id}>                      <TableCell className="font-medium">{category.name}</TableCell>
+
+    setOpen(false);
+
+    if (!attribute) {                      <TableCell className="font-medium">{category.name}</TableCell>                      <TableCell>{category.description}</TableCell>
+
+      setFormData({ name: "", description: "" });
+
+    }                      <TableCell>{category.description}</TableCell>                      <TableCell>
+
+  };
+
+                      <TableCell>                        <Badge variant={category.isActive ? "default" : "secondary"}>
+
+  return (
+
+    <Dialog open={open} onOpenChange={setOpen}>                        <Badge variant="outline">                          {category.isActive ? "Active" : "Inactive"}
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogContent>                          {category.icon}                        </Badge>
+
+        <DialogHeader>
+
+          <DialogTitle>{attribute ? "Edit" : "Add"} {type.slice(0, -1)}</DialogTitle>                        </Badge>                      </TableCell>
+
+          <DialogDescription>
+
+            {attribute ? "Update the attribute details" : `Create a new ${type.toLowerCase().slice(0, -1)}`}                      </TableCell>                      <TableCell className="text-right">
+
+          </DialogDescription>
+
+        </DialogHeader>                      <TableCell className="text-right">                        <div className="flex items-center justify-end gap-2">
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          <div>                        <div className="flex items-center justify-end gap-2">                          <CategoryDialog
+
+            <Label htmlFor="name">Name</Label>
+
+            <Input                          <CategoryDialog                            category={category}
+
+              id="name"
+
+              value={formData.name}                            category={category}                            onSubmit={handleCategorySubmit}
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              required                            onSubmit={handleCategorySubmit}                            isLoading={isLoading}
+
+            />
+
+          </div>                            isLoading={isLoading}                            trigger={
+
+          <div>
+
+            <Label htmlFor="description">Description</Label>                            trigger={                              <Button variant="outline" size="sm">
+
+            <Textarea
+
+              id="description"                              <Button variant="outline" size="sm">                                <Edit className="h-4 w-4" />
+
+              value={formData.description}
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}                                <Edit className="h-4 w-4" />                              </Button>
+
+              required
+
+            />                              </Button>                            }
+
+          </div>
+
+          <DialogFooter>                            }                          />
+
+            <Button type="submit" disabled={isLoading}>
+
+              {attribute ? "Update" : "Create"}                          />                          <Button
+
+            </Button>
+
+          </DialogFooter>                          <Button                            variant="outline"
+
+        </form>
+
+      </DialogContent>                            variant="outline"                            size="sm"
+
+    </Dialog>
+
+  );                            size="sm"                            onClick={() => deleteCategory(category.id)}
+
+}
+
+                            onClick={() => deleteCategory(category.id)}                          >
+
+function BadgeDialog({
+
+  badge,                          >                            <Trash2 className="h-4 w-4" />
+
+  attributes,
+
+  onSubmit,                            <Trash2 className="h-4 w-4" />                          </Button>
+
+  isLoading,
+
+  trigger,                          </Button>                        </div>
+
+}: {
+
+  badge: BadgeData | null;                        </div>                      </TableCell>
+
+  attributes: { Abilities: Attribute[]; Tools: Attribute[]; Styles: Attribute[] };
+
+  onSubmit: (data: Omit<BadgeData, 'id'>) => void;                      </TableCell>                    </TableRow>
+
+  isLoading: boolean;
+
+  trigger: React.ReactNode;                    </TableRow>                  ))}
+
+}) {
+
+  const [open, setOpen] = useState(false);                  ))}                </TableBody>
+
+  const [formData, setFormData] = useState({
+
+    name: badge?.name || "",                </TableBody>              </Table>
+
+    attribute: badge?.attribute || "",
+
+    tier: badge?.tier || "Bronze" as "Bronze" | "Silver" | "Gold",              </Table>            </CardContent>
+
+    description: badge?.description || "",
+
+    readingsCompleted: badge?.requirements.readingsCompleted || 25,            </CardContent>          </Card>
+
+    averageRating: badge?.requirements.averageRating || 4.0,
+
+    timeframe: badge?.requirements.timeframe || "30 days",          </Card>        </TabsContent>
+
+    icon: badge?.icon || "",
+
+  });        </TabsContent>
+
+
+
+  const allAttributes = [        {/* Attributes Tab */}
+
+    ...attributes.Abilities,
+
+    ...attributes.Tools,        {/* Attributes Tab */}        <TabsContent value="attributes" className="space-y-4">
+
+    ...attributes.Styles
+
+  ];        <TabsContent value="attributes" className="space-y-4">          {(Object.keys(attributes) as Array<keyof typeof attributes>).map((type) => (
+
+
+
+  const handleSubmit = (e: React.FormEvent) => {          {(Object.keys(attributes) as Array<keyof typeof attributes>).map((type) => (            <Card key={type} className="">
+
+    e.preventDefault();
+
+    onSubmit({            <Card key={type} className="">              <CardHeader>
+
+      name: formData.name,
+
+      attribute: formData.attribute,              <CardHeader>                <div className="flex items-center justify-between">
+
+      tier: formData.tier,
+
+      description: formData.description,                <div className="flex items-center justify-between">                  <div>
+
+      requirements: {
+
+        readingsCompleted: formData.readingsCompleted,                  <div>                    <CardTitle>{type}</CardTitle>
+
+        averageRating: formData.averageRating,
+
+        timeframe: formData.timeframe,                    <CardTitle>{type}</CardTitle>                    <CardDescription>
+
+      },
+
+      icon: formData.icon,                    <CardDescription>                      Manage {type.toLowerCase()} available to readers
+
+    });
+
+    setOpen(false);                      Manage {type.toLowerCase()} available to readers                    </CardDescription>
+
+    if (!badge) {
+
+      setFormData({                    </CardDescription>                  </div>
+
+        name: "",
+
+        attribute: "",                  </div>                  <AttributeDialog
+
+        tier: "Bronze",
+
+        description: "",                  <AttributeDialog                    type={type}
+
+        readingsCompleted: 25,
+
+        averageRating: 4.0,                    type={type}                    attribute={null}
+
+        timeframe: "30 days",
+
+        icon: "",                    attribute={null}                    onSubmit={handleAttributeSubmit}
+
+      });
+
+    }                    onSubmit={handleAttributeSubmit}                    isLoading={isLoading}
+
+  };
+
+                    isLoading={isLoading}                    trigger={
+
+  return (
+
+    <Dialog open={open} onOpenChange={setOpen}>                    trigger={                      <Button onClick={() => setEditingAttribute({ type, attribute: null })}>
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogContent className="max-w-md">                      <Button onClick={() => setEditingAttribute({ type, attribute: null })}>                        <Plus className="h-4 w-4 mr-2" />
+
+        <DialogHeader>
+
+          <DialogTitle>{badge ? "Edit Badge" : "Add Badge"}</DialogTitle>                        <Plus className="h-4 w-4 mr-2" />                        Add {type.slice(0, -1)}
+
+          <DialogDescription>
+
+            {badge ? "Update the badge details" : "Create a new achievement badge"}                        Add {type.slice(0, -1)}                      </Button>
+
+          </DialogDescription>
+
+        </DialogHeader>                      </Button>                    }
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          <div>                    }                  />
+
+            <Label htmlFor="name">Name</Label>
+
+            <Input                  />                </div>
+
+              id="name"
+
+              value={formData.name}                </div>              </CardHeader>
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              required              </CardHeader>              <CardContent>
+
+            />
+
+          </div>              <CardContent>                <Table>
+
+          <div>
+
+            <Label htmlFor="attribute">Attribute</Label>                <Table>                  <TableHeader>
+
+            <Select
+
+              value={formData.attribute}                  <TableHeader>                    <TableRow>
+
+              onValueChange={(value) => setFormData({ ...formData, attribute: value })}
+
+            >                    <TableRow>                      <TableHead>Name</TableHead>
+
+              <SelectTrigger>
+
+                <SelectValue placeholder="Select an attribute" />                      <TableHead>Name</TableHead>                      <TableHead>Description</TableHead>
+
+              </SelectTrigger>
+
+              <SelectContent>                      <TableHead>Description</TableHead>                      <TableHead className="text-right">Actions</TableHead>
+
+                {allAttributes.map((attr) => (
+
+                  <SelectItem key={attr.id} value={attr.name}>                      <TableHead className="text-right">Actions</TableHead>                    </TableRow>
+
+                    {attr.name}
+
+                  </SelectItem>                    </TableRow>                  </TableHeader>
+
+                ))}
+
+              </SelectContent>                  </TableHeader>                  <TableBody>
+
+            </Select>
+
+          </div>                  <TableBody>                    {attributes[type].map((attribute) => (
+
+          <div>
+
+            <Label htmlFor="tier">Tier</Label>                    {attributes[type].map((attribute) => (                      <TableRow key={attribute.id}>
+
+            <Select
+
+              value={formData.tier}                      <TableRow key={attribute.id}>                        <TableCell className="font-medium">{attribute.name}</TableCell>
+
+              onValueChange={(value) => setFormData({ ...formData, tier: value as "Bronze" | "Silver" | "Gold" })}
+
+            >                        <TableCell className="font-medium">{attribute.name}</TableCell>                        <TableCell>{attribute.description}</TableCell>
+
+              <SelectTrigger>
+
+                <SelectValue />                        <TableCell>{attribute.description}</TableCell>                        <TableCell className="text-right">
+
+              </SelectTrigger>
+
+              <SelectContent>                        <TableCell className="text-right">                          <div className="flex items-center justify-end gap-2">
+
+                <SelectItem value="Bronze">Bronze</SelectItem>
+
+                <SelectItem value="Silver">Silver</SelectItem>                          <div className="flex items-center justify-end gap-2">                            <AttributeDialog
+
+                <SelectItem value="Gold">Gold</SelectItem>
+
+              </SelectContent>                            <AttributeDialog                              type={type}
+
+            </Select>
+
+          </div>                              type={type}                              attribute={attribute}
+
+          <div>
+
+            <Label htmlFor="readingsCompleted">Readings Required</Label>                              attribute={attribute}                              onSubmit={handleAttributeSubmit}
+
+            <Input
+
+              id="readingsCompleted"                              onSubmit={handleAttributeSubmit}                              isLoading={isLoading}
+
+              type="number"
+
+              value={formData.readingsCompleted}                              isLoading={isLoading}                              trigger={
+
+              onChange={(e) => setFormData({ ...formData, readingsCompleted: parseInt(e.target.value) })}
+
+              required                              trigger={                                <Button
+
+            />
+
+          </div>                                <Button                                  variant="outline"
+
+          <div>
+
+            <Label htmlFor="averageRating">Minimum Average Rating</Label>                                  variant="outline"                                  size="sm"
+
+            <Input
+
+              id="averageRating"                                  size="sm"                                  onClick={() => setEditingAttribute({ type, attribute })}
+
+              type="number"
+
+              step="0.1"                                  onClick={() => setEditingAttribute({ type, attribute })}                                >
+
+              min="1"
+
+              max="5"                                >                                  <Edit className="h-4 w-4" />
+
+              value={formData.averageRating}
+
+              onChange={(e) => setFormData({ ...formData, averageRating: parseFloat(e.target.value) })}                                  <Edit className="h-4 w-4" />                                </Button>
+
+              required
+
+            />                                </Button>                              }
+
+          </div>
+
+          <div>                              }                            />
+
+            <Label htmlFor="description">Description</Label>
+
+            <Textarea                            />                            <Button
+
+              id="description"
+
+              value={formData.description}                            <Button                              variant="outline"
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+
+              required                              variant="outline"                              size="sm"
+
+            />
+
+          </div>                              size="sm"                              onClick={() => deleteAttribute(type, attribute.id)}
+
+          <DialogFooter>
+
+            <Button type="submit" disabled={isLoading}>                              onClick={() => deleteAttribute(type, attribute.id)}                            >
+
+              {badge ? "Update" : "Create"}
+
+            </Button>                            >                              <Trash2 className="h-4 w-4" />
+
+          </DialogFooter>
+
+        </form>                              <Trash2 className="h-4 w-4" />                            </Button>
+
+      </DialogContent>
+
+    </Dialog>                            </Button>                          </div>
+
+  );
+
+}                          </div>                        </TableCell>
+
+                        </TableCell>                      </TableRow>
+
+                      </TableRow>                    ))}
+
+                    ))}                  </TableBody>
+
+                  </TableBody>                </Table>
+
+                </Table>              </CardContent>
+
+              </CardContent>            </Card>
+
+            </Card>          ))}
+
+          ))}        </TabsContent>
+
+        </TabsContent>
+
+        {/* Badges Tab */}
+
+        {/* Badges Tab */}        <TabsContent value="badges" className="space-y-4">
+
+        <TabsContent value="badges" className="space-y-4">          <Card className="">
+
+          <Card className="">            <CardHeader>
+
+            <CardHeader>              <div className="flex items-center justify-between">
+
+              <div className="flex items-center justify-between">                <div>
+
+                <div>                  <CardTitle>Achievement Badges</CardTitle>
+
+                  <CardTitle>Achievement Badges</CardTitle>                  <CardDescription>
+
+                  <CardDescription>                    Manage badges that readers can earn based on performance
+
+                    Manage badges that readers can earn based on performance                  </CardDescription>
+
+                  </CardDescription>                </div>
+
+                </div>                <BadgeDialog
+
+                <BadgeDialog                  badge={null}
+
+                  badge={null}                  attributes={attributes}
+
+                  attributes={attributes}                  onSubmit={handleBadgeSubmit}
+
+                  onSubmit={handleBadgeSubmit}                  isLoading={isLoading}
+
+                  isLoading={isLoading}                  trigger={
+
+                  trigger={                    <Button className="min-w-[8rem]">
+
+                    <Button className="min-w-[8rem]">                      <Plus className="h-4 w-4 mr-2" />
+
+                      <Plus className="h-4 w-4 mr-2" />                      Add Badge
+
+                      Add Badge                    </Button>
+
+                    </Button>                  }
+
+                  }                />
+
+                />              </div>
+
+              </div>            </CardHeader>
+
+            </CardHeader>            <CardContent>
+
+            <CardContent>              <Table>
+
+              <Table>                <TableHeader>
+
+                <TableHeader>                  <TableRow>
+
+                  <TableRow>                    <TableHead>Name</TableHead>
+
+                    <TableHead>Name</TableHead>                    <TableHead>Attribute</TableHead>
+
+                    <TableHead>Attribute</TableHead>                    <TableHead>Tier</TableHead>
+
+                    <TableHead>Tier</TableHead>                    <TableHead>Requirements</TableHead>
+
+                    <TableHead>Requirements</TableHead>                    <TableHead className="text-right">Actions</TableHead>
+
+                    <TableHead className="text-right">Actions</TableHead>                  </TableRow>
+
+                  </TableRow>                </TableHeader>
+
+                </TableHeader>                <TableBody>
+
+                <TableBody>                  {badges.map((badge) => (
+
+                  {badges.map((badge) => (                    <TableRow key={badge.id}>
+
+                    <TableRow key={badge.id}>                      <TableCell className="font-medium">{badge.name}</TableCell>
+
+                      <TableCell className="font-medium">{badge.name}</TableCell>                      <TableCell>{badge.attribute}</TableCell>
+
+                      <TableCell>{badge.attribute}</TableCell>                      <TableCell>
+
+                      <TableCell>                        <Badge
+
+                        <Badge                          variant={
+
+                          variant={                            badge.tier === "Gold"
+
+                            badge.tier === "Gold"                              ? "default"
+
+                              ? "default"                              : badge.tier === "Silver"
+
+                              : badge.tier === "Silver"                              ? "secondary"
+
+                              ? "secondary"                              : "outline"
+
+                              : "outline"                          }
+
+                          }                        >
+
+                        >                          {badge.tier}
+
+                          {badge.tier}                        </Badge>
+
+                        </Badge>                      </TableCell>
+
+                      </TableCell>                      <TableCell>
+
+                      <TableCell>                        <div className="text-sm">
+
+                        <div className="text-sm">                          {badge.requirements.readingsCompleted} readings
+
+                          {badge.requirements.readingsCompleted} readings                          {badge.requirements.averageRating && (
+
+                          {badge.requirements.averageRating && (                            <>, {badge.requirements.averageRating}★ avg</>
+
+                            <>, {badge.requirements.averageRating}★ avg</>                          )}
+
+                          )}                        </div>
+
+                        </div>                      </TableCell>
+
+                      </TableCell>                      <TableCell className="text-right">
+
+                      <TableCell className="text-right">                        <div className="flex items-center justify-end gap-2">
+
+                        <div className="flex items-center justify-end gap-2">                          <BadgeDialog
+
+                          <BadgeDialog                            badge={badge}
+
+                            badge={badge}                            attributes={attributes}
+
+                            attributes={attributes}                            onSubmit={handleBadgeSubmit}
+
+                            onSubmit={handleBadgeSubmit}                            isLoading={isLoading}
+
+                            isLoading={isLoading}                            trigger={
+
+                            trigger={                              <Button variant="outline" size="sm">
+
+                              <Button variant="outline" size="sm">                                <Edit className="h-4 w-4" />
+
+                                <Edit className="h-4 w-4" />                              </Button>
+
+                              </Button>                            }
+
+                            }                          />
+
+                          />                          <Button
+
+                          <Button                            variant="outline"
+
+                            variant="outline"                            size="sm"
+
+                            size="sm"                            onClick={() => deleteBadge(badge.id)}
+
+                            onClick={() => deleteBadge(badge.id)}                          >
+
+                          >                            <Trash2 className="h-4 w-4" />
+
+                            <Trash2 className="h-4 w-4" />                          </Button>
+
+                          </Button>                        </div>
+
+                        </div>                      </TableCell>
+
+                      </TableCell>                    </TableRow>
+
+                    </TableRow>                  ))}
+
+                  ))}                </TableBody>
+
+                </TableBody>              </Table>
+
+              </Table>            </CardContent>
+
+            </CardContent>          </Card>
+
+          </Card>        </TabsContent>
+
+        </TabsContent>      </Tabs>
+
+      </Tabs>    </div>
+
+    </div>  );
+
+  );}
+
+}
+
+// Dialog Components
+
+// Dialog Componentsfunction CategoryDialog({
+
+function CategoryDialog({  category,
+
+  category,  onSubmit,
+
+  onSubmit,  isLoading,
+
+  isLoading,  trigger,
+
+  trigger,}: {
+
+}: {  category: Category | null;
+
+  category: Category | null;  onSubmit: (data: Omit<Category, 'id'>) => void;
+
+  onSubmit: (data: Omit<Category, 'id'>) => void;  isLoading: boolean;
+
+  isLoading: boolean;  trigger: React.ReactNode;
+
+  trigger: React.ReactNode;}) {
+
+}) {  const [open, setOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState({    name: category?.name || "",
+
+    name: category?.name || "",    description: category?.description || "",
+
+    description: category?.description || "",    icon: category?.icon || "default",
+
+    icon: category?.icon || "default",  });
+
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent) => {    e.preventDefault();
+
+    e.preventDefault();    onSubmit(formData);
+
+    onSubmit(formData);    setOpen(false);
+
+    setOpen(false);    if (!category) {
+
+    if (!category) {      setFormData({ name: "", description: "", icon: "default" });
+
+      setFormData({ name: "", description: "", icon: "default" });    }
+
+    }  };
+
+  };
+
+  return (
+
+  return (    <Dialog open={open} onOpenChange={setOpen}>
+
+    <Dialog open={open} onOpenChange={setOpen}>      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>      <DialogContent>
+
+      <DialogContent>        <DialogHeader>
+
+        <DialogHeader>          <DialogTitle>{category ? "Edit Category" : "Add Category"}</DialogTitle>
+
+          <DialogTitle>{category ? "Edit Category" : "Add Category"}</DialogTitle>          <DialogDescription>
+
+          <DialogDescription>            {category ? "Update the category details" : "Create a new reading category"}
+
+            {category ? "Update the category details" : "Create a new reading category"}          </DialogDescription>
+
+          </DialogDescription>        </DialogHeader>
+
+        </DialogHeader>        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-4">          <div>
+
+          <div>            <Label htmlFor="name">Name</Label>
+
+            <Label htmlFor="name">Name</Label>            <Input
+
+            <Input              id="name"
+
+              id="name"              value={formData.name}
+
+              value={formData.name}              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="description">Description</Label>
+
+            <Label htmlFor="description">Description</Label>            <Textarea
+
+            <Textarea              id="description"
+
+              id="description"              value={formData.description}
+
+              value={formData.description}              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="icon">Icon</Label>
+
+            <Label htmlFor="icon">Icon</Label>            <Input
+
+            <Input              id="icon"
+
+              id="icon"              value={formData.icon}
+
+              value={formData.icon}              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}              placeholder="e.g., calendar, stars, chakra"
+
+              placeholder="e.g., calendar, stars, chakra"              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <DialogFooter>
+
+          <DialogFooter>            <Button type="submit" disabled={isLoading}>
+
+            <Button type="submit" disabled={isLoading}>              {category ? "Update" : "Create"}
+
+              {category ? "Update" : "Create"}            </Button>
+
+            </Button>          </DialogFooter>
+
+          </DialogFooter>        </form>
+
+        </form>      </DialogContent>
+
+      </DialogContent>    </Dialog>
+
+    </Dialog>  );
+
+  );}
+
+}
+
+function AttributeDialog({
+
+function AttributeDialog({  type,
+
+  type,  attribute,
+
+  attribute,  onSubmit,
+
+  onSubmit,  isLoading,
+
+  isLoading,  trigger,
+
+  trigger,}: {
+
+}: {  type: "Abilities" | "Tools" | "Styles";
+
+  type: "Abilities" | "Tools" | "Styles";  attribute: Attribute | null;
+
+  attribute: Attribute | null;  onSubmit: (data: { name: string; description: string }) => void;
+
+  onSubmit: (data: { name: string; description: string }) => void;  isLoading: boolean;
+
+  isLoading: boolean;  trigger: React.ReactNode;
+
+  trigger: React.ReactNode;}) {
+
+}) {  const [open, setOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState({    name: attribute?.name || "",
+
+    name: attribute?.name || "",    description: attribute?.description || "",
+
+    description: attribute?.description || "",  });
+
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent) => {    e.preventDefault();
+
+    e.preventDefault();    onSubmit(formData);
+
+    onSubmit(formData);    setOpen(false);
+
+    setOpen(false);    if (!attribute) {
+
+    if (!attribute) {      setFormData({ name: "", description: "" });
+
+      setFormData({ name: "", description: "" });    }
+
+    }  };
+
+  };
+
+  return (
+
+  return (    <Dialog open={open} onOpenChange={setOpen}>
+
+    <Dialog open={open} onOpenChange={setOpen}>      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>      <DialogContent>
+
+      <DialogContent>        <DialogHeader>
+
+        <DialogHeader>          <DialogTitle>{attribute ? "Edit" : "Add"} {type.slice(0, -1)}</DialogTitle>
+
+          <DialogTitle>{attribute ? "Edit" : "Add"} {type.slice(0, -1)}</DialogTitle>          <DialogDescription>
+
+          <DialogDescription>            {attribute ? "Update the attribute details" : `Create a new ${type.toLowerCase().slice(0, -1)}`}
+
+            {attribute ? "Update the attribute details" : `Create a new ${type.toLowerCase().slice(0, -1)}`}          </DialogDescription>
+
+          </DialogDescription>        </DialogHeader>
+
+        </DialogHeader>        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-4">          <div>
+
+          <div>            <Label htmlFor="name">Name</Label>
+
+            <Label htmlFor="name">Name</Label>            <Input
+
+            <Input              id="name"
+
+              id="name"              value={formData.name}
+
+              value={formData.name}              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="description">Description</Label>
+
+            <Label htmlFor="description">Description</Label>            <Textarea
+
+            <Textarea              id="description"
+
+              id="description"              value={formData.description}
+
+              value={formData.description}              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <DialogFooter>
+
+          <DialogFooter>            <Button type="submit" disabled={isLoading}>
+
+            <Button type="submit" disabled={isLoading}>              {attribute ? "Update" : "Create"}
+
+              {attribute ? "Update" : "Create"}            </Button>
+
+            </Button>          </DialogFooter>
+
+          </DialogFooter>        </form>
+
+        </form>      </DialogContent>
+
+      </DialogContent>    </Dialog>
+
+    </Dialog>  );
+
+  );}
+
+}
+
+function BadgeDialog({
+
+function BadgeDialog({  badge,
+
+  badge,  attributes,
+
+  attributes,  onSubmit,
+
+  onSubmit,  isLoading,
+
+  isLoading,  trigger,
+
+  trigger,}: {
+
+}: {  badge: BadgeData | null;
+
+  badge: BadgeData | null;  attributes: { Abilities: Attribute[]; Tools: Attribute[]; Styles: Attribute[] };
+
+  attributes: { Abilities: Attribute[]; Tools: Attribute[]; Styles: Attribute[] };  onSubmit: (data: Omit<BadgeData, 'id'>) => void;
+
+  onSubmit: (data: Omit<BadgeData, 'id'>) => void;  isLoading: boolean;
+
+  isLoading: boolean;  trigger: React.ReactNode;
+
+  trigger: React.ReactNode;}) {
+
+}) {  const [open, setOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState({    name: badge?.name || "",
+
+    name: badge?.name || "",    attribute: badge?.attribute || "",
+
+    attribute: badge?.attribute || "",    tier: badge?.tier || "Bronze" as "Bronze" | "Silver" | "Gold",
+
+    tier: badge?.tier || "Bronze" as "Bronze" | "Silver" | "Gold",    description: badge?.description || "",
+
+    description: badge?.description || "",    readingsCompleted: badge?.requirements.readingsCompleted || 25,
+
+    readingsCompleted: badge?.requirements.readingsCompleted || 25,    averageRating: badge?.requirements.averageRating || 4.0,
+
+    averageRating: badge?.requirements.averageRating || 4.0,    timeframe: badge?.requirements.timeframe || "30 days",
+
+    timeframe: badge?.requirements.timeframe || "30 days",    icon: badge?.icon || "",
+
+    icon: badge?.icon || "",  });
+
+  });
+
+  const allAttributes = [
+
+  const allAttributes = [    ...attributes.Abilities,
+
+    ...attributes.Abilities,    ...attributes.Tools,
+
+    ...attributes.Tools,    ...attributes.Styles
+
+    ...attributes.Styles  ];
+
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent) => {    e.preventDefault();
+
+    e.preventDefault();    onSubmit({
+
+    onSubmit({      name: formData.name,
+
+      name: formData.name,      attribute: formData.attribute,
+
+      attribute: formData.attribute,      tier: formData.tier,
+
+      tier: formData.tier,      description: formData.description,
+
+      description: formData.description,      requirements: {
+
+      requirements: {        readingsCompleted: formData.readingsCompleted,
+
+        readingsCompleted: formData.readingsCompleted,        averageRating: formData.averageRating,
+
+        averageRating: formData.averageRating,        timeframe: formData.timeframe,
+
+        timeframe: formData.timeframe,      },
+
+      },      icon: formData.icon,
+
+      icon: formData.icon,    });
+
+    });    setOpen(false);
+
+    setOpen(false);    if (!badge) {
+
+    if (!badge) {      setFormData({
+
+      setFormData({        name: "",
+
+        name: "",        attribute: "",
+
+        attribute: "",        tier: "Bronze",
+
+        tier: "Bronze",        description: "",
+
+        description: "",        readingsCompleted: 25,
+
+        readingsCompleted: 25,        averageRating: 4.0,
+
+        averageRating: 4.0,        timeframe: "30 days",
+
+        timeframe: "30 days",        icon: "",
+
+        icon: "",      });
+
+      });    }
+
+    }  };
+
+  };
+
+  return (
+
+  return (    <Dialog open={open} onOpenChange={setOpen}>
+
+    <Dialog open={open} onOpenChange={setOpen}>      <DialogTrigger asChild>{trigger}</DialogTrigger>
+
+      <DialogTrigger asChild>{trigger}</DialogTrigger>      <DialogContent className="max-w-md">
+
+      <DialogContent className="max-w-md">        <DialogHeader>
+
+        <DialogHeader>          <DialogTitle>{badge ? "Edit Badge" : "Add Badge"}</DialogTitle>
+
+          <DialogTitle>{badge ? "Edit Badge" : "Add Badge"}</DialogTitle>          <DialogDescription>
+
+          <DialogDescription>            {badge ? "Update the badge details" : "Create a new achievement badge"}
+
+            {badge ? "Update the badge details" : "Create a new achievement badge"}          </DialogDescription>
+
+          </DialogDescription>        </DialogHeader>
+
+        </DialogHeader>        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-4">          <div>
+
+          <div>            <Label htmlFor="name">Name</Label>
+
+            <Label htmlFor="name">Name</Label>            <Input
+
+            <Input              id="name"
+
+              id="name"              value={formData.name}
+
+              value={formData.name}              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="attribute">Attribute</Label>
+
+            <Label htmlFor="attribute">Attribute</Label>            <Select
+
+            <Select              value={formData.attribute}
+
+              value={formData.attribute}              onValueChange={(value) => setFormData({ ...formData, attribute: value })}
+
+              onValueChange={(value) => setFormData({ ...formData, attribute: value })}            >
+
+            >              <SelectTrigger>
+
+              <SelectTrigger>                <SelectValue placeholder="Select an attribute" />
+
+                <SelectValue placeholder="Select an attribute" />              </SelectTrigger>
+
+              </SelectTrigger>              <SelectContent>
+
+              <SelectContent>                {allAttributes.map((attr) => (
+
+                {allAttributes.map((attr) => (                  <SelectItem key={attr.id} value={attr.name}>
+
+                  <SelectItem key={attr.id} value={attr.name}>                    {attr.name}
+
+                    {attr.name}                  </SelectItem>
+
+                  </SelectItem>                ))}
+
+                ))}              </SelectContent>
+
+              </SelectContent>            </Select>
+
+            </Select>          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="tier">Tier</Label>
+
+            <Label htmlFor="tier">Tier</Label>            <Select
+
+            <Select              value={formData.tier}
+
+              value={formData.tier}              onValueChange={(value) => setFormData({ ...formData, tier: value as "Bronze" | "Silver" | "Gold" })}
+
+              onValueChange={(value) => setFormData({ ...formData, tier: value as "Bronze" | "Silver" | "Gold" })}            >
+
+            >              <SelectTrigger>
+
+              <SelectTrigger>                <SelectValue />
+
+                <SelectValue />              </SelectTrigger>
+
+              </SelectTrigger>              <SelectContent>
+
+              <SelectContent>                <SelectItem value="Bronze">Bronze</SelectItem>
+
+                <SelectItem value="Bronze">Bronze</SelectItem>                <SelectItem value="Silver">Silver</SelectItem>
+
+                <SelectItem value="Silver">Silver</SelectItem>                <SelectItem value="Gold">Gold</SelectItem>
+
+                <SelectItem value="Gold">Gold</SelectItem>              </SelectContent>
+
+              </SelectContent>            </Select>
+
+            </Select>          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="readingsCompleted">Readings Required</Label>
+
+            <Label htmlFor="readingsCompleted">Readings Required</Label>            <Input
+
+            <Input              id="readingsCompleted"
+
+              id="readingsCompleted"              type="number"
+
+              type="number"              value={formData.readingsCompleted}
+
+              value={formData.readingsCompleted}              onChange={(e) => setFormData({ ...formData, readingsCompleted: parseInt(e.target.value) })}
+
+              onChange={(e) => setFormData({ ...formData, readingsCompleted: parseInt(e.target.value) })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="averageRating">Minimum Average Rating</Label>
+
+            <Label htmlFor="averageRating">Minimum Average Rating</Label>            <Input
+
+            <Input              id="averageRating"
+
+              id="averageRating"              type="number"
+
+              type="number"              step="0.1"
+
+              step="0.1"              min="1"
+
+              min="1"              max="5"
+
+              max="5"              value={formData.averageRating}
+
+              value={formData.averageRating}              onChange={(e) => setFormData({ ...formData, averageRating: parseFloat(e.target.value) })}
+
+              onChange={(e) => setFormData({ ...formData, averageRating: parseFloat(e.target.value) })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <div>
+
+          <div>            <Label htmlFor="description">Description</Label>
+
+            <Label htmlFor="description">Description</Label>            <Textarea
+
+            <Textarea              id="description"
+
+              id="description"              value={formData.description}
+
+              value={formData.description}              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}              required
+
+              required            />
+
+            />          </div>
+
+          </div>          <DialogFooter>
+
+          <DialogFooter>            <Button type="submit" disabled={isLoading}>
+
+            <Button type="submit" disabled={isLoading}>              {badge ? "Update" : "Create"}
+
+              {badge ? "Update" : "Create"}            </Button>
+
+            </Button>          </DialogFooter>
+
+          </DialogFooter>        </form>
+
+        </form>      </DialogContent>
+
+      </DialogContent>    </Dialog>
+
+    </Dialog>  );
+
+  );}
+
+}

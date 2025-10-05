@@ -9,6 +9,8 @@ export enum UserRole {
 const userSchema = new mongoose.Schema({
   clerkId: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
+  firstName: { type: String },
+  lastName: { type: String },
   username: { type: String },
   role: { 
     type: String, 
@@ -17,9 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   credits: { type: Number, default: 0 },
   subscriptionId: String,
-  bio: { type: String },
-  location: { type: String },
-  website: { type: String },
+  timezone: { type: String, default: 'America/New_York' },
   preferences: {
     theme: { type: String, enum: ['light', 'dark', 'auto'], default: 'auto' },
     notifications: {
@@ -29,9 +29,7 @@ const userSchema = new mongoose.Schema({
     }
   },
   hasCompletedOnboarding: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  lastLogin: { type: Date, default: Date.now }
 }, {
   timestamps: true
 });

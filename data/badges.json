@@ -7,8 +7,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "tarot-bronze.svg",
       "description": "Completed 25 tarot readings with good ratings"
@@ -20,8 +20,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "runes-bronze.svg",
       "description": "Completed 25 rune readings with good ratings"
@@ -34,7 +34,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "runes-silver.svg",
       "description": "Mastered rune readings with excellent feedback"
@@ -47,7 +47,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "runes-gold.svg",
       "description": "Elite rune reader with exceptional track record"
@@ -59,8 +59,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "dream-analysis-bronze.svg",
       "description": "Demonstrated dream interpretation abilities"
@@ -73,7 +73,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "dream-analysis-silver.svg",
       "description": "Advanced dream interpretation practitioner"
@@ -86,7 +86,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "dream-analysis-gold.svg",
       "description": "Master dream interpreter with proven expertise"
@@ -99,7 +99,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "tarot-silver.svg",
       "description": "Mastered tarot readings with excellent feedback"
@@ -112,7 +112,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "tarot-gold.svg",
       "description": "Elite tarot reader with exceptional track record"
@@ -124,8 +124,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "clairvoyant-bronze.svg",
       "description": "Demonstrated clairvoyant abilities"
@@ -138,7 +138,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "clairvoyant-silver.svg",
       "description": "Advanced clairvoyant practitioner"
@@ -151,7 +151,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "clairvoyant-gold.svg",
       "description": "Master clairvoyant with proven expertise"
@@ -163,8 +163,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "compassionate-bronze.svg",
       "description": "Consistently demonstrates empathy and understanding"
@@ -177,7 +177,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "compassionate-silver.svg",
       "description": "Known for exceptional emotional support"
@@ -190,7 +190,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "compassionate-gold.svg",
       "description": "Master of compassionate guidance"
@@ -202,8 +202,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "straightforward-bronze.svg",
       "description": "Consistently delivers clear, direct readings"
@@ -216,7 +216,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "straightforward-silver.svg",
       "description": "Known for exceptional clarity and directness"
@@ -229,7 +229,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "straightforward-gold.svg",
       "description": "Master of direct and clear guidance"
@@ -241,8 +241,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "channeling-bronze.svg",
       "description": "Demonstrated channeling abilities"
@@ -255,7 +255,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "channeling-silver.svg",
       "description": "Advanced channeling practitioner"
@@ -268,7 +268,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "channeling-gold.svg",
       "description": "Master channeler with proven expertise"
@@ -280,8 +280,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "empath-bronze.svg",
       "description": "Demonstrated empathic abilities"
@@ -294,7 +294,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "empath-silver.svg",
       "description": "Advanced empathic practitioner"
@@ -307,7 +307,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "empath-gold.svg",
       "description": "Master empath with proven expertise"
@@ -319,8 +319,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "clairaudient-bronze.svg",
       "description": "Demonstrated clairaudient abilities"
@@ -333,7 +333,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "clairaudient-silver.svg",
       "description": "Advanced clairaudient practitioner"
@@ -346,7 +346,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "clairaudient-gold.svg",
       "description": "Master clairaudient with proven expertise"
@@ -358,8 +358,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "scrying-bronze.svg",
       "description": "Demonstrated scrying abilities"
@@ -372,7 +372,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "scrying-silver.svg",
       "description": "Advanced scrying practitioner"
@@ -385,7 +385,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "scrying-gold.svg",
       "description": "Master of scrying with proven expertise"
@@ -397,8 +397,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "medium-bronze.svg",
       "description": "Demonstrated mediumship abilities"
@@ -411,7 +411,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "medium-silver.svg",
       "description": "Advanced mediumship practitioner"
@@ -424,7 +424,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "medium-gold.svg",
       "description": "Master medium with proven expertise"
@@ -436,8 +436,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "crystal-energy-bronze.svg",
       "description": "Demonstrated crystal reading abilities"
@@ -450,7 +450,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "crystal-energy-silver.svg",
       "description": "Advanced crystal energy practitioner"
@@ -463,7 +463,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "crystal-energy-gold.svg",
       "description": "Master of crystal energy readings"
@@ -475,8 +475,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "astrology-bronze.svg",
       "description": "Demonstrated astrological reading abilities"
@@ -489,7 +489,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "astrology-silver.svg",
       "description": "Advanced astrology practitioner"
@@ -502,7 +502,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "astrology-gold.svg",
       "description": "Master astrologer with proven expertise"
@@ -514,8 +514,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "pendulum-bronze.svg",
       "description": "Demonstrated pendulum reading abilities"
@@ -528,7 +528,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "pendulum-silver.svg",
       "description": "Advanced pendulum practitioner"
@@ -541,7 +541,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "pendulum-gold.svg",
       "description": "Master of pendulum readings"
@@ -553,8 +553,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "oracle-cards-bronze.svg",
       "description": "Demonstrated oracle card reading abilities"
@@ -567,7 +567,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "oracle-cards-silver.svg",
       "description": "Advanced oracle cards practitioner"
@@ -580,7 +580,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "oracle-cards-gold.svg",
       "description": "Master of oracle card readings"
@@ -592,8 +592,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "i-ching-bronze.svg",
       "description": "Demonstrated I-Ching reading abilities"
@@ -606,7 +606,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "i-ching-silver.svg",
       "description": "Advanced I-Ching practitioner"
@@ -619,7 +619,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "i-ching-gold.svg",
       "description": "Master of I-Ching readings"
@@ -631,8 +631,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "numerology-bronze.svg",
       "description": "Demonstrated numerology abilities"
@@ -645,7 +645,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "numerology-silver.svg",
       "description": "Advanced numerology practitioner"
@@ -658,7 +658,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "numerology-gold.svg",
       "description": "Master numerologist with proven expertise"
@@ -670,8 +670,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "no-tools-bronze.svg",
       "description": "Demonstrated pure intuitive reading abilities"
@@ -684,7 +684,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "no-tools-silver.svg",
       "description": "Advanced pure intuitive practitioner"
@@ -697,7 +697,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "no-tools-gold.svg",
       "description": "Master of pure intuitive readings"
@@ -709,8 +709,8 @@
       "tier": "Bronze",
       "requirements": {
         "readingsCompleted": 25,
-        "averageRating": 4.0,
-        "timeframe": "30 days"
+        "averageRating": 4,
+        "timeframe": 30
       },
       "icon": "inspirational-bronze.svg",
       "description": "Consistently provides uplifting guidance"
@@ -723,7 +723,7 @@
       "requirements": {
         "readingsCompleted": 100,
         "averageRating": 4.5,
-        "timeframe": "90 days"
+        "timeframe": 90
       },
       "icon": "inspirational-silver.svg",
       "description": "Known for exceptional motivational guidance"
@@ -736,7 +736,7 @@
       "requirements": {
         "readingsCompleted": 500,
         "averageRating": 4.8,
-        "timeframe": "180 days"
+        "timeframe": 180
       },
       "icon": "inspirational-gold.svg",
       "description": "Master of inspirational guidance"

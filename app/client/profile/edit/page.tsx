@@ -45,8 +45,8 @@ function ClientProfileEditPage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Edit Profile</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">Edit Profile</h1>
+        <p className="page-description">
           Update your profile information and preferences
         </p>
       </div>

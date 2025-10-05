@@ -143,6 +143,50 @@ body {
   color: #C0C0C0;
 }
 
+/* Page-specific heading styles */
+.page-title {
+  font-size: 2rem; /* 32px */
+  font-weight: 700;
+  line-height: 1.2;
+  /* margin-bottom: 1rem; */
+  background: linear-gradient(90deg, #7878FF 0%, rgba(120, 120, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.025em;
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem; /* 32px on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.75rem; /* 28px on small mobile */
+  }
+}
+
+.page-description {
+  font-size: 14px;
+  font-weight: 400;
+  /* line-height: 1.6; */
+  /* margin-bottom: 2rem; */
+  color: rgba(9, 9, 9, 0.6);
+  max-width: 65ch;
+}
+
+.dark .page-description {
+  color: rgba(192, 192, 192, 0.8);
+}
+
+@media (max-width: 480px) {
+  .page-description {
+    font-size: 13px;
+  }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -377,4 +421,103 @@ body {
 
 .status-dot.offline {
   background-color: rgb(239 68 68); /* red-500 */
+}
+
+/* Custom Shadow Utilities */
+
+/* Standard shadows that work in both light and dark mode */
+.shadow-aura-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .shadow-aura-sm {
+  box-shadow: 0 1px 2px 0 rgba(255, 255, 255, 0.1);
+}
+
+.shadow-aura {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura {
+  box-shadow: 0 1px 3px 0 rgba(255, 255, 255, 0.1), 0 1px 2px -1px rgba(255, 255, 255, 0.06);
+}
+
+.shadow-aura-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura-md {
+  box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.1), 0 2px 4px -2px rgba(255, 255, 255, 0.06);
+}
+
+.shadow-aura-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura-lg {
+  box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -4px rgba(255, 255, 255, 0.06);
+}
+
+/* Inverted shadows (shadows that appear at the top) */
+.shadow-aura-top-sm {
+  box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .shadow-aura-top-sm {
+  box-shadow: 0 -1px 2px 0 rgba(255, 255, 255, 0.1);
+}
+
+.shadow-aura-top {
+  box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.1), 0 -1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura-top {
+  box-shadow: 0 -1px 3px 0 rgba(255, 255, 255, 0.1), 0 -1px 2px -1px rgba(255, 255, 255, 0.06);
+}
+
+.shadow-aura-top-md {
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura-top-md {
+  box-shadow: 0 -4px 6px -1px rgba(255, 255, 255, 0.1), 0 -2px 4px -2px rgba(255, 255, 255, 0.06);
+}
+
+.shadow-aura-top-lg {
+  box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.1), 0 -4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .shadow-aura-top-lg {
+  box-shadow: 0 -10px 15px -3px rgba(255, 255, 255, 0.1), 0 -4px 6px -4px rgba(255, 255, 255, 0.06);
+}
+
+/* Primary colored shadows (using your theme color) */
+.shadow-aura-primary {
+  box-shadow: 0 4px 6px -1px rgba(120, 120, 255, 0.2), 0 2px 4px -2px rgba(120, 120, 255, 0.1);
+}
+
+.shadow-aura-primary-lg {
+  box-shadow: 0 10px 15px -3px rgba(120, 120, 255, 0.2), 0 4px 6px -4px rgba(120, 120, 255, 0.1);
+}
+
+/* Glow effects for special cases */
+.shadow-aura-glow {
+  box-shadow: 0 0 20px rgba(120, 120, 255, 0.3);
+}
+
+.dark .shadow-aura-glow {
+  box-shadow: 0 0 20px rgba(120, 120, 255, 0.4);
+}
+
+.shadow-aura-glow-sm {
+  box-shadow: 0 0 10px rgba(120, 120, 255, 0.2);
+}
+
+.dark .shadow-aura-glow-sm {
+  box-shadow: 0 0 10px rgba(120, 120, 255, 0.3);
+}
+
+/* No shadow utility for removing shadows conditionally */
+.shadow-aura-none {
+  box-shadow: none;
 }

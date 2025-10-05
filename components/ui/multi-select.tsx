@@ -107,7 +107,7 @@ export function MultiSelect({
       </div>
       <div className="relative mt-2">
         {open && (
-          <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+          <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-aura-md outline-none animate-in">
             <CommandGroup className="h-full overflow-auto">
               {options
                 .filter((option) => {

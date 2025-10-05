@@ -145,7 +145,7 @@ export function FooterNavigation({
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-lg",
+        "fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-top-md",
         className
       )}
     >
@@ -159,7 +159,7 @@ export function FooterNavigation({
               asChild
               className={cn(
                 "h-full rounded-xl transition-all duration-200 hover:bg-primary/10 hover:scale-105 group",
-                isActive && "bg-primary/15 border border-primary/20 shadow-sm"
+                isActive && "bg-primary/15 border border-primary/20 shadow-aura-sm"
               )}
             >
             <a
@@ -174,7 +174,7 @@ export function FooterNavigation({
                 {/* {item.badge && item.badge > 0 && (
                   <Badge
                     variant="default"
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground shadow-md animate-pulse"
+                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground shadow-aura-md animate-pulse"
                   >
                     {item.badge}
                   </Badge>

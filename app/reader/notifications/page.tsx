@@ -11,8 +11,8 @@ export default function ReaderNotificationsPage() {
     <main className="container py-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="page-title">Notifications</h1>
+          <p className="page-description">
             Stay updated on your reading requests and client interactions
           </p>
         </div>

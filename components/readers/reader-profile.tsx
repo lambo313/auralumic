@@ -47,7 +47,7 @@ export function ReaderProfile({
   }
 
   return (
-    <Card className="w-full mx-auto shadow-lg rounded-xl ">
+    <Card className="w-full mx-auto shadow-aura-lg rounded-xl ">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <CardTitle className="text-xl font-bold">Reader Stats</CardTitle>
@@ -93,7 +93,7 @@ export function ReaderProfile({
               <h3 className="text-lg font-semibold mb-4">Recent Testimonials</h3>
               <div className="space-y-4">
                 {reader.testimonials.map((testimonial) => (
-                  <Card key={testimonial.id} className="bg-zinc-50 dark:bg-zinc-800 border-none shadow-sm">
+                  <Card key={testimonial.id} className="bg-zinc-50 dark:bg-zinc-800 border-none shadow-aura-sm">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium">

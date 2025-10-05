@@ -63,8 +63,9 @@ interface User {
   isActive: boolean;
   credits: number;
   totalReadings: number;
-  joinDate: Date;
-  lastActive: Date;
+  timezone?: string;
+  joinDate: Date | string;
+  lastActive: Date | string;
 }
 
 interface Reader extends User {
@@ -87,55 +88,38 @@ export function UserManagement() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const formatDate = (date: Date | string) => {
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString();
+    }
+    return date.toLocaleDateString();
+  };
+
   useEffect(() => {
     loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterRole, filterStatus, searchTerm]);
+
+  useEffect(() => {
     loadReaders();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus, searchTerm]);
 
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      // This would be an API call to fetch users
-      // For now, using mock data
-      const mockUsers: User[] = [
-        {
-          id: "1",
-          email: "john.doe@example.com",
-          firstName: "John",
-          lastName: "Doe",
-          role: "client",
-          isActive: true,
-          credits: 150,
-          totalReadings: 5,
-          joinDate: new Date("2024-01-15"),
-          lastActive: new Date("2024-08-20"),
-        },
-        {
-          id: "2",
-          email: "jane.smith@example.com",
-          firstName: "Jane",
-          lastName: "Smith",
-          role: "client",
-          isActive: true,
-          credits: 75,
-          totalReadings: 2,
-          joinDate: new Date("2024-02-20"),
-          lastActive: new Date("2024-08-18"),
-        },
-        {
-          id: "3",
-          email: "admin@auralumic.com",
-          firstName: "Admin",
-          lastName: "User",
-          role: "admin",
-          isActive: true,
-          credits: 0,
-          totalReadings: 0,
-          joinDate: new Date("2024-01-01"),
-          lastActive: new Date("2024-08-25"),
-        },
-      ];
-      setUsers(mockUsers);
+      const params = new URLSearchParams();
+      if (filterRole !== 'all') params.append('role', filterRole);
+      if (filterStatus !== 'all') params.append('status', filterStatus);
+      if (searchTerm) params.append('search', searchTerm);
+
+      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      } else {
+        console.error('Failed to load users:', response.statusText);
+      }
     } catch (error) {
       console.error("Error loading users:", error);
     } finally {
@@ -145,48 +129,17 @@ export function UserManagement() {
 
   const loadReaders = async () => {
     try {
-      // This would be an API call to fetch readers
-      const mockReaders: Reader[] = [
-        {
-          id: "4",
-          email: "psychic.maria@example.com",
-          firstName: "Maria",
-          lastName: "Santos",
-          role: "reader",
-          isActive: true,
-          isApproved: true,
-          isOnline: true,
-          credits: 0,
-          totalReadings: 147,
-          rating: 4.8,
-          reviewCount: 89,
-          totalEarnings: 2940,
-          specialties: ["Tarot", "Clairvoyant", "Compassionate"],
-          verificationStatus: "verified",
-          joinDate: new Date("2024-01-10"),
-          lastActive: new Date("2024-08-25"),
-        },
-        {
-          id: "5",
-          email: "reader.alex@example.com",
-          firstName: "Alex",
-          lastName: "Johnson",
-          role: "reader",
-          isActive: true,
-          isApproved: false,
-          isOnline: false,
-          credits: 0,
-          totalReadings: 0,
-          rating: 0,
-          reviewCount: 0,
-          totalEarnings: 0,
-          specialties: ["Astrology", "Runes"],
-          verificationStatus: "pending",
-          joinDate: new Date("2024-08-20"),
-          lastActive: new Date("2024-08-22"),
-        },
-      ];
-      setReaders(mockReaders);
+      const params = new URLSearchParams();
+      if (filterStatus !== 'all') params.append('status', filterStatus);
+      if (searchTerm) params.append('search', searchTerm);
+
+      const response = await fetch(`/api/admin/readers?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReaders(data.readers || []);
+      } else {
+        console.error('Failed to load readers:', response.statusText);
+      }
     } catch (error) {
       console.error("Error loading readers:", error);
     }
@@ -194,15 +147,24 @@ export function UserManagement() {
 
   const updateUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      // API call to update user status
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, isActive } : user
-      ));
-      
-      if (readers.find(r => r.id === userId)) {
-        setReaders(prev => prev.map(reader => 
-          reader.id === userId ? { ...reader, isActive } : reader
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive }),
+      });
+
+      if (response.ok) {
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, isActive } : user
         ));
+        
+        if (readers.find(r => r.id === userId)) {
+          setReaders(prev => prev.map(reader => 
+            reader.id === userId ? { ...reader, isActive } : reader
+          ));
+        }
+      } else {
+        console.error('Failed to update user status:', response.statusText);
       }
     } catch (error) {
       console.error("Error updating user status:", error);
@@ -211,10 +173,21 @@ export function UserManagement() {
 
   const updateUserRole = async (userId: string, role: "client" | "reader" | "admin") => {
     try {
-      // API call to update user role
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, role } : user
-      ));
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+
+      if (response.ok) {
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, role } : user
+        ));
+        // Reload users to reflect changes
+        loadUsers();
+      } else {
+        console.error('Failed to update user role:', response.statusText);
+      }
     } catch (error) {
       console.error("Error updating user role:", error);
     }
@@ -268,7 +241,6 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <h2 className="text-2xl font-bold">User Management</h2>
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full lg:w-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -374,7 +346,7 @@ export function UserManagement() {
                       <TableCell>{user.credits}</TableCell>
                       <TableCell>{user.totalReadings}</TableCell>
                       <TableCell>
-                        {user.joinDate.toLocaleDateString()}
+                        {formatDate(user.joinDate)}
                       </TableCell>
                       <TableCell className="text-right">
                         <UserActionsDialog
@@ -493,7 +465,7 @@ export function UserManagement() {
                       </TableCell>
                       <TableCell>${reader.totalEarnings}</TableCell>
                       <TableCell>
-                        {reader.joinDate.toLocaleDateString()}
+                        {formatDate(reader.joinDate)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -529,9 +501,9 @@ export function UserManagement() {
               </Table>
             </CardContent>
           </Card>
+          <ReaderApproval />
         </TabsContent>
       </Tabs>
-      <ReaderApproval />
     </div>
   );
 }
@@ -549,6 +521,13 @@ function UserActionsDialog({
   trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  
+  const formatDate = (date: Date | string) => {
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString();
+    }
+    return date.toLocaleDateString();
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -579,7 +558,7 @@ function UserActionsDialog({
               <span className="font-medium">Readings:</span> {user.totalReadings}
             </div>
             <div>
-              <span className="font-medium">Joined:</span> {user.joinDate.toLocaleDateString()}
+              <span className="font-medium">Joined:</span> {formatDate(user.joinDate)}
             </div>
           </div>
           

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
+import { mockReaders } from "@/components/readers/mock-reader-data"
+
 type SearchQuery = {
   isApproved: boolean;
   $or?: Array<Record<string, unknown>>;
@@ -49,6 +51,45 @@ export async function GET(request: Request) {
       .lean() as LeanReader[]
 
     const total = await Reader.countDocuments(searchQuery)
+
+    // If no readers found in database, use mock data
+    if (readers.length === 0 && page === 1) {
+      // Filter mock readers (only approved ones)
+      let filteredMockReaders = mockReaders.filter(r => r.isApproved)
+      
+      // Apply search filter if query exists
+      if (query) {
+        const lowerQuery = query.toLowerCase()
+        filteredMockReaders = filteredMockReaders.filter(r => {
+          return (
+            r.tagline?.toLowerCase().includes(lowerQuery) ||
+            r.location?.toLowerCase().includes(lowerQuery) ||
+            r.experience?.toLowerCase().includes(lowerQuery) ||
+            r.attributes?.tools?.some(t => t.toLowerCase().includes(lowerQuery)) ||
+            r.attributes?.abilities?.some(a => a.toLowerCase().includes(lowerQuery))
+          )
+        })
+      }
+
+      // Convert mock readers to API format
+      const mockReadersFormatted = filteredMockReaders.slice(skip, skip + limit).map(r => ({
+        ...r,
+        _id: r.id,
+        createdAt: r.createdAt.toISOString(),
+        lastActive: r.lastActive.toISOString(),
+        updatedAt: r.updatedAt?.toISOString() || r.createdAt.toISOString()
+      }))
+
+      return NextResponse.json({
+        readers: mockReadersFormatted,
+        pagination: {
+          page,
+          limit,
+          total: filteredMockReaders.length,
+          pages: Math.ceil(filteredMockReaders.length / limit)
+        }
+      })
+    }
 
     return NextResponse.json({
       readers,

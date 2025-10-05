@@ -3,6 +3,7 @@ import { Stars, Sparkles, Shield } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
 import { AuthButtons } from "@/components/auth/auth-buttons";
 import LandingHeader from "@/components/layout/landing-header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const features = [
   {
@@ -145,13 +146,10 @@ export default async function Home() {
             {testimonials.map((testimonial, index) => (
               <div key={index} className="card-glass p-6 rounded-lg">
                 <div className="flex items-center gap-4 mb-4">
-                  <Image
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={testimonial.image} alt={`${testimonial.name}'s avatar`} className="transition-transform group-hover:scale-105 rounded-full" />
+                    <AvatarFallback>{(testimonial.name?.[0] || "U").toUpperCase()}</AvatarFallback>
+                  </Avatar>
                   <div>
                     <h3 className="font-semibold text-foreground">{testimonial.name}</h3>
                     <div className="flex text-primary">

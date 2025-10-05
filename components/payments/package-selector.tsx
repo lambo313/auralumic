@@ -35,7 +35,7 @@ export function PackageSelector({
         return (
           <Card
             key={pkg.id}
-            className={`relative cursor-pointer p-6 transition-all hover:shadow-md ${
+            className={`relative cursor-pointer p-6 transition-all hover:shadow-aura-md ${
               isSelected ? "border-primary ring-2 ring-primary" : ""
             }`}
             onClick={() => onSelect(pkg)}

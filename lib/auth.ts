@@ -1,5 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
+import dbConnect from "@/lib/database"
+import { User } from "@/models/User"
 
 interface UserRole {
   id: string
@@ -14,14 +16,16 @@ export async function getUserRole(): Promise<UserRole | null> {
   }
 
   try {
-    const clerk = await clerkClient()
-    const user = await clerk.users.getUser(userId)
-    // Assuming we store the role in public metadata
-    const role = user.publicMetadata.role as "client" | "reader" | "admin"
+    await dbConnect()
+    const user = await User.findOne({ clerkId: userId })
+    
+    if (!user) {
+      return null
+    }
 
     return {
       id: userId,
-      role: role || "client", // Default to client if no role is set
+      role: user.role || "client", // Default to client if no role is set
     }
   } catch (error) {
     console.error("Error fetching user role:", error)
@@ -61,10 +65,16 @@ export async function requireAdminAuth() {
 
 export async function setUserRole(userId: string, role: "client" | "reader" | "admin") {
   try {
-    const clerk = await clerkClient()
-    await clerk.users.updateUser(userId, {
-      publicMetadata: { role },
-    })
+    await dbConnect()
+    const user = await User.findOne({ clerkId: userId })
+    
+    if (!user) {
+      throw new Error("User not found")
+    }
+    
+    user.role = role
+    user.updatedAt = new Date()
+    await user.save()
   } catch (error) {
     console.error("Error setting user role:", error)
     throw error

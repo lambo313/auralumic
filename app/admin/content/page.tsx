@@ -8,7 +8,11 @@ export const metadata: Metadata = {
 
 export default function ContentPage() {
   return (
-    <div className="container mx-auto py-8">
+    <div className="container py-6 space-y-6">
+      <div className="flex items-center justify-between space-x-6">
+        <h1 className="page-title">Content Management</h1>
+        <p className="page-description">Manage categories, attributes, and badges</p>
+      </div>
       <ContentManagement />
     </div>
   );

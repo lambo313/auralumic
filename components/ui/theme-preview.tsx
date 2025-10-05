@@ -11,7 +11,7 @@ export default function ThemePreview() {
         <h1 className="text-3xl font-bold">UI Theme Preview</h1>
         <Button 
           variant="default"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-6 py-2 shadow-lg"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-6 py-2 shadow-aura-lg"
         >
           Get Started
         </Button>
@@ -23,7 +23,7 @@ export default function ThemePreview() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="bg-card border-primary/40 rounded-2xl shadow-md">
+        <Card className="bg-card border-primary/40 rounded-2xl shadow-aura-md">
           <CardContent className="p-6 space-y-4">
             <h2 className="text-xl font-semibold text-secondary">Featured Section</h2>
             <p className="text-muted-foreground">
@@ -54,7 +54,7 @@ export default function ThemePreview() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
       >
-        <form className="bg-card p-6 rounded-2xl shadow-md border border-secondary/30 space-y-4 max-w-md">
+        <form className="bg-card p-6 rounded-2xl shadow-aura-md border border-secondary/30 space-y-4 max-w-md">
           <h3 className="text-lg font-semibold text-secondary">Sign Up</h3>
           <Input
             placeholder="Username"

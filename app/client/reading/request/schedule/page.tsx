@@ -8,7 +8,7 @@ export default async function ClientSchedulePage() {
 
   return (
     <div className="container max-w-3xl py-6 space-y-6">
-      <h1 className="text-3xl font-bold">Schedule Reading</h1>
+      <h1 className="page-title">Schedule Reading</h1>
       <ScheduleForm />
     </div>
   )

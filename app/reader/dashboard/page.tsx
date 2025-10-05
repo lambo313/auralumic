@@ -89,8 +89,8 @@ function ReaderDashboardPage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Reader Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">Reader Dashboard</h1>
+        <p className="page-description">
           Overview of your readings and performance
         </p>
       </div>

@@ -33,7 +33,7 @@ export default function ClientRequestReadingPage() {
 
   return (
     <div className="container max-w-3xl py-6 space-y-6">
-      <h1 className="text-3xl font-bold">Request Reading</h1>
+      <h1 className="page-title">Request Reading</h1>
       <BookingForm onSubmit={handleSubmit} />
     </div>
   )

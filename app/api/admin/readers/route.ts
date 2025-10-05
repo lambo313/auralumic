@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import dbConnect from '@/lib/database';
+import { User, UserRole } from '@/models/User';
+import Reader from '@/models/Reader';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,67 +12,83 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    await dbConnect();
+
+    // Verify admin role
+    const adminUser = await User.findOne({ clerkId: userId });
+    if (!adminUser || adminUser.role !== UserRole.ADMIN) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
 
-    // Mock reader data - in production this would come from your database
-    let readers = [
-      {
-        id: "4",
-        email: "psychic.maria@example.com",
-        firstName: "Maria",
-        lastName: "Santos",
-        role: "reader",
-        isActive: true,
-        isApproved: true,
-        isOnline: true,
-        credits: 0,
-        totalReadings: 147,
-        rating: 4.8,
-        reviewCount: 89,
-        totalEarnings: 2940,
-        specialties: ["Tarot", "Clairvoyant", "Compassionate"],
-        verificationStatus: "verified",
-        joinDate: new Date("2024-01-10"),
-        lastActive: new Date("2024-08-25"),
-      },
-      {
-        id: "5",
-        email: "reader.alex@example.com",
-        firstName: "Alex",
-        lastName: "Johnson",
-        role: "reader",
-        isActive: true,
-        isApproved: false,
-        isOnline: false,
-        credits: 0,
-        totalReadings: 0,
-        rating: 0,
-        reviewCount: 0,
-        totalEarnings: 0,
-        specialties: ["Astrology", "Runes"],
-        verificationStatus: "pending",
-        joinDate: new Date("2024-08-20"),
-        lastActive: new Date("2024-08-22"),
-      },
-    ];
+    // Build query for readers
+    const readerQuery: Record<string, unknown> = {};
 
-    // Apply filters
+    // Status filter
     if (status && status !== 'all') {
       if (status === 'approved') {
-        readers = readers.filter(reader => reader.isApproved);
+        readerQuery.isApproved = true;
       } else if (status === 'pending') {
-        readers = readers.filter(reader => !reader.isApproved && reader.verificationStatus === 'pending');
+        readerQuery.isApproved = false;
+        readerQuery.status = 'pending';
       } else if (status === 'rejected') {
-        readers = readers.filter(reader => reader.verificationStatus === 'rejected');
+        readerQuery.status = 'rejected';
       }
     }
 
+    // Fetch readers from database
+    const readers = await Reader.find(readerQuery)
+      .populate('reviews')
+      .select('-__v')
+      .lean();
+
+    // Get user data for each reader
+    const userIds = readers.map(r => r.userId);
+    const users = await User.find({ clerkId: { $in: userIds } }).lean();
+    const userMap = new Map(users.map(u => [u.clerkId, u]));
+
+    // Merge reader and user data
+    let readerData = readers.map(reader => {
+      const user = userMap.get(reader.userId);
+      const verificationStatus = reader.isApproved ? 'verified' : 
+        (reader.status === 'rejected' ? 'rejected' : 'pending');
+      
+      // Get specialties from attributes
+      const specialties = [
+        ...(reader.attributes?.abilities || []),
+        ...(reader.attributes?.tools || []),
+        reader.attributes?.style
+      ].filter(Boolean);
+
+      return {
+        id: reader.userId,
+        email: user?.email || '',
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        role: 'reader' as const,
+        isActive: user?.role === UserRole.READER,
+        isApproved: reader.isApproved,
+        isOnline: reader.isOnline,
+        credits: user?.credits || 0,
+        totalReadings: reader.stats?.totalReadings || 0,
+        rating: reader.stats?.averageRating || 0,
+        reviewCount: reader.reviews?.length || 0,
+        totalEarnings: reader.stats?.totalEarnings || 0,
+        specialties,
+        verificationStatus,
+        joinDate: reader.createdAt,
+        lastActive: reader.lastActive
+      };
+    });
+
+    // Search filter
     if (search) {
       const searchLower = search.toLowerCase();
-      readers = readers.filter(reader => 
+      readerData = readerData.filter(reader => 
         reader.firstName.toLowerCase().includes(searchLower) ||
         reader.lastName.toLowerCase().includes(searchLower) ||
         reader.email.toLowerCase().includes(searchLower)
@@ -77,8 +96,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      readers,
-      total: readers.length,
+      readers: readerData,
+      total: readerData.length,
       page: 1,
       limit: 50,
     });

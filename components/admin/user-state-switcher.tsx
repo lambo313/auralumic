@@ -40,10 +40,10 @@ export function UserStateSwitcher() {
       // Redirect to appropriate dashboard
       switch (newRole) {
         case "client":
-          router.push("/dashboard");
+          router.push("/client/dashboard");
           break;
         case "reader":
-          router.push("/dashboard");
+          router.push("/reader/dashboard");
           break;
         case "admin":
           router.push("/admin/dashboard");

@@ -18,7 +18,7 @@ function ReaderLayoutInner({
   const pathname = usePathname();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Redirect non-reader users away from reader routes
+  // Redirect non-reader users away from reader routes (except profile view pages)
   useEffect(() => {
     if (!isLoaded) return; // Wait for auth to load
     
@@ -28,12 +28,24 @@ function ReaderLayoutInner({
       return;
     }
     
+    // Check if the current path is a reader profile view page (accessible to all users)
+    const isProfileViewPage = pathname?.match(/^\/reader\/profile\/[^\/]+$/) && pathname !== '/reader/profile/edit';
+    
+    // Allow all authenticated users to view reader profiles
+    if (isProfileViewPage) {
+      setIsRedirecting(false);
+      return;
+    }
+    
+    // Redirect admins to their dashboard
     if (role === "admin") {
       setIsRedirecting(true);
       router.replace("/admin/dashboard");
       return;
     }
     
+    // Redirect clients from reader-only pages to their dashboard
+    // (profile view pages are already handled above)
     if (role === "client") {
       setIsRedirecting(true);
       router.replace("/client/dashboard");

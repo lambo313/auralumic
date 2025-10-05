@@ -45,7 +45,7 @@ export function ClientCard({ client, onSuggestReading }: ClientCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow duration-200">
+    <Card className="hover:shadow-aura-md transition-shadow duration-200">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -74,8 +74,8 @@ function ClientProfileViewPage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{(profile && 'role' in profile && profile.role === "client") ? "Client Profile" : "Reader Profile"}</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">{(profile && 'role' in profile && profile.role === "client") ? "Client Profile" : "Reader Profile"}</h1>
+        <p className="page-description">
           {isOwnProfile
             ? (profile && 'role' in profile && profile.role === "client")
               ? "Manage your client profile and preferences"

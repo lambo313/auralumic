@@ -76,8 +76,8 @@ function ClientDashboardPage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Client Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-title">Client Dashboard</h1>
+        <p className="page-description">
           Overview of your readings and account activity
         </p>
       </div>

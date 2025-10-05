@@ -42,24 +42,13 @@ export function ReaderConnect({ onSelectReader }: { onSelectReader?: (readerId: 
     );
   };
 
-  // Handler for reader card click: navigate to /dashboard/profile/[id]
+  // Handler for reader card click: navigate to /reader/profile/[id]
   const handleSelectReader = (readerId: string) => {
     if (onSelectReader) {
       onSelectReader(readerId);
     } else {
-      // Navigate to profile based on current user role
-      if (typeof window !== 'undefined') {
-        const pathname = window.location.pathname;
-        if (pathname.includes('/client/')) {
-          router.push(`/client/profile/${readerId}`);
-        } else if (pathname.includes('/reader/')) {
-          router.push(`/reader/profile/${readerId}`);
-        } else {
-          router.push(`/dashboard/profile/${readerId}`); // fallback
-        }
-      } else {
-        router.push(`/dashboard/profile/${readerId}`); // fallback
-      }
+      // Always navigate to reader profile page regardless of current user role
+      router.push(`/reader/profile/${readerId}`);
     }
   };
 

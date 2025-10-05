@@ -9,7 +9,7 @@ export default async function ClientSettingsPage() {
 
   return (
     <div className="container max-w-4xl py-6 space-y-6">
-      <h1 className="text-3xl font-bold">Settings</h1>
+      <h1 className="page-title">Settings</h1>
       
       <Tabs defaultValue="account" className="space-y-4">
         <TabsList>

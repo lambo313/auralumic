@@ -339,9 +339,9 @@ export const mockReaders: Reader[] = [
     updatedAt: new Date('2023-01-01'),
   },
 ];
-// Helper to get a mock reader by id
+// Helper to get a mock reader by id or userId
 export function getMockReaderById(id: string): Reader | undefined {
-  return mockReaders.find(reader => reader.id === id);
+  return mockReaders.find(reader => reader.id === id || reader.userId === id);
 }
 
 export const specialtiesList = Array.from(

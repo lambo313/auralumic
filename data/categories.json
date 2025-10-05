@@ -1,0 +1,60 @@
+{
+  "categories": [
+    {
+      "id": "yearly",
+      "name": "Yearly",
+      "description": "Annual readings and prediction",
+      "icon": "calendar",
+      "isActive": true
+    },
+    {
+      "id": "monthly",
+      "name": "Monthly",
+      "description": "Monthly guidance and insights",
+      "icon": "calendar-month",
+      "isActive": true
+    },
+    {
+      "id": "weekly",
+      "name": "Weekly",
+      "description": "Weekly forecasts and advice",
+      "icon": "calendar-week",
+      "isActive": true
+    },
+    {
+      "id": "daily",
+      "name": "Daily",
+      "description": "Day-to-day guidance and predictions",
+      "icon": "calendar-day",
+      "isActive": true
+    },
+    {
+      "id": "shadow-work",
+      "name": "Shadow Work",
+      "description": "Exploring and healing the hidden aspects of self",
+      "icon": "shadow",
+      "isActive": true
+    },
+    {
+      "id": "mirror-work",
+      "name": "Mirror Work",
+      "description": "Self-reflection and personal transformation",
+      "icon": "mirror",
+      "isActive": true
+    },
+    {
+      "id": "astrology",
+      "name": "Astrology",
+      "description": "Celestial insights and astrological readings",
+      "icon": "stars",
+      "isActive": true
+    },
+    {
+      "id": "chakras",
+      "name": "Chakras",
+      "description": "Energy center alignment and healing",
+      "icon": "chakra",
+      "isActive": true
+    }
+  ]
+}
