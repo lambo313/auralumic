@@ -52,7 +52,7 @@ export default async function Home() {
     <div className="min-h-screen">
       <LandingHeader />
       {/* Hero Section */}
-      <section className="relative min-h-[100vh] flex items-start justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[100vh] flex items-start justify-center overflow-hidden pt-16 md:pt-12">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-background/90">
           <div className="absolute inset-0 bg-grid-pattern opacity-5 animate-pulse"></div>

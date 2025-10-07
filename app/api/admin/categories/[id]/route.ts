@@ -2,41 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/database";
 import { User, UserRole } from "@/models/User";
-import fs from 'fs';
-import path from 'path';
-
-const CATEGORIES_FILE_PATH = path.join(process.cwd(), 'data', 'categories.json');
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  isActive: boolean;
-}
-
-interface CategoriesData {
-  categories: Category[];
-}
-
-function readCategoriesFile(): CategoriesData {
-  try {
-    const fileContent = fs.readFileSync(CATEGORIES_FILE_PATH, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error reading categories file:', error);
-    return { categories: [] };
-  }
-}
-
-function writeCategoriesFile(data: CategoriesData): void {
-  try {
-    fs.writeFileSync(CATEGORIES_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
-  } catch (error) {
-    console.error('Error writing categories file:', error);
-    throw new Error('Failed to save categories');
-  }
-}
+import Category from "@/models/Category";
 
 export async function PUT(
   request: Request,
@@ -63,27 +29,29 @@ export async function PUT(
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
-    const categoriesData = readCategoriesFile();
-    const categoryIndex = categoriesData.categories.findIndex(cat => cat.id === id);
+    const updatedCategory = await Category.findOneAndUpdate(
+      { id },
+      { 
+        name, 
+        description, 
+        icon: icon || 'default', 
+        isActive: isActive ?? true 
+      },
+      { new: true, runValidators: true }
+    );
 
-    if (categoryIndex === -1) {
+    if (!updatedCategory) {
       return new NextResponse("Category not found", { status: 404 });
     }
 
-    const updatedCategory: Category = {
-      id,
-      name,
-      description,
-      icon: icon || 'default',
-      isActive: isActive ?? true
-    };
-
-    categoriesData.categories[categoryIndex] = updatedCategory;
-    writeCategoriesFile(categoriesData);
-
     return NextResponse.json({ category: updatedCategory });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[ADMIN_CATEGORIES_PUT]", error);
+    
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+      return new NextResponse("Category with this name already exists", { status: 409 });
+    }
+    
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -107,15 +75,12 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const categoriesData = readCategoriesFile();
-    const categoryIndex = categoriesData.categories.findIndex(cat => cat.id === id);
+    
+    const deletedCategory = await Category.findOneAndDelete({ id });
 
-    if (categoryIndex === -1) {
+    if (!deletedCategory) {
       return new NextResponse("Category not found", { status: 404 });
     }
-
-    categoriesData.categories.splice(categoryIndex, 1);
-    writeCategoriesFile(categoriesData);
 
     return NextResponse.json({ message: "Category deleted successfully" });
   } catch (error) {

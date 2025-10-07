@@ -49,16 +49,6 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
       icon: BarChart3,
     },
     {
-      name: "Users",
-      href: "/admin/users",
-      icon: Users,
-    },
-    {
-      name: "Readings",
-      href: "/admin/readings",
-      icon: BookOpen,
-    },
-    {
       name: "Content",
       href: "/admin/content",
       icon: Settings,
@@ -67,6 +57,16 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
       name: "Disputes",
       href: "/admin/disputes",
       icon: Shield,
+    },
+    {
+      name: "Readings",
+      href: "/admin/readings",
+      icon: BookOpen,
+    },
+    {
+      name: "Users",
+      href: "/admin/users",
+      icon: Users,
     },
   ]
 

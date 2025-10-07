@@ -15,11 +15,12 @@ export async function POST(
     if (!session || !session.userId) {
       return new NextResponse("Unauthorized", { status: 401 })
     }
-    const userId = session.userId
+    const adminUserId = session.userId
 
     await dbConnect()
-    const reader = await Reader.findById(id)
-      .populate("userId", "name email")
+    
+    // Find reader by userId (Clerk user ID), not by _id
+    const reader = await Reader.findOne({ userId: id })
 
     if (!reader) {
       return new NextResponse("Reader not found", { status: 404 })
@@ -27,13 +28,14 @@ export async function POST(
 
     // Update reader status
     reader.isApproved = true
+    reader.status = 'approved'
     reader.approvedAt = new Date()
-    reader.approvedBy = userId
+    reader.approvedBy = adminUserId
     await reader.save()
 
     // Send notification to reader
     await sendNotification({
-      userId: reader.userId._id,
+      userId: reader.userId, // This is the Clerk user ID
       type: NotificationType.READING_ACCEPTED,
       message: "Your reader application has been approved! You can now start accepting reading requests.",
       data: {
@@ -41,7 +43,7 @@ export async function POST(
       }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, reader })
   } catch (error) {
     console.error("[READER_APPROVE]", error)
     return new NextResponse("Internal error", { status: 500 })

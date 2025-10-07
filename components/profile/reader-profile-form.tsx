@@ -5,6 +5,7 @@ import { uploadFile, FILE_UPLOAD_CONFIG, isValidFileType, isValidFileSize } from
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -56,6 +57,8 @@ interface ReaderProfileFormProps {
 }
 
 export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
+  const router = useRouter();
+  
   // Load attributes
   const attributes = attributesData;
   const [selectedAbilities, setSelectedAbilities] = useState<string[]>([]);
@@ -260,6 +263,9 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
         title: "Profile updated",
         description: "Your reader profile has been updated successfully.",
       });
+      
+      // Redirect to reader profile page after successful save
+      router.push("/reader/profile");
     } catch (error) {
       toast({
         title: "Error",

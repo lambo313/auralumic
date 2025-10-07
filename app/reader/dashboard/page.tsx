@@ -6,49 +6,48 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { withSafeRendering } from "@/components/ui/with-safe-rendering";
 import { ReaderStatsDashboard } from "@/components/profile/reader-stats-dashboard";
-import { userService } from "@/services/api";
 import { readerService } from "@/services/reader-service";
-import type { User, Reader } from "@/types";
+import type { Reader } from "@/types";
 
 function ReaderDashboardPage() {
   const { user: clerkUser, role } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
   const [readerProfile, setReaderProfile] = useState<Reader | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchUserData() {
-      if (!clerkUser) {
+    async function fetchReaderData() {
+      if (!clerkUser || !role) {
         setLoading(false);
         return;
       }
       
       try {
         setLoading(true);
-        const userData = await userService.getCurrentUser();
-        setUser(userData);
         
-        // If user is a reader, try to fetch their reader profile
-        if (userData.role === 'reader') {
+        // If user's role is reader, try to fetch their reader profile
+        if (role === 'reader') {
           try {
-            const readerData = await readerService.getReaderById(userData.id);
+            console.log("Fetching reader profile for user:", clerkUser.id, "with role:", role);
+            const readerData = await readerService.getReaderById(clerkUser.id);
+            console.log("Reader profile fetched successfully:", readerData);
             setReaderProfile(readerData);
           } catch (readerError) {
+            console.error("Reader profile fetch error:", readerError);
             console.log("Reader profile not found, user may not be approved yet");
             // This is fine - the user might be a reader but not have an approved profile yet
           }
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
-        setError("Failed to load user data");
+        console.error("Error fetching reader data:", err);
+        setError("Failed to load reader data");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchUserData();
-  }, [clerkUser]);
+    fetchReaderData();
+  }, [clerkUser, role]);
 
   if (!clerkUser) {
     return (
@@ -74,12 +73,12 @@ function ReaderDashboardPage() {
     );
   }
 
-  if (error || !user) {
+  if (error) {
     return (
       <main className="container py-6">
         <Card className="p-6">
           <p className="text-center text-red-500">
-            {error || "Failed to load user data"}
+            {error}
           </p>
         </Card>
       </main>

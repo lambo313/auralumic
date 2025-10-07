@@ -26,7 +26,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-clientSchema.index({ userId: 1 });
+// Note: userId index is automatically created by unique: true
 clientSchema.index({ isActive: 1 });
 clientSchema.index({ lastActive: -1 });
 

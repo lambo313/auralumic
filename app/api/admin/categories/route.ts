@@ -2,41 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/database";
 import { User, UserRole } from "@/models/User";
-import fs from 'fs';
-import path from 'path';
-
-const CATEGORIES_FILE_PATH = path.join(process.cwd(), 'data', 'categories.json');
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  isActive: boolean;
-}
-
-interface CategoriesData {
-  categories: Category[];
-}
-
-function readCategoriesFile(): CategoriesData {
-  try {
-    const fileContent = fs.readFileSync(CATEGORIES_FILE_PATH, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error reading categories file:', error);
-    return { categories: [] };
-  }
-}
-
-function writeCategoriesFile(data: CategoriesData): void {
-  try {
-    fs.writeFileSync(CATEGORIES_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
-  } catch (error) {
-    console.error('Error writing categories file:', error);
-    throw new Error('Failed to save categories');
-  }
-}
+import Category from "@/models/Category";
 
 export async function GET() {
   try {
@@ -53,8 +19,8 @@ export async function GET() {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const categoriesData = readCategoriesFile();
-    return NextResponse.json({ categories: categoriesData.categories });
+    const categories = await Category.find({}).sort({ name: 1 }).lean();
+    return NextResponse.json({ categories });
   } catch (error) {
     console.error("[ADMIN_CATEGORIES_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
@@ -82,8 +48,7 @@ export async function POST(request: Request) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
-    const categoriesData = readCategoriesFile();
-    const newCategory: Category = {
+    const newCategory = {
       id: name.toLowerCase().replace(/\s+/g, '-'),
       name,
       description,
@@ -91,10 +56,15 @@ export async function POST(request: Request) {
       isActive: isActive ?? true
     };
 
-    categoriesData.categories.push(newCategory);
-    writeCategoriesFile(categoriesData);
-
-    return NextResponse.json({ category: newCategory }, { status: 201 });
+    try {
+      const result = await Category.create(newCategory);
+      return NextResponse.json({ category: result }, { status: 201 });
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+        return new NextResponse("Category with this name already exists", { status: 409 });
+      }
+      throw error;
+    }
   } catch (error) {
     console.error("[ADMIN_CATEGORIES_POST]", error);
     return new NextResponse("Internal error", { status: 500 });

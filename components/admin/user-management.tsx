@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -53,6 +54,7 @@ import {
 import { api } from "@/services/api";
 import Reader from "@/models/Reader";
 import { ReaderApproval } from "./reader-approval";
+import { useToast } from "@/components/ui/use-toast";
 
 interface User {
   id: string;
@@ -80,6 +82,8 @@ interface Reader extends User {
 }
 
 export function UserManagement() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [readers, setReaders] = useState<Reader[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -195,18 +199,52 @@ export function UserManagement() {
 
   const approveReader = async (readerId: string, approved: boolean) => {
     try {
-      // API call to approve/reject reader
-      setReaders(prev => prev.map(reader => 
-        reader.id === readerId 
-          ? { 
-              ...reader, 
-              isApproved: approved,
-              verificationStatus: approved ? "verified" : "rejected"
-            } 
-          : reader
-      ));
+      const endpoint = approved ? 'approve' : 'reject';
+      const response = await fetch(`/api/admin/readers/${readerId}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Update local state only after successful API call
+        setReaders(prev => prev.map(reader => 
+          reader.id === readerId 
+            ? { 
+                ...reader, 
+                isApproved: approved,
+                verificationStatus: approved ? "verified" : "rejected"
+              } 
+            : reader
+        ));
+        
+        // Show success toast
+        toast({
+          title: `Reader ${approved ? 'Approved' : 'Rejected'}`,
+          description: `The reader application has been ${approved ? 'approved' : 'rejected'} successfully.`,
+        });
+        
+        // Optionally reload readers to ensure consistency
+        loadReaders();
+      } else {
+        const errorData = await response.text();
+        console.error(`Failed to ${approved ? 'approve' : 'reject'} reader:`, response.statusText, errorData);
+        
+        toast({
+          title: "Error",
+          description: `Failed to ${approved ? 'approve' : 'reject'} reader. Please try again.`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error updating reader approval:", error);
+      
+      toast({
+        title: "Error",
+        description: `An error occurred while ${approved ? 'approving' : 'rejecting'} the reader.`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -490,7 +528,11 @@ export function UserManagement() {
                               </Button>
                             </>
                           )}
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => router.push(`/reader/profile/${reader.id}`)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </div>
@@ -501,7 +543,7 @@ export function UserManagement() {
               </Table>
             </CardContent>
           </Card>
-          <ReaderApproval />
+          {/* <ReaderApproval /> */}
         </TabsContent>
       </Tabs>
     </div>

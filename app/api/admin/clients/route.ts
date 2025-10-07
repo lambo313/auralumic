@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/database';
 import { User, UserRole } from '@/models/User';
 import Client from '@/models/Client';
+import Reading from '@/models/Reading';
+import Review from '@/models/Review';
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,8 +46,6 @@ export async function GET(request: NextRequest) {
 
     // Get client data
     const clients = await Client.find({ userId: { $in: userIds } })
-      .populate('readings')
-      .populate('reviews')
       .lean();
 
     const clientMap = new Map(clients.map(c => [c.userId, c]));

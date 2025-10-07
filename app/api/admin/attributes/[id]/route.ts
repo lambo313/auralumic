@@ -2,39 +2,21 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/database";
 import { User, UserRole } from "@/models/User";
-import fs from 'fs';
-import path from 'path';
+import Ability from "@/models/Ability";
+import Tool from "@/models/Tool";
+import Style from "@/models/Style";
+import Badge from "@/models/Badge";
 
-const ATTRIBUTES_FILE_PATH = path.join(process.cwd(), 'data', 'attributes.json');
-
-interface Attribute {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface AttributesData {
-  Abilities: Attribute[];
-  Tools: Attribute[];
-  Styles: Attribute[];
-}
-
-function readAttributesFile(): AttributesData {
-  try {
-    const fileContent = fs.readFileSync(ATTRIBUTES_FILE_PATH, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error reading attributes file:', error);
-    return { Abilities: [], Tools: [], Styles: [] };
-  }
-}
-
-function writeAttributesFile(data: AttributesData): void {
-  try {
-    fs.writeFileSync(ATTRIBUTES_FILE_PATH, JSON.stringify(data, null, 2), 'utf8');
-  } catch (error) {
-    console.error('Error writing attributes file:', error);
-    throw new Error('Failed to save attributes');
+function getModel(type: string) {
+  switch (type) {
+    case 'Abilities':
+      return Ability;
+    case 'Tools':
+      return Tool;
+    case 'Styles':
+      return Style;
+    default:
+      throw new Error('Invalid attribute type');
   }
 }
 
@@ -67,25 +49,26 @@ export async function PUT(
       return new NextResponse("Invalid attribute type", { status: 400 });
     }
 
-    const attributesData = readAttributesFile();
-    const attributeIndex = attributesData[type as keyof AttributesData].findIndex(attr => attr.id === id);
+    const Model = getModel(type);
+    
+    const updatedAttribute = await Model.findOneAndUpdate(
+      { id },
+      { name, description },
+      { new: true, runValidators: true }
+    );
 
-    if (attributeIndex === -1) {
+    if (!updatedAttribute) {
       return new NextResponse("Attribute not found", { status: 404 });
     }
 
-    const updatedAttribute: Attribute = {
-      id,
-      name,
-      description
-    };
-
-    attributesData[type as keyof AttributesData][attributeIndex] = updatedAttribute;
-    writeAttributesFile(attributesData);
-
     return NextResponse.json({ attribute: updatedAttribute });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[ADMIN_ATTRIBUTES_PUT]", error);
+    
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+      return new NextResponse("Attribute with this name already exists", { status: 409 });
+    }
+    
     return new NextResponse("Internal error", { status: 500 });
   }
 }
@@ -116,17 +99,29 @@ export async function DELETE(
       return new NextResponse("Invalid or missing attribute type", { status: 400 });
     }
 
-    const attributesData = readAttributesFile();
-    const attributeIndex = attributesData[type as keyof AttributesData].findIndex(attr => attr.id === id);
-
-    if (attributeIndex === -1) {
+    const Model = getModel(type);
+    
+    // First, find the attribute to get its name for badge matching
+    const attributeToDelete = await Model.findOne({ id });
+    if (!attributeToDelete) {
       return new NextResponse("Attribute not found", { status: 404 });
     }
 
-    attributesData[type as keyof AttributesData].splice(attributeIndex, 1);
-    writeAttributesFile(attributesData);
+    // Delete associated badges that reference this attribute
+    // Badges reference attributes by name, so we match on the attribute name
+    const deletedBadges = await Badge.deleteMany({ 
+      attribute: attributeToDelete.name 
+    });
 
-    return NextResponse.json({ message: "Attribute deleted successfully" });
+    // Now delete the attribute itself
+    const deletedAttribute = await Model.findOneAndDelete({ id });
+
+    console.log(`Deleted attribute "${attributeToDelete.name}" and ${deletedBadges.deletedCount} associated badges`);
+
+    return NextResponse.json({ 
+      message: "Attribute deleted successfully",
+      deletedBadges: deletedBadges.deletedCount
+    });
   } catch (error) {
     console.error("[ADMIN_ATTRIBUTES_DELETE]", error);
     return new NextResponse("Internal error", { status: 500 });

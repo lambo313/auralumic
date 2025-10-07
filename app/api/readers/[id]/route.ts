@@ -13,11 +13,18 @@ export async function GET(
     const { userId } = await auth()
     const { id } = await context.params
 
+    console.log("GET /api/readers/[id] - userId from auth:", userId, "requested id:", id);
+
     await dbConnect()
 
     const reader = await Reader.findOne({ userId: id })
       .select('-__v')
       .lean() as Record<string, unknown> | null
+
+    console.log("Reader found:", reader ? "yes" : "no");
+    if (reader) {
+      console.log("Reader isApproved:", reader.isApproved, "reader.userId:", reader.userId);
+    }
 
     // If no reader found in database, try mock data
     if (!reader) {
@@ -40,7 +47,10 @@ export async function GET(
 
     // Allow access if the reader is approved OR if the authenticated user is the owner
     const isOwner = userId && reader.userId === userId
+    console.log("Access check - isOwner:", isOwner, "reader.isApproved:", reader.isApproved);
+    
     if (!reader.isApproved && !isOwner) {
+      console.log("Access denied - reader not approved and user is not owner");
       return new NextResponse("Reader not found", { status: 404 })
     }
 
@@ -67,32 +77,65 @@ export async function PATCH(
 
     await dbConnect()
 
-    // Check if the reader belongs to the authenticated user
-    const reader = await Reader.findOne({ userId: id })
-    if (!reader) {
-      return new NextResponse("Reader not found", { status: 404 })
-    }
-
-    if (reader.userId !== userId) {
+    // Ensure the user is trying to update their own profile
+    if (id !== userId) {
       return new NextResponse("Forbidden", { status: 403 })
     }
 
+    // Check if the reader exists
+    let reader = await Reader.findOne({ userId: id })
+
     // Check if username is being changed and if it's already taken
-    if (body.username && body.username !== reader.username) {
+    if (body.username) {
       const existingUsername = await Reader.findOne({ username: body.username });
-      if (existingUsername) {
+      if (existingUsername && existingUsername.userId !== userId) {
         return new NextResponse("Username is already taken", { status: 409 });
       }
     }
 
-    // Update the reader
-    const updatedReader = await Reader.findByIdAndUpdate(
-      reader._id,
-      { $set: body },
-      { new: true, runValidators: true }
-    ).select('-__v')
+    if (!reader) {
+      // Create new reader profile if it doesn't exist
+      const newReaderData = {
+        userId: id,
+        username: body.username,
+        profileImage: body.profileImage,
+        tagline: body.tagline,
+        location: body.location,
+        experience: body.experience || '',
+        additionalInfo: body.additionalInfo || '',
+        attributes: body.attributes || { tools: [], abilities: [], style: '' },
+        availability: body.availability || {
+          schedule: {
+            monday: [],
+            tuesday: [],
+            wednesday: [],
+            thursday: [],
+            friday: [],
+            saturday: [],
+            sunday: []
+          },
+          timezone: 'UTC',
+          instantBooking: false
+        },
+        isApproved: false, // New profiles need approval
+        status: 'pending'
+      }
 
-    return NextResponse.json(updatedReader)
+      reader = await Reader.create(newReaderData)
+    } else {
+      // Update existing reader
+      reader = await Reader.findByIdAndUpdate(
+        reader._id,
+        { $set: body },
+        { new: true, runValidators: true }
+      )
+    }
+
+    // Remove __v field from response
+    const readerObj = reader.toObject()
+    delete readerObj.__v
+
+    return NextResponse.json(readerObj)
 
   } catch (error) {
     console.error("[READER_PATCH]", error)

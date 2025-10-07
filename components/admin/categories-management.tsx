@@ -93,7 +93,9 @@ export function CategoriesManagement() {
           const { category } = await response.json();
           setCategories(prev => prev.map(cat => cat.id === categoryId ? category : cat));
         } else {
-          throw new Error('Failed to update category');
+          const errorText = await response.text();
+          console.error('Update failed:', response.status, errorText);
+          throw new Error(`Failed to update category: ${errorText}`);
         }
       } else {
         // Add new category
@@ -107,11 +109,14 @@ export function CategoriesManagement() {
           const { category } = await response.json();
           setCategories(prev => [...prev, category]);
         } else {
-          throw new Error('Failed to create category');
+          const errorText = await response.text();
+          console.error('Create failed:', response.status, errorText);
+          throw new Error(`Failed to create category: ${errorText}`);
         }
       }
     } catch (error) {
       console.error("Error saving category:", error);
+      alert(error instanceof Error ? error.message : 'Failed to save category');
     } finally {
       setIsLoading(false);
     }
@@ -126,10 +131,13 @@ export function CategoriesManagement() {
       if (response.ok) {
         setCategories(prev => prev.filter(cat => cat.id !== id));
       } else {
-        throw new Error('Failed to delete category');
+        const errorText = await response.text();
+        console.error('Delete failed:', response.status, errorText);
+        throw new Error(`Failed to delete category: ${errorText}`);
       }
     } catch (error) {
       console.error('Error deleting category:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete category');
     }
   };
 

@@ -28,7 +28,14 @@ const readerSchema = new mongoose.Schema({
   additionalInfo: { type: String }, // Added additionalInfo field
   isOnline: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: false },
-  status: { type: String, default: "pending" }, // Reader status (e.g., pending, active, suspended)
+  status: { type: String, default: "pending" }, // Reader status (e.g., pending, approved, rejected, suspended)
+  
+  // Approval tracking
+  approvedAt: { type: Date },
+  approvedBy: { type: String }, // Admin user ID who approved
+  rejectedAt: { type: Date },
+  rejectedBy: { type: String }, // Admin user ID who rejected
+  
   languages: { type: [String], default: [] }, // List of languages
   attributes: {
     tools: {

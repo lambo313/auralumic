@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/database';
 import { User, UserRole } from '@/models/User';
 import Reader from '@/models/Reader';
+import Review from '@/models/Review';
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +44,6 @@ export async function GET(request: NextRequest) {
 
     // Fetch readers from database
     const readers = await Reader.find(readerQuery)
-      .populate('reviews')
       .select('-__v')
       .lean();
 
@@ -50,6 +51,14 @@ export async function GET(request: NextRequest) {
     const userIds = readers.map(r => r.userId);
     const users = await User.find({ clerkId: { $in: userIds } }).lean();
     const userMap = new Map(users.map(u => [u.clerkId, u]));
+
+    // Get review counts for readers
+    const readerIds = readers.map(r => r.userId);
+    const reviewCounts = await Review.aggregate([
+      { $match: { readerId: { $in: readerIds } } },
+      { $group: { _id: '$readerId', count: { $sum: 1 } } }
+    ]);
+    const reviewCountMap = new Map(reviewCounts.map(rc => [rc._id, rc.count]));
 
     // Merge reader and user data
     let readerData = readers.map(reader => {
@@ -76,7 +85,7 @@ export async function GET(request: NextRequest) {
         credits: user?.credits || 0,
         totalReadings: reader.stats?.totalReadings || 0,
         rating: reader.stats?.averageRating || 0,
-        reviewCount: reader.reviews?.length || 0,
+        reviewCount: reviewCountMap.get(reader.userId) || 0,
         totalEarnings: reader.stats?.totalEarnings || 0,
         specialties,
         verificationStatus,

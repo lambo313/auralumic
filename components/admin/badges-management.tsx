@@ -121,8 +121,21 @@ export function BadgesManagement() {
     }
   };
 
-  const loadAttributes = () => {
-    setAttributesByType(attributesData as AttributesData);
+  const loadAttributes = async () => {
+    try {
+      const response = await fetch('/api/admin/attributes');
+      if (response.ok) {
+        const data = await response.json();
+        setAttributesByType(data.attributes);
+      } else {
+        // Fallback to local data if API fails
+        setAttributesByType(attributesData as AttributesData);
+      }
+    } catch (error) {
+      console.error('Error loading attributes:', error);
+      // Fallback to local data
+      setAttributesByType(attributesData as AttributesData);
+    }
   };
 
   const handleBadgeSubmit = async (data: Omit<BadgeData, 'id'>, badgeId?: string) => {
@@ -140,7 +153,9 @@ export function BadgesManagement() {
           const { badge } = await response.json();
           setBadges(prev => prev.map(b => b.id === badgeId ? badge : b));
         } else {
-          throw new Error('Failed to update badge');
+          const errorText = await response.text();
+          console.error('Update failed:', response.status, errorText);
+          throw new Error(`Failed to update badge: ${errorText}`);
         }
       } else {
         // Add new badge
@@ -154,11 +169,14 @@ export function BadgesManagement() {
           const { badge } = await response.json();
           setBadges(prev => [...prev, badge]);
         } else {
-          throw new Error('Failed to create badge');
+          const errorText = await response.text();
+          console.error('Create failed:', response.status, errorText);
+          throw new Error(`Failed to create badge: ${errorText}`);
         }
       }
     } catch (error) {
       console.error("Error saving badge:", error);
+      alert(error instanceof Error ? error.message : 'Failed to save badge');
     } finally {
       setIsLoading(false);
     }
@@ -173,10 +191,13 @@ export function BadgesManagement() {
       if (response.ok) {
         setBadges(prev => prev.filter(badge => badge.id !== id));
       } else {
-        throw new Error('Failed to delete badge');
+        const errorText = await response.text();
+        console.error('Delete failed:', response.status, errorText);
+        throw new Error(`Failed to delete badge: ${errorText}`);
       }
     } catch (error) {
       console.error('Error deleting badge:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete badge');
     }
   };
 
