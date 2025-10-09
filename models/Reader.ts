@@ -23,8 +23,8 @@ const readerSchema = new mongoose.Schema({
   profileImage: { type: String, required: true },
   backgroundImage: String,
   tagline: { type: String, required: true },
-  location: { type: String, required: true },
-  experience: { type: String }, // Added experience field
+  location: { type: String, required: true }, // Format: "State, Country"
+  aboutMe: { type: String }, // Video link for about me section
   additionalInfo: { type: String }, // Added additionalInfo field
   isOnline: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: false },

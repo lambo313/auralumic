@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { StatusPostForm } from "./status-post-form";
 import { StatusCard } from "./status-card";
-import { Status } from "@/types";
+import { Status, ClientStatusSummary } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,12 @@ interface StatusManagerProps {
     category: string;
   }) => void;
   onAcceptSuggestion: (suggestionId: string) => void;
+  onSuggestReading?: (statusId: string) => void; // New prop for suggesting readings
   isPostingStatus: boolean;
+  canPost?: boolean; // New prop to control posting access
+  isOwnProfile?: boolean; // New prop to determine if viewing own profile
+  userRole?: "client" | "reader" | "admin"; // New prop for role-based access
+  clientData?: ClientStatusSummary; // New prop for modal data
 }
 
 export function StatusManager({
@@ -28,7 +33,12 @@ export function StatusManager({
   userAvatar,
   onPostStatus,
   onAcceptSuggestion,
-  isPostingStatus
+  onSuggestReading,
+  isPostingStatus,
+  canPost = true, // Default to true for backward compatibility
+  isOwnProfile = false,
+  userRole,
+  clientData
 }: StatusManagerProps) {
   const [showHistory, setShowHistory] = useState(false);
 
@@ -89,7 +99,7 @@ export function StatusManager({
       </div>
 
       {/* Post New Status Form */}
-      {!activeStatus && (
+      {!activeStatus && canPost && (
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">Share Your Current Situation</h2>
           <p className="text-sm text-muted-foreground">
@@ -113,9 +123,13 @@ export function StatusManager({
             userName={userName}
             userAvatar={userAvatar}
             onAcceptSuggestion={onAcceptSuggestion}
+            onSuggestReading={onSuggestReading}
             showActions={true}
+            isOwnProfile={isOwnProfile}
+            userRole={userRole}
+            clientData={clientData}
           />
-          {!isPostingStatus && (
+          {!isPostingStatus && canPost && (
             <Card className="border-dashed">
               <CardContent className="p-4 text-center">
                 <p className="text-sm text-muted-foreground mb-2">
@@ -152,7 +166,11 @@ export function StatusManager({
                   status={status}
                   userName={userName}
                   userAvatar={userAvatar}
+                  onSuggestReading={onSuggestReading}
                   showActions={false}
+                  isOwnProfile={isOwnProfile}
+                  userRole={userRole}
+                  clientData={clientData}
                 />
               ))}
               {pastStatuses.length > 5 && (

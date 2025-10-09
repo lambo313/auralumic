@@ -20,6 +20,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import { LocationSelector } from "@/components/ui/location-selector";
+import { timezoneGroups, getCommonTimezones, formatTimezoneLabel } from "@/lib/timezone-utils";
 import attributesData from "@/data/attributes.json";
 
 // Reuse schema from ReaderApplicationForm
@@ -30,8 +32,8 @@ const readerProfileSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   profileImage: z.string().optional(),
   tagline: z.string().min(10, "Tagline must be at least 10 characters").max(100, "Tagline must be less than 100 characters"),
-  location: z.string().min(1, "Please specify your location"),
-  experience: z.string().min(1, "Please describe your experience"),
+  location: z.string().min(1, "Please select your location"),
+  aboutMe: z.string().optional(),
   additionalInfo: z.string().optional(),
 });
 
@@ -44,12 +46,12 @@ interface ReaderProfileFormProps {
     profileImage?: string;
     tagline?: string;
     location?: string;
+    aboutMe?: string;
     attributes?: {
       abilities?: string[];
       tools?: string[];
       style?: string;
     };
-    experience?: string;
     availability?: string;
     additionalInfo?: string;
     role?: string;
@@ -65,21 +67,13 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
-  // Timezone options (can be expanded)
-  const timezoneOptions = [
-    "UTC",
-    "America/New_York",
-    "America/Chicago",
-    "America/Denver",
-    "America/Los_Angeles",
-    "Europe/London",
-    "Europe/Paris",
-    "Asia/Tokyo",
-    "Australia/Sydney"
-  ];
-  // Simple schedule: user picks available days (full day)
+  // Get common timezones for quick access, with full list available
+  const commonTimezones = getCommonTimezones();
+  const [showAllTimezones, setShowAllTimezones] = useState(false);
+  // Simple schedule: user picks available days with specific times
   const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
   const [availableDays, setAvailableDays] = useState<string[]>([]);
+  const [scheduleHours, setScheduleHours] = useState<Record<string, { start: string; end: string }>>({});
   const [timezone, setTimezone] = useState<string>("UTC");
   const [usernameStatus, setUsernameStatus] = useState<{
     available: boolean | null;
@@ -94,7 +88,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
       profileImage: reader.profileImage || "",
       tagline: reader.tagline || "",
       location: reader.location || "",
-      experience: reader.experience || "",
+      aboutMe: reader.aboutMe || "",
       additionalInfo: reader.additionalInfo || "",
     },
   });
@@ -111,7 +105,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             profileImage: data.profileImage || "",
             tagline: data.tagline || "",
             location: data.location || "",
-            experience: data.experience || "",
+            aboutMe: data.aboutMe || "",
             additionalInfo: data.additionalInfo || "",
           });
           // Update selected attributes
@@ -124,6 +118,19 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             day => data.availability.schedule[day].length > 0
           );
           setAvailableDays(days);
+          
+          // Load schedule hours for each day
+          const hours: Record<string, { start: string; end: string }> = {};
+          days.forEach(day => {
+            const daySchedule = data.availability?.schedule[day];
+            if (daySchedule && daySchedule.length > 0) {
+              hours[day] = {
+                start: daySchedule[0].start,
+                end: daySchedule[0].end
+              };
+            }
+          });
+          setScheduleHours(hours);
         }
       } catch (error) {
         console.error("Failed to fetch reader data", error);
@@ -203,12 +210,17 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const [profileImagePreview, setProfileImagePreview] = useState<string>("");
 
   async function onSubmit(data: ReaderProfileFormValues) {
-    // Build schedule object (full day for selected days)
+    // Build schedule object with specific times for selected days
     const schedule: Record<string, { start: string; end: string }[]> = {};
     daysOfWeek.forEach(day => {
-      schedule[day] = availableDays.includes(day)
-        ? [{ start: "00:00", end: "23:59" }] // available all day
-        : [];
+      if (availableDays.includes(day) && scheduleHours[day]) {
+        schedule[day] = [{ 
+          start: scheduleHours[day].start, 
+          end: scheduleHours[day].end 
+        }];
+      } else {
+        schedule[day] = [];
+      }
     });
     // Build availability object
     const availability = {
@@ -252,7 +264,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             style: selectedStyle || "",
           },
           availability,
-          experience: data.experience,
+          aboutMe: data.aboutMe,
           additionalInfo: data.additionalInfo,
         }),
       });
@@ -419,8 +431,33 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., New York, NY or London, UK" {...field} />
+                <LocationSelector
+                  value={field.value}
+                  onChange={(location, detectedTimezone) => {
+                    field.onChange(location);
+                    setTimezone(detectedTimezone);
+                  }}
+                />
               </FormControl>
+              <FormDescription>
+                Select your country and state/province. This will automatically set your timezone.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={readerForm.control}
+          name="aboutMe"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>About Me Video</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., https://youtube.com/embed/your-video-id" {...field} />
+              </FormControl>
+              <FormDescription>
+                Provide a link to a video where you introduce yourself to potential clients (YouTube embed link, Vimeo embed link, etc.)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -483,59 +520,138 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           </FormDescription>
         </div>
 
-        <FormField
-          control={readerForm.control}
-          name="experience"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Experience</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Tell us about your experience as a reader..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Availability: Days of week checkboxes */}
-        <div className="space-y-2">
-          <FormLabel>General Availability</FormLabel>
-          <div className="flex flex-wrap gap-2 mb-2">
+        {/* Availability: Days of week with detailed time settings */}
+        <div className="space-y-4">
+          <FormLabel>Detailed Availability Schedule</FormLabel>
+          <div className="space-y-3">
             {daysOfWeek.map(day => (
-              <label key={day} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={availableDays.includes(day)}
-                  onChange={e => {
-                    setAvailableDays(prev =>
-                      e.target.checked
-                        ? [...prev, day]
-                        : prev.filter(d => d !== day)
-                    );
-                  }}
-                />
-                <span className="capitalize">{day}</span>
-              </label>
+              <div key={day} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={availableDays.includes(day)}
+                      onChange={e => {
+                        setAvailableDays(prev =>
+                          e.target.checked
+                            ? [...prev, day]
+                            : prev.filter(d => d !== day)
+                        );
+                        if (e.target.checked && !scheduleHours[day]) {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: { start: "09:00", end: "17:00" }
+                          }));
+                        }
+                      }}
+                    />
+                    <span className="capitalize font-medium">{day}</span>
+                  </label>
+                </div>
+                {availableDays.includes(day) && (
+                  <div className="grid grid-cols-2 gap-4 ml-6">
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm">Start Time</FormLabel>
+                      <Input
+                        type="time"
+                        value={scheduleHours[day]?.start || "09:00"}
+                        onChange={e => {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: {
+                              ...prev[day],
+                              start: e.target.value
+                            }
+                          }));
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm">End Time</FormLabel>
+                      <Input
+                        type="time"
+                        value={scheduleHours[day]?.end || "17:00"}
+                        onChange={e => {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: {
+                              ...prev[day],
+                              end: e.target.value
+                            }
+                          }));
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
           <FormDescription>
-            Select the days you are generally available. (You&apos;ll be able to set specific hours later)
+            Select the days you are available and set specific hours for each day. You can edit these times later.
           </FormDescription>
         </div>
         {/* Timezone dropdown */}
         <div className="space-y-2">
           <FormLabel>Timezone</FormLabel>
-          <select
-            className="border rounded px-2 py-1 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-            value={timezone}
-            onChange={e => setTimezone(e.target.value)}
-          >
-            {timezoneOptions.map(tz => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
+          <div className="space-y-3">
+            <select
+              className="w-full border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+              value={timezone}
+              onChange={e => {
+                const value = e.target.value;
+                if (value === 'show-all') {
+                  setShowAllTimezones(true);
+                } else if (value === 'show-common') {
+                  setShowAllTimezones(false);
+                } else {
+                  setTimezone(value);
+                }
+              }}
+            >
+              {!showAllTimezones ? (
+                <>
+                  <optgroup label="Common Timezones">
+                    {commonTimezones.map(tz => (
+                      <option key={tz.value} value={tz.value}>
+                        {formatTimezoneLabel(tz)}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="show-all">── Show All Timezones ──</option>
+                </>
+              ) : (
+                <>
+                  <option value="show-common">── Show Common Only ──</option>
+                  {timezoneGroups.map(group => (
+                    <optgroup key={group.region} label={group.region}>
+                      {group.timezones.map(tz => (
+                        <option key={tz.value} value={tz.value}>
+                          {formatTimezoneLabel(tz)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </>
+              )}
+            </select>
+            
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllTimezones(!showAllTimezones)}
+                className="text-xs"
+              >
+                {showAllTimezones ? 'Show Common Only' : 'Show All Timezones'}
+              </Button>
+            </div>
+          </div>
           <FormDescription>
-            Select your timezone for accurate scheduling.
+            Select your timezone for accurate scheduling. The timezone will be automatically detected based on your selected location.
           </FormDescription>
         </div>
 

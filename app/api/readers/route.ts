@@ -11,11 +11,12 @@ type SearchQuery = {
 type LeanReader = {
   _id: string;
   tagline?: string;
-  bio?: string;
   location?: string;
+  aboutMe?: string;
   attributes?: {
     tools?: string[];
     abilities?: string[];
+    style?: string;
   };
   // Add other fields as needed
 };
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
         { tagline: { $regex: query, $options: "i" } },
         { bio: { $regex: query, $options: "i" } },
         { location: { $regex: query, $options: "i" } },
+        { aboutMe: { $regex: query, $options: "i" } },
         { "attributes.tools": { $in: [new RegExp(query, "i")] } },
         { "attributes.abilities": { $in: [new RegExp(query, "i")] } }
       ]
@@ -49,6 +51,12 @@ export async function GET(request: Request) {
       .skip(skip)
       .limit(limit)
       .lean() as LeanReader[]
+
+    // Convert MongoDB _id to id for consistency
+    const formattedReaders = readers.map(reader => ({
+      ...reader,
+      id: reader._id.toString(),
+    }));
 
     const total = await Reader.countDocuments(searchQuery)
 
@@ -64,7 +72,7 @@ export async function GET(request: Request) {
           return (
             r.tagline?.toLowerCase().includes(lowerQuery) ||
             r.location?.toLowerCase().includes(lowerQuery) ||
-            r.experience?.toLowerCase().includes(lowerQuery) ||
+            r.aboutMe?.toLowerCase().includes(lowerQuery) ||
             r.attributes?.tools?.some(t => t.toLowerCase().includes(lowerQuery)) ||
             r.attributes?.abilities?.some(a => a.toLowerCase().includes(lowerQuery))
           )
@@ -74,7 +82,7 @@ export async function GET(request: Request) {
       // Convert mock readers to API format
       const mockReadersFormatted = filteredMockReaders.slice(skip, skip + limit).map(r => ({
         ...r,
-        _id: r.id,
+        // Keep the existing id from mock data, don't change to _id
         createdAt: r.createdAt.toISOString(),
         lastActive: r.lastActive.toISOString(),
         updatedAt: r.updatedAt?.toISOString() || r.createdAt.toISOString()
@@ -92,7 +100,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      readers,
+      readers: formattedReaders,
       pagination: {
         page,
         limit,

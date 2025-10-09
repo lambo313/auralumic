@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,20 @@ import { formatDistanceToNow } from "date-fns";
 interface ClientCardProps {
   client: ClientStatusSummary;
   onSuggestReading: (clientId: string, statusId: string) => void;
+  onSelectClient?: () => void;
 }
 
-export function ClientCard({ client, onSuggestReading }: ClientCardProps) {
+export function ClientCard({ client, onSuggestReading, onSelectClient }: ClientCardProps) {
+  const router = useRouter();
   const { currentStatus } = client;
+
+  const handleClientClick = () => {
+    if (onSelectClient) {
+      onSelectClient();
+    } else {
+      router.push(`/client/profile/${client.id}`);
+    }
+  };
   
   const getMoodIcon = (mood?: string) => {
     switch (mood?.toLowerCase()) {
@@ -46,7 +57,10 @@ export function ClientCard({ client, onSuggestReading }: ClientCardProps) {
 
   return (
     <Card className="hover:shadow-aura-md transition-shadow duration-200">
-      <CardHeader className="pb-3">
+      <CardHeader 
+        className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors duration-200"
+        onClick={handleClientClick}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">

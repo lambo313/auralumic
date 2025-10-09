@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Status, SuggestedReading } from "@/types";
+import { Status, SuggestedReading, ClientStatusSummary } from "@/types";
+import { SuggestReadingModal } from "@/components/clients/suggest-reading-modal";
 import { MessageCircle, Clock, User, Heart, Star, CheckCircle, XCircle, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -16,7 +17,11 @@ interface StatusCardProps {
   userAvatar?: string;
   onAcceptSuggestion?: (suggestionId: string) => void;
   onViewDetails?: (statusId: string) => void;
+  onSuggestReading?: (statusId: string) => void; // New prop for suggesting readings
   showActions?: boolean;
+  isOwnProfile?: boolean; // New prop to determine if viewing own profile
+  userRole?: "client" | "reader" | "admin"; // New prop for role-based access
+  clientData?: ClientStatusSummary; // New prop for modal data
 }
 
 export function StatusCard({ 
@@ -25,9 +30,14 @@ export function StatusCard({
   userAvatar, 
   onAcceptSuggestion, 
   onViewDetails,
-  showActions = true 
+  onSuggestReading,
+  showActions = true,
+  isOwnProfile = false,
+  userRole,
+  clientData
 }: StatusCardProps) {
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getMoodIcon = (mood?: string) => {
     switch (mood?.toLowerCase()) {
@@ -58,6 +68,11 @@ export function StatusCard({
   };
 
   const acceptedSuggestion = status.suggestedReadings.find(s => s.isAccepted);
+
+  const handleSuggestReading = () => {
+    setIsModalOpen(true);
+    onSuggestReading?.(status.id);
+  };
 
   return (
     <Card className="w-full">
@@ -104,6 +119,28 @@ export function StatusCard({
           <p className="text-sm text-muted-foreground leading-relaxed pl-6">
             {status.content}
           </p>
+        </div>
+
+        {/* Status Info */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>{status.suggestedReadings.length} suggestions</span>
+            <span>•</span>
+            <span className={status.isActive ? "text-green-600" : "text-orange-600"}>
+              {status.isActive ? "Open" : "Closed"}
+            </span>
+          </div>
+          
+          {/* Suggest Reading button - only for readers viewing active statuses */}
+          {status.isActive && userRole === "reader" && !isOwnProfile && onSuggestReading && (
+            <Button
+              size="sm"
+              onClick={handleSuggestReading}
+              className="h-7 px-3 text-xs"
+            >
+              Suggest Reading
+            </Button>
+          )}
         </div>
 
         {/* Suggested Readings */}
@@ -167,7 +204,7 @@ export function StatusCard({
                     )}
                   </div>
 
-                  {showActions && !acceptedSuggestion && status.isActive && (
+                  {showActions && !acceptedSuggestion && status.isActive && isOwnProfile && (
                     <div className="mt-3 flex justify-end gap-2">
                       <Button
                         size="sm"
@@ -203,7 +240,7 @@ export function StatusCard({
         )}
 
         {/* Action Buttons */}
-        {showActions && onViewDetails && (
+        {showActions && onViewDetails && isOwnProfile && (
           <div className="flex justify-end pt-2">
             <Button
               variant="ghost"
@@ -216,6 +253,14 @@ export function StatusCard({
           </div>
         )}
       </CardContent>
+
+      {/* Suggest Reading Modal */}
+      <SuggestReadingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        client={clientData || null}
+        statusId={status.id}
+      />
     </Card>
   );
 }

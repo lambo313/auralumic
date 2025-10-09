@@ -4,6 +4,14 @@ import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
 import Review from "@/models/Review"
 import { getMockReaderById } from "@/components/readers/mock-reader-data"
+import mongoose from "mongoose"
+
+interface LeanReaderDocument {
+  _id: mongoose.Types.ObjectId;
+  userId: string;
+  isApproved: boolean;
+  [key: string]: unknown;
+}
 
 export async function GET(
   request: Request,
@@ -17,11 +25,23 @@ export async function GET(
 
     await dbConnect()
 
-    const reader = await Reader.findOne({ userId: id })
-      .select('-__v')
-      .lean() as Record<string, unknown> | null
+    // Try to find reader by MongoDB _id first (only if it's a valid ObjectId)
+    let reader: LeanReaderDocument | null = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      reader = await Reader.findById(id)
+        .select('-__v')
+        .lean() as LeanReaderDocument | null;
+      console.log("Reader found by _id:", reader ? "yes" : "no");
+    }
 
-    console.log("Reader found:", reader ? "yes" : "no");
+    // If not found by _id, try by userId (for backward compatibility)
+    if (!reader) {
+      reader = await Reader.findOne({ userId: id })
+        .select('-__v')
+        .lean() as LeanReaderDocument | null;
+      console.log("Reader found by userId:", reader ? "yes" : "no");
+    }
+
     if (reader) {
       console.log("Reader isApproved:", reader.isApproved, "reader.userId:", reader.userId);
     }
@@ -54,7 +74,13 @@ export async function GET(
       return new NextResponse("Reader not found", { status: 404 })
     }
 
-    return NextResponse.json(reader)
+    // Convert _id to id for consistency with frontend expectations
+    const formattedReader = {
+      ...reader,
+      id: reader._id.toString()
+    };
+
+    return NextResponse.json(formattedReader)
 
   } catch (error) {
     console.error("[READER_GET]", error)

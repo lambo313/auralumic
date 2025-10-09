@@ -13,7 +13,7 @@ interface ReaderData {
   profileImage: string;
   tagline: string;
   location: string;
-  experience?: string;
+  aboutMe?: string;
   additionalInfo?: string;
   attributes?: {
     abilities?: string[];
@@ -122,7 +122,7 @@ function ReaderProfileEditPage() {
             profileImage: readerData?.profileImage || user.imageUrl || '',
             tagline: readerData?.tagline || '',
             location: readerData?.location || '',
-            experience: readerData?.experience || '',
+            aboutMe: readerData?.aboutMe || '',
             additionalInfo: readerData?.additionalInfo || '',
             attributes: readerData?.attributes,
             availability: readerData?.availability ? 

@@ -28,6 +28,15 @@ function ClientLayoutInner({
       return;
     }
     
+    // Check if the current path is a client profile view page (accessible to all users)
+    const isProfileViewPage = pathname?.match(/^\/client\/profile\/[^\/]+$/) && pathname !== '/client/profile/edit';
+    
+    // Allow all authenticated users to view client profiles
+    if (isProfileViewPage) {
+      setIsRedirecting(false);
+      return;
+    }
+    
     if (role === "admin") {
       setIsRedirecting(true);
       router.replace("/admin/dashboard");

@@ -29,7 +29,7 @@ export interface Reader {
   backgroundImage?: string;
   tagline: string;
   location: string;
-  experience?: string;
+  aboutMe?: string;
   additionalInfo?: string;
   isOnline: boolean;
   isApproved: boolean;

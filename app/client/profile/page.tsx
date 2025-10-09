@@ -18,8 +18,8 @@ type UserMetadata = {
 // Mock user statuses for development - this would come from an API in production
 const mockUserStatuses: Status[] = [
   {
-    id: "user-status-1",
-    userId: "current-user",
+    id: "67053cb0f1a2b3c4d5e6f789",
+    userId: "67053cb1a2b3c4d5e6f78901",
     content: "I've been feeling really lost in my career lately. I have a good job but something feels missing. I wake up every day feeling unmotivated and I'm starting to question if this is the right path for me. Any insights would be appreciated.",
     mood: "confused",
     category: "career",
@@ -28,9 +28,9 @@ const mockUserStatuses: Status[] = [
     updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     suggestedReadings: [
       {
-        id: "suggestion-user-1",
-        statusId: "user-status-1",
-        readerId: "reader-1",
+        id: "67053cb2b3c4d5e6f7890123",
+        statusId: "67053cb0f1a2b3c4d5e6f789",
+        readerId: "67053cb3c4d5e6f789012345",
         readerName: "Luna Mystic",
         readerAvatarUrl: "/assets/readers/luna.jpg",
         title: "Career Path Clarity Reading",
@@ -68,8 +68,8 @@ function ClientProfilePage() {
 
       // Create new status
       const newStatus: Status = {
-        id: `user-status-${Date.now()}`,
-        userId: user?.id || "current-user",
+        id: `67053cb4${Date.now().toString(16)}`, // MongoDB-like ObjectId with timestamp
+        userId: user?.id || "67053cb1a2b3c4d5e6f78901",
         content: statusData.content,
         mood: statusData.mood,
         category: statusData.category,
@@ -161,7 +161,12 @@ function ClientProfilePage() {
               userAvatar={user.imageUrl}
               onPostStatus={handlePostStatus}
               onAcceptSuggestion={handleAcceptSuggestion}
+              onSuggestReading={async () => {}} // Main profile page doesn't need suggest reading
               isPostingStatus={isPostingStatus}
+              canPost={true}
+              isOwnProfile={true}
+              userRole={role || "client"}
+              clientData={undefined} // Own profile doesn't need client data for modal
             />
           </div>
 

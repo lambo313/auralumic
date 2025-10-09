@@ -63,8 +63,22 @@ export default clerkMiddleware(async (auth, req) => {
     return
   }
 
-  // Client routes require client role
+  // Client routes require client role, except profile view pages
   if (isClientRoute(req)) {
+    const pathname = req.nextUrl.pathname
+    
+    // Check if it's a client profile view page (e.g., /client/profile/user_123)
+    // Allow access if it matches /client/profile/{id} but not /client/profile/edit
+    const profileViewMatch = pathname.match(/^\/client\/profile\/[^\/]+$/)
+    const isEditPage = pathname === '/client/profile/edit'
+    
+    if (profileViewMatch && !isEditPage) {
+      // Profile view pages are accessible to all authenticated users
+      await auth.protect()
+      return
+    }
+    
+    // All other client routes require authentication (role checking done in components)
     await auth.protect()
     return
   }

@@ -4,21 +4,26 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { ProfileHeader } from "@/components/profile/profile-header";
-import { ReaderProfile } from "@/components/readers";
+import { StatusManager } from "@/components/profile/status-manager";
 import { Card } from "@/components/ui/card";
 import { withSafeRendering } from "@/components/ui/with-safe-rendering";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { BookingDialog } from "@/components/readings/booking-dialog";
-import type { User, Reader } from "@/types/index";
-import { getMockReaderById } from "@/components/readers/mock-reader-data";
-import { readerService } from "@/services/reader-service";
+import { ChevronLeft } from "lucide-react";
+import type { User, Status } from "@/types/index";
+import { getMockClientById } from "@/components/clients/mock-client-data";
 import { userService } from "@/services/api";
 
-// Fetch profile by id (client or reader)
-function useProfile(id: string | null) {
-  const { user, role } = useAuth();
-  const [profile, setProfile] = useState<User | Reader | null>(null);
+type UserMetadata = {
+  bio?: string;
+  location?: string;
+  website?: string;
+};
+
+// Fetch client profile by id
+function useClientProfile(id: string | null) {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,24 +33,39 @@ function useProfile(id: string | null) {
       setError(null);
       try {
         if (!id || (user && id === user.id)) {
-          // Own profile (client or reader)
+          // Own profile
           const data = await userService.getCurrentUser();
           setProfile(data);
         } else {
-          // Reader profile
-          try {
-            const data = await readerService.getReaderById(id);
-            setProfile(data);
-          } catch (err) {
-            // Use mock reader if fetch fails
-            // Use mock reader if fetch fails
-            const mockReader = getMockReaderById(id);
-            if (mockReader) {
-              setProfile(mockReader);
-            } else {
-              setProfile(null);
-            }
-            setError(null);
+          // Other client profile - use mock data for now
+          const mockClient = getMockClientById(id);
+          if (mockClient) {
+            // Convert ClientStatusSummary to User format
+            const clientUser: User = {
+              id: mockClient.id,
+              clerkId: mockClient.id,
+              email: `${mockClient.name.toLowerCase().replace(' ', '.')}@email.com`,
+              username: mockClient.name.toLowerCase().replace(' ', '_'),
+              role: "client",
+              credits: 0,
+              preferences: {
+                theme: 'auto',
+                notifications: {
+                  email: true,
+                  push: true,
+                  inApp: true
+                }
+              },
+              hasCompletedOnboarding: true,
+              createdAt: mockClient.joinDate,
+              updatedAt: mockClient.lastActive,
+              lastLogin: mockClient.lastActive,
+              bio: `Spiritual seeker interested in ${mockClient.preferredCategories?.join(', ') || 'guidance'}`,
+              location: "United States"
+            };
+            setProfile(clientUser);
+          } else {
+            setError("Client profile not found");
           }
         }
       } catch (err: unknown) {
@@ -58,7 +78,7 @@ function useProfile(id: string | null) {
     fetchProfile();
   }, [id, user]);
 
-  return { profile, role, loading, error };
+  return { profile, loading, error };
 }
 
 
@@ -67,20 +87,139 @@ function ClientProfileViewPage() {
   const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : null;
   const { user, role } = useAuth();
-  const { profile, loading, error } = useProfile(id);
-  const isOwnProfile = !id || (user && id === user.id) ? true : false;
-  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const { profile, loading, error } = useClientProfile(id);
+  const isOwnProfile = !id || (user && id === user.id);
+
+  // Mock client statuses for development - in production this would come from API
+  const [clientStatuses, setClientStatuses] = useState<Status[]>([]);
+  const [isPostingStatus, setIsPostingStatus] = useState(false);
+
+  // Get client's statuses from mock data if viewing another client
+  useEffect(() => {
+    if (profile && !isOwnProfile) {
+      const mockClient = getMockClientById(profile.id);
+      if (mockClient?.currentStatus) {
+        setClientStatuses([mockClient.currentStatus]);
+      }
+    }
+  }, [profile, isOwnProfile]);
+
+  // Get client data for modal
+  const getClientData = () => {
+    if (profile && !isOwnProfile) {
+      return getMockClientById(profile.id);
+    }
+    return undefined;
+  };
+
+  // Get avatar URL for client (from mock data if available)
+  const getClientAvatar = (profile: User) => {
+    if (isOwnProfile) {
+      return (profile as User & { imageUrl?: string }).imageUrl;
+    } else {
+      const mockClient = getMockClientById(profile.id);
+      return mockClient?.avatarUrl || (profile as User & { imageUrl?: string }).imageUrl || "/assets/clients/default.jpg";
+    }
+  };
+
+  const handlePostStatus = async (statusData: {
+    content: string;
+    mood: string;
+    category: string;
+  }) => {
+    if (!isOwnProfile) return; // Only allow posting on own profile
+    
+    setIsPostingStatus(true);
+    try {
+      // Close any existing active status
+      const updatedStatuses = clientStatuses.map(status => ({
+        ...status,
+        isActive: false,
+        updatedAt: new Date()
+      }));
+
+      // Create new status
+      const newStatus: Status = {
+        id: `67053cb4${Date.now().toString(16)}`, // MongoDB-like ObjectId with timestamp
+        userId: user?.id || profile?.id || "",
+        content: statusData.content,
+        mood: statusData.mood,
+        category: statusData.category,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        suggestedReadings: []
+      };
+
+      setClientStatuses([newStatus, ...updatedStatuses]);
+    } catch (error) {
+      console.error("Error posting status:", error);
+      alert("Failed to post status. Please try again.");
+    } finally {
+      setIsPostingStatus(false);
+    }
+  };
+
+  const handleAcceptSuggestion = async (suggestionId: string) => {
+    if (!isOwnProfile) return; // Only allow accepting on own profile
+    
+    try {
+      const statusWithSuggestion = clientStatuses.find(status =>
+        status.suggestedReadings.some(s => s.id === suggestionId)
+      );
+
+      if (!statusWithSuggestion) return;
+
+      const updatedStatuses = clientStatuses.map(status => {
+        if (status.id === statusWithSuggestion.id) {
+          return {
+            ...status,
+            isActive: false,
+            acceptedSuggestedReadingId: suggestionId,
+            updatedAt: new Date(),
+            suggestedReadings: status.suggestedReadings.map(suggestion => ({
+              ...suggestion,
+              isAccepted: suggestion.id === suggestionId,
+              updatedAt: new Date()
+            }))
+          };
+        }
+        return status;
+      });
+
+      setClientStatuses(updatedStatuses);
+      alert("Reading suggestion accepted! The reader will be notified.");
+    } catch (error) {
+      console.error("Error accepting suggestion:", error);
+      alert("Failed to accept suggestion. Please try again.");
+    }
+  };
+
+  const handleSuggestReading = async (statusId: string) => {
+    // The modal is now handled directly in the StatusCard component
+    // No additional action needed here
+    console.log("Suggest reading for status:", statusId);
+  };
 
   return (
     <main className="container py-6">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.back()}
+        className="mb-6 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
+
       <div className="mb-6">
-        <h1 className="page-title">{(profile && 'role' in profile && profile.role === "client") ? "Client Profile" : "Reader Profile"}</h1>
+        <h1 className="page-title">Client Profile</h1>
         <p className="page-description">
           {isOwnProfile
-            ? (profile && 'role' in profile && profile.role === "client")
-              ? "Manage your client profile and preferences"
-              : "Manage your reader profile and preferences"
-            : `Viewing ${(profile && 'role' in profile && profile.role === "client") ? "Client" : "Reader"}: ${(profile && 'username' in profile) ? profile.username : 'Unknown'}`}
+            ? "Manage your client profile and preferences"
+            : `Viewing Client: ${profile?.username || 'Unknown'}`}
         </p>
       </div>
 
@@ -90,73 +229,93 @@ function ClientProfileViewPage() {
         </Card>
       ) : error ? (
         <Card className="p-6">
-          <p className="text-center text-red-500">{error}</p>
+          <div className="text-center space-y-4">
+            <p className="text-red-500">{error}</p>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </div>
         </Card>
       ) : profile ? (
         <div className="space-y-8">
-          <ProfileHeader user={profile as User | Reader} isOwnProfile={Boolean(isOwnProfile)} />
+          <ProfileHeader user={{
+            avatarUrl: getClientAvatar(profile),
+            profileImage: undefined,
+            name: profile.username,
+            username: profile.username,
+            firstName: undefined,
+            lastName: undefined,
+            bio: profile.bio,
+            location: profile.location,
+            website: profile.website
+          }} isOwnProfile={Boolean(isOwnProfile)} />
+
           <Separator />
-          {/* Sleek ReaderProfile display for reader profiles */}
-          {!isOwnProfile && profile && (!('role' in profile) || profile.role === "reader") ? (
-            (() => {
-              const reader = profile as Reader;
-              const readerProfileData = {
-                id: reader.id,
-                name: reader.username ?? `${(reader as Reader & { firstName?: string }).firstName ?? ""} ${(reader as Reader & { lastName?: string }).lastName ?? ""}`.trim(),
-                avatarUrl: reader.profileImage ?? "/assets/readers/default.jpg",
-                bio: reader.experience ?? reader.additionalInfo ?? "",
-                specialties: (reader as Reader & { specialties?: string[] }).specialties ?? [],
-                rating: (reader as Reader & { rating?: number }).rating ?? 0,
-                reviewCount: (reader as Reader & { reviewCount?: number }).reviewCount ?? 0,
-                status: (reader as Reader & { status?: "available" | "busy" | "offline" }).status ?? "available",
-                completedReadings: (reader as Reader & { completedReadings?: number }).completedReadings ?? 0,
-                languages: (reader as Reader & { languages?: string[] }).languages ?? ["English"],
-                isVerified: (reader as Reader & { isVerified?: boolean }).isVerified ?? false,
-                joinDate: reader.createdAt ? new Date(reader.createdAt) : new Date(),
-                testimonials: (reader as Reader & { testimonials?: Array<{ id: string; text: string; rating: number; clientName: string; date: Date }> }).testimonials ?? [],
-              };
-              // Only show request button if logged in as client
-              const showRequestButton = role === "client";
-              const handleRequestReading = () => {
-                // Open the booking dialog for this reader
-                setIsBookingDialogOpen(true);
-              };
-              return (
-                <div className="mt-6">
-                  <Card className="p-0 shadow-none border-none bg-transparent">
-                    <div className="rounded-xl overflow-hidden">
-                      <div className="bg-white dark:bg-zinc-900">
-                        <div className="p-0">
-                          <ReaderProfile
-                            reader={readerProfileData}
-                            onRequestReading={showRequestButton ? handleRequestReading : undefined}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              );
-            })()
-          ) : null}
-          {/* If viewing own reader profile, you can add more details here if needed */}
+
+          {/* Status Management Section */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">
+                {isOwnProfile ? "My Status Updates" : "Recent Activity"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isOwnProfile 
+                  ? "Share what's on your mind and receive personalized reading suggestions from our readers."
+                  : "View recent status updates and activity."
+                }
+              </p>
+            </div>
+            
+            {isOwnProfile ? (
+              <StatusManager
+                userStatuses={clientStatuses}
+                userName={profile.username || "You"}
+                userAvatar={getClientAvatar(profile)}
+                onPostStatus={handlePostStatus}
+                onAcceptSuggestion={handleAcceptSuggestion}
+                onSuggestReading={handleSuggestReading}
+                isPostingStatus={isPostingStatus}
+                canPost={true}
+                isOwnProfile={true}
+                userRole={role || "client"}
+                clientData={getClientData()}
+              />
+            ) : (
+              clientStatuses.length > 0 ? (
+                <StatusManager
+                  userStatuses={clientStatuses}
+                  userName={profile.username || "Client"}
+                  userAvatar={getClientAvatar(profile)}
+                  onPostStatus={async () => {}} // No posting for other profiles
+                  onAcceptSuggestion={async () => {}} // No accepting for other profiles
+                  onSuggestReading={handleSuggestReading}
+                  isPostingStatus={false}
+                  canPost={false} // Disable posting for other profiles
+                  isOwnProfile={false}
+                  userRole={role || "client"}
+                  clientData={getClientData()}
+                />
+              ) : (
+                <Card className="p-6">
+                  <p className="text-center text-muted-foreground">
+                    This client hasn&apos;t posted any status updates yet.
+                  </p>
+                </Card>
+              )
+            )}
+          </div>
         </div>
       ) : (
         <Card className="p-6">
-          <p className="text-center text-muted-foreground">
-            Please sign in to view your profile
-          </p>
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">Client profile not found</p>
+            <Button variant="outline" onClick={() => router.back()}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </div>
         </Card>
-      )}
-
-      {/* Booking Dialog */}
-      {profile && !isOwnProfile && (!('role' in profile) || profile.role === "reader") && (
-        <BookingDialog
-          readerId={profile.id}
-          readerName={profile.username || "Reader"}
-          isOpen={isBookingDialogOpen}
-          onClose={() => setIsBookingDialogOpen(false)}
-        />
       )}
     </main>
   );

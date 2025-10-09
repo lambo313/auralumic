@@ -1,19 +1,33 @@
 import { Reader } from "@/types"
 
+interface ReadersResponse {
+  readers: Reader[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+
 class ReaderService {
   private baseUrl = "/api/readers"
 
   async getReaders(params?: {
-    type?: string
-    status?: string
+    query?: string
     page?: number
     limit?: number
-  }): Promise<Reader[]> {
-    const queryString = params
-      ? "?" + new URLSearchParams(params as Record<string, string>).toString()
-      : ""
+  }): Promise<ReadersResponse> {
+    const queryParams = new URLSearchParams()
+    
+    if (params?.query) queryParams.append("query", params.query)
+    if (params?.page) queryParams.append("page", params.page.toString())
+    if (params?.limit) queryParams.append("limit", params.limit.toString())
 
-    const response = await fetch(`${this.baseUrl}${queryString}`)
+    const queryString = queryParams.toString()
+    const url = queryString ? `${this.baseUrl}?${queryString}` : this.baseUrl
+
+    const response = await fetch(url)
     if (!response.ok) {
       throw new Error("Failed to fetch readers")
     }

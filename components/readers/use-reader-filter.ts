@@ -31,7 +31,6 @@ export function useReaderFilter({
         if (
           searchQuery &&
           !(reader.username?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-          !(reader.experience?.toLowerCase().includes(searchQuery.toLowerCase())) &&
           !(reader.attributes?.tools?.some((tool) =>
             tool.toLowerCase().includes(searchQuery.toLowerCase())
           ) || reader.attributes?.abilities?.some((ability) =>

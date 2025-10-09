@@ -22,9 +22,11 @@ import {
   MessageSquare,
   CheckCircle2,
   XCircle,
-  Globe
+  Globe,
+  MapPin
 } from 'lucide-react';
 import attributesData from '@/data/attributes.json';
+import { getTimezoneByValue, formatTimezoneLabel } from '@/lib/timezone-utils';
 
 interface ReaderData {
   userId: string;
@@ -33,7 +35,7 @@ interface ReaderData {
   backgroundImage?: string;
   tagline: string;
   location: string;
-  experience?: string;
+  aboutMe?: string;
   additionalInfo?: string;
   isOnline: boolean;
   isApproved: boolean;
@@ -111,6 +113,15 @@ function ReaderProfilePage() {
     return attribute?.name || id;
   };
 
+  // Helper function to convert 24-hour time to 12-hour format
+  const formatTime12Hour = (time24: string): string => {
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   // Format available days
   const getAvailableDays = () => {
     if (!readerData?.availability?.schedule) return [];
@@ -185,39 +196,111 @@ function ReaderProfilePage() {
   const availableDays = getAvailableDays();
 
   return (
-    <main className="container py-6">
+    <main className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6">
-        <h1 className="page-title">Reader Profile</h1>
-        <p className="page-description">
+        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
+          Reader Profile
+        </h1>
+        <p className="text-lg text-muted-foreground font-medium mt-2">
           Manage your reader profile and track your performance
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Profile Header */}
-        <ProfileHeader 
-          user={{
-            profileImage: readerData.profileImage,
-            username: readerData.username,
-            bio: readerData.tagline,
-            location: readerData.location,
-            createdAt: readerData.createdAt
-          }} 
-          isOwnProfile={true} 
-        />
+        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-gray-950 dark:via-gray-900/50 dark:to-gray-950">
+          {readerData.backgroundImage && (
+            <div 
+              className="h-40 md:h-48 bg-cover bg-center relative"
+              style={{ backgroundImage: `url(${readerData.backgroundImage})` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+            </div>
+          )}
+          <CardContent className={`${readerData.backgroundImage ? 'pt-8' : 'pt-8'} pb-8`}>
+            <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
+              {/* Avatar Section */}
+              <div className="relative">
+                <div className={`h-28 w-28 md:h-32 md:w-32 rounded-full border-4 border-white/80 shadow-xl backdrop-blur-sm overflow-hidden ${readerData.backgroundImage ? '-mt-20 md:-mt-24' : ''}`}>
+                  <img 
+                    src={readerData.profileImage} 
+                    alt={readerData.username} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Status Indicator */}
+                <div className={`absolute -bottom-2 -right-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-lg ${
+                  readerData.isOnline 
+                    ? 'bg-green-500/90 text-white border border-green-400/50' 
+                    : 'bg-gray-500/90 text-white border border-gray-400/50'
+                }`}>
+                  <div className={`h-2 w-2 rounded-full ${
+                    readerData.isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'
+                  }`} />
+                  {readerData.isOnline ? 'Online' : 'Offline'}
+                </div>
+              </div>
+              
+              {/* Profile Information */}
+              <div className="flex-1 w-full">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
+                        {readerData.username}
+                      </h1>
+                      <p className="text-lg md:text-xl text-muted-foreground font-medium">{readerData.tagline}</p>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="p-1 rounded-md bg-blue-100 dark:bg-blue-900/30">
+                          <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <span className="font-medium">{readerData.location}</span>
+                      </span>
+                      <span className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="p-1 rounded-md bg-yellow-100 dark:bg-yellow-900/30">
+                          <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                        </div>
+                        <span className="font-medium">
+                          {readerData.stats.averageRating.toFixed(1)} · {readerData.stats.totalReadings} readings
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => router.push('/reader/profile/edit')}
+                      className="border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 hover:scale-105"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Status Banner */}
-        <Card className={`border-2 ${
+        <Card className={`relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 ${
           readerData.isApproved 
-            ? 'border-green-500/20 bg-green-500/5' 
-            : 'border-yellow-500/20 bg-yellow-500/5'
+            ? 'bg-gradient-to-br from-green-50 via-white to-green-50/50 dark:from-green-950/30 dark:via-gray-950 dark:to-green-950/30' 
+            : 'bg-gradient-to-br from-yellow-50 via-white to-yellow-50/50 dark:from-yellow-950/30 dark:via-gray-950 dark:to-yellow-950/30'
         }`}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {readerData.isApproved ? (
                   <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
                     <div>
                       <p className="font-semibold text-green-700 dark:text-green-400">
                         Profile Approved
@@ -229,7 +312,9 @@ function ReaderProfilePage() {
                   </>
                 ) : (
                   <>
-                    <XCircle className="h-5 w-5 text-yellow-500" />
+                    <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+                      <XCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
                     <div>
                       <p className="font-semibold text-yellow-700 dark:text-yellow-400">
                         Pending Approval
@@ -254,72 +339,86 @@ function ReaderProfilePage() {
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Readings</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-blue-950/30 dark:via-gray-950 dark:to-blue-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Readings</CardTitle>
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{readerData.stats.totalReadings}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalReadings}</div>
+              <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
+          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-yellow-50 via-white to-yellow-50/50 dark:from-yellow-950/30 dark:via-gray-950 dark:to-yellow-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Average Rating</CardTitle>
+              <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">
+                <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold flex items-center gap-1">
+              <div className="text-3xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
                 {readerData.stats.averageRating.toFixed(1)}
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Out of 5.0</p>
+              <p className="text-xs text-muted-foreground mt-1">Out of 5.0</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 via-white to-green-50/50 dark:from-green-950/30 dark:via-gray-950 dark:to-green-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Earnings</CardTitle>
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{readerData.stats.totalEarnings} credits</div>
-              <p className="text-xs text-muted-foreground">Lifetime</p>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalEarnings} credits</div>
+              <p className="text-xs text-muted-foreground mt-1">Lifetime</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/50 dark:from-purple-950/30 dark:via-gray-950 dark:to-purple-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Completion Rate</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{readerData.stats.completionRate}%</div>
-              <p className="text-xs text-muted-foreground">Of all bookings</p>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.completionRate}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Of all bookings</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-8 lg:grid-cols-2">
           {/* Attributes & Specialties */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
+          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                  <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
                 Attributes & Specialties
               </CardTitle>
-              <CardDescription>Your unique abilities and reading style</CardDescription>
+              <CardDescription className="text-base">Your unique abilities and reading style</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {readerData.attributes?.abilities && readerData.attributes.abilities.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium mb-2">Abilities</p>
+                  <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Abilities</p>
                   <div className="flex flex-wrap gap-2">
                     {readerData.attributes.abilities.map((ability) => (
-                      <Badge key={ability} variant="secondary" className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                      <Badge key={ability} variant="secondary" className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors px-3 py-1">
                         {getAttributeName(ability, 'Abilities')}
                       </Badge>
                     ))}
@@ -329,10 +428,10 @@ function ReaderProfilePage() {
 
               {readerData.attributes?.tools && readerData.attributes.tools.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium mb-2">Tools</p>
+                  <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Tools</p>
                   <div className="flex flex-wrap gap-2">
                     {readerData.attributes.tools.map((tool) => (
-                      <Badge key={tool} variant="secondary" className="bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+                      <Badge key={tool} variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors px-3 py-1">
                         {getAttributeName(tool, 'Tools')}
                       </Badge>
                     ))}
@@ -342,8 +441,8 @@ function ReaderProfilePage() {
 
               {readerData.attributes?.style && (
                 <div>
-                  <p className="text-sm font-medium mb-2">Reading Style</p>
-                  <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300">
+                  <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Reading Style</p>
+                  <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors px-3 py-1">
                     {getAttributeName(readerData.attributes.style, 'Styles')}
                   </Badge>
                 </div>
@@ -361,42 +460,64 @@ function ReaderProfilePage() {
           </Card>
 
           {/* Availability */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
                 Availability
               </CardTitle>
-              <CardDescription>Your schedule and timezone</CardDescription>
+              <CardDescription className="text-base">Your schedule and timezone information</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {readerData.availability ? (
                 <>
                   <div>
-                    <p className="text-sm font-medium mb-2">Available Days</p>
+                    <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Schedule</p>
                     {availableDays.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {availableDays.map((day) => (
-                          <Badge key={day} variant="outline">
-                            {day}
-                          </Badge>
-                        ))}
+                      <div className="space-y-2">
+                        {availableDays.map((day) => {
+                          const daySchedule = readerData.availability?.schedule[day.toLowerCase()];
+                          const timeSlot = daySchedule && daySchedule.length > 0 ? daySchedule[0] : null;
+                          return (
+                            <div key={day} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
+                              <span className="font-medium text-blue-700 dark:text-blue-300">{day}</span>
+                              {timeSlot ? (
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+                                  {formatTime12Hour(timeSlot.start)} - {formatTime12Hour(timeSlot.end)}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-gray-500">All day</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">No availability set</p>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                    </div>
                     <span className="font-medium">Timezone:</span>
-                    <span className="text-muted-foreground">{readerData.availability.timezone}</span>
+                    <span className="text-muted-foreground">
+                      {(() => {
+                        const timezoneObj = getTimezoneByValue(readerData.availability.timezone);
+                        return timezoneObj ? formatTimezoneLabel(timezoneObj) : readerData.availability.timezone;
+                      })()}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </div>
                     <span className="font-medium">Instant Booking:</span>
-                    <span className={readerData.availability.instantBooking ? 'text-green-600' : 'text-muted-foreground'}>
+                    <span className={`font-medium ${readerData.availability.instantBooking ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
                       {readerData.availability.instantBooking ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
@@ -412,29 +533,43 @@ function ReaderProfilePage() {
 
         {/* Reading Options */}
         {readerData.readingOptions && readerData.readingOptions.length > 0 && (
-          <Card>
+          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                  <MessageSquare className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
                 Reading Options
               </CardTitle>
-              <CardDescription>Services you offer to clients</CardDescription>
+              <CardDescription className="text-base">Services you offer to clients</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
                 {readerData.readingOptions.map((option, index) => (
-                  <Card key={index} className={`${!option.isActive && 'opacity-50'}`}>
+                  <Card key={index} className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 ${!option.isActive && 'opacity-50'}`}>
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-3">
-                        {option.type === 'phone_call' && <Phone className="h-5 w-5 text-blue-500" />}
-                        {option.type === 'video_message' && <Video className="h-5 w-5 text-purple-500" />}
-                        {option.type === 'live_video' && <Video className="h-5 w-5 text-green-500" />}
+                        {option.type === 'phone_call' && (
+                          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                            <Phone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        )}
+                        {option.type === 'video_message' && (
+                          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                            <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                        )}
+                        {option.type === 'live_video' && (
+                          <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                            <Video className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                        )}
                         <div className="flex-1">
-                          <h4 className="font-semibold">{option.name}</h4>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">{option.name}</h4>
                           <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
                           <div className="mt-3 flex items-center justify-between">
-                            <span className="text-lg font-bold">{option.basePrice} credits</span>
-                            <Badge variant={option.isActive ? 'default' : 'secondary'}>
+                            <span className="text-lg font-bold text-gray-900 dark:text-white">{option.basePrice} credits</span>
+                            <Badge variant={option.isActive ? 'default' : 'secondary'} className="ml-2">
                               {option.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
@@ -448,28 +583,43 @@ function ReaderProfilePage() {
           </Card>
         )}
 
-        {/* Experience & Additional Info */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {readerData.experience && (
-            <Card>
+        {/* About Me Video & Additional Info */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {readerData.aboutMe && (
+            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
               <CardHeader>
-                <CardTitle>Experience</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  About Me Video
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {readerData.experience}
-                </p>
+                <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
+                  <iframe
+                    src={readerData.aboutMe}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title="About Me Video"
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
 
           {readerData.additionalInfo && (
-            <Card>
+            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
               <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  Additional Information
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   {readerData.additionalInfo}
                 </p>
               </CardContent>
@@ -477,52 +627,57 @@ function ReaderProfilePage() {
           )}
         </div>
 
-        {/* Badges */}
-        {readerData.badges && readerData.badges.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Achievements & Badges
-              </CardTitle>
-              <CardDescription>Badges earned for your accomplishments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                {readerData.badges.map((badgeId) => (
-                  <div key={badgeId} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                    <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                      {badgeId}
-                    </span>
+        {/* Badges & Languages */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {readerData.badges && readerData.badges.length > 0 && (
+            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                    <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  Achievements & Badges
+                </CardTitle>
+                <CardDescription className="text-base">Badges earned for your accomplishments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  {readerData.badges.map((badgeId) => (
+                    <div key={badgeId} className="flex items-center gap-2 px-4 py-3 rounded-lg bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/30 transition-colors">
+                      <Award className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                        {badgeId}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Languages */}
-        {readerData.languages && readerData.languages.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Languages
-              </CardTitle>
-              <CardDescription>Languages you can conduct readings in</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {readerData.languages.map((language) => (
-                  <Badge key={language} variant="outline">
-                    {language}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {readerData.languages && readerData.languages.length > 0 && (
+            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  Languages
+                </CardTitle>
+                <CardDescription className="text-base">Languages you can conduct readings in</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {readerData.languages.map((language) => (
+                    <Badge key={language} variant="outline" className="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      {language}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </main>
   );
