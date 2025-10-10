@@ -21,8 +21,8 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
               duration: 0,
               credits: 0,
               createdAt: new Date(),
-              reader: { id: '', name: '', avatarUrl: '' },
-              client: { id: '', name: '', avatarUrl: '' },
+              readerId: '',
+              clientId: ''
             }}
             userRole="client"
             onViewDetails={() => {}}
@@ -43,7 +43,7 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
 
   return (
     <div className="space-y-4">
-      {readings.map((reading) => {
+      {readings.map((reading, index) => {
         // Map ReadingStatus to the expected status values for ReadingCard
         const mapStatus = (status: string) => {
           switch (status) {
@@ -53,29 +53,32 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
           }
         };
 
+        // Use _id if id is not available, or fallback to index
+        const readingId = reading.id || (reading as unknown as { _id?: string })._id || `reading-${index}`;
+
         return (
           <ReadingCard
-            key={reading.id}
+            key={readingId}
             reading={{
-              id: reading.id,
+              id: readingId,
               topic: reading.topic,
               description: reading.question || '',
               status: mapStatus(reading.status),
               duration: reading.readingOption.timeSpan.duration,
               credits: reading.credits,
-              createdAt: reading.createdAt,
-              client: { id: reading.clientId, name: 'Client' },
-              reader: { id: reading.readerId, name: 'Reader' }
+              createdAt: new Date(reading.createdAt),
+              readerId: reading.readerId,
+              clientId: reading.clientId
             }}
             userRole="client"
             onViewDetails={() => {
               const pathname = window.location.pathname;
               if (pathname.includes('/client/')) {
-                window.location.href = `/client/reading/${reading.id}`;
+                window.location.href = `/client/reading/${readingId}`;
               } else if (pathname.includes('/reader/')) {
-                window.location.href = `/reader/reading/${reading.id}`;
+                window.location.href = `/reader/reading/${readingId}`;
               } else {
-                window.location.href = `/dashboard/reading/${reading.id}`; // fallback
+                window.location.href = `/dashboard/reading/${readingId}`; // fallback
               }
             }}
           />

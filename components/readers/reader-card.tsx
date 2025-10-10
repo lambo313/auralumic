@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { LoadingState } from '@/components/ui/loading-state';
 import { RequestReadingModal } from '@/components/readers/request-reading-modal';
 import { useLoadingState } from '@/hooks/use-loading-state';
+import { useCredits } from '@/hooks/use-credits';
 import { cn } from '@/lib/utils';
 import type { Reader } from '@/types/index';
 import type { ReadingRequest } from '@/types/readings';
@@ -21,6 +22,7 @@ interface ReaderCardProps {
 
 export function ReaderCard({ reader, showRequestReading = true, onRequestReading, onSelectReader }: ReaderCardProps) {
   const { isLoading, withLoading } = useLoadingState();
+  const { credits } = useCredits();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleRequestReading = () => {
@@ -126,6 +128,7 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
       <RequestReadingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        client={{ credits }}
         reader={reader}
         onRequestReading={handleModalRequestReading}
       />

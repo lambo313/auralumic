@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +18,15 @@ import type { Reader, WeeklySchedule } from "@/types/index";
 import { User, Clock, CreditCard, MessageCircle, Calendar as CalendarIcon, Star, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { readingService } from "@/services/api";
+import { useToast } from "@/components/ui/use-toast";
 
 interface RequestReadingModalProps {
   isOpen: boolean;
   onClose: () => void;
   reader: Reader | null;
-  onRequestReading?: (request: ReadingRequest) => Promise<void>;
+  onRequestReading?: (request: ReadingRequest) => Promise<void>; // Optional - kept for backward compatibility
+  client: { credits: number };
 }
 
 interface Category {
@@ -58,6 +62,30 @@ const timeSlots = [
   "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
   "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
   "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+];
+
+const readingOptions = [
+  {
+    value: 'phone_call',
+    label: 'Phone Call',
+    description: 'Live voice call reading',
+    multiplier: 1.0,
+    icon: '📞'
+  },
+  {
+    value: 'video_message',
+    label: 'Video Message',
+    description: 'Pre-recorded video reading',
+    multiplier: 0.8,
+    icon: '🎥'
+  },
+  {
+    value: 'live_video',
+    label: 'Live Video',
+    description: 'Live video call reading',
+    multiplier: 1.2,
+    icon: '📹'
+  }
 ];
 
 // Helper functions for schedule management
@@ -117,8 +145,9 @@ const isDateAvailable = (date: Date, schedule: WeeklySchedule): boolean => {
   const daySchedule = schedule[dayName];
   return daySchedule && daySchedule.length > 0;
 };
-
-export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading }: RequestReadingModalProps) {
+export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading, client }: RequestReadingModalProps) {
+  const router = useRouter();
+  const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [readingTypes, setReadingTypes] = useState<ReadingType[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -127,6 +156,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
   
   const [formData, setFormData] = useState({
     readingType: "",
+    readingOption: "",
     description: "",
     duration: "",
     scheduledDate: undefined as Date | undefined,
@@ -134,6 +164,8 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
     timeZone: reader?.availability?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<ReadingRequest | null>(null);
 
   // Fetch categories from API
   useEffect(() => {
@@ -198,13 +230,15 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
   }, [formData.scheduledDate, formData.duration, reader?.availability?.schedule]);
 
   const selectedType = readingTypes.find(type => type.value === formData.readingType);
+  const selectedOption = readingOptions.find(option => option.value === formData.readingOption);
   
-  // Calculate credit cost based on type and duration
+  // Calculate credit cost based on type, duration, and reading option
   const calculateCredits = () => {
-    if (!selectedType || !formData.duration) return 0;
+    if (!selectedType || !formData.duration || !selectedOption) return 0;
     const duration = parseInt(formData.duration);
     const baseRate = selectedType.baseCredits;
-    return Math.round((duration / 30) * baseRate);
+    const baseCredits = Math.round((duration / 30) * baseRate);
+    return Math.round(baseCredits * selectedOption.multiplier);
   };
 
   const creditCost = calculateCredits();
@@ -213,46 +247,91 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
     e.preventDefault();
     if (!reader || !onRequestReading) return;
 
+    // Combine date and time for scheduled reading
+    let scheduledFor: Date | null = null;
+    if (formData.scheduledDate && formData.scheduledTime) {
+      const [hours, minutes] = formData.scheduledTime.split(':').map(Number);
+      scheduledFor = new Date(formData.scheduledDate);
+      scheduledFor.setHours(hours, minutes, 0, 0);
+    }
+
+    // Create the reading request
+    const readingRequest: ReadingRequest = {
+      readerId: reader.id,
+      topic: formData.readingType,
+      description: formData.description.trim() || 'General', // Keep for our interface
+      question: formData.description.trim() || 'General',     // Add for API compatibility  
+      duration: parseInt(formData.duration),
+      readingOption: {
+        type: formData.readingOption as 'phone_call' | 'video_message' | 'live_video',
+        basePrice: Math.round((parseInt(formData.duration) / 30) * selectedType!.baseCredits),
+        timeSpan: {
+          duration: parseInt(formData.duration),
+          label: `${formData.duration} minutes`,
+          multiplier: selectedOption!.multiplier
+        },
+        finalPrice: creditCost
+      },
+      creditCost: creditCost,
+      scheduledDate: scheduledFor ? scheduledFor.toISOString() : undefined, // Convert to string for API
+      timeZone: formData.timeZone,
+      status: 'pending'
+    };
+
+    // Show confirmation dialog
+    setPendingRequest(readingRequest);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!pendingRequest) return;
+
     setIsSubmitting(true);
     try {
-      // Combine date and time for scheduled reading
-      let scheduledFor: Date | null = null;
-      if (formData.scheduledDate && formData.scheduledTime) {
-        const [hours, minutes] = formData.scheduledTime.split(':').map(Number);
-        scheduledFor = new Date(formData.scheduledDate);
-        scheduledFor.setHours(hours, minutes, 0, 0);
+      // Use the reading service to create the reading request
+      const response = await readingService.createReading(pendingRequest);
+      
+      if (!response || response.error) {
+        throw new Error(response?.error || 'Failed to create reading request');
       }
 
-      // Create the reading request
-      const readingRequest: ReadingRequest = {
-        readerId: reader.id,
-        topic: formData.readingType,
-        duration: parseInt(formData.duration),
-        creditCost: creditCost,
-        description: formData.description,
-        scheduledDate: scheduledFor || undefined,
-        timeZone: formData.timeZone,
-        status: 'pending'
-      };
-
-      await onRequestReading(readingRequest);
+      // Show success toast
+      toast({
+        title: "Reading Request Submitted!",
+        description: `Your ${selectedType?.label} reading request has been sent to ${reader?.username}. You'll be notified when they respond.`,
+      });
 
       // Reset form and close modal
       setFormData({
         readingType: "",
+        readingOption: "",
         description: "",
         duration: "",
         scheduledDate: undefined,
         scheduledTime: "",
         timeZone: reader?.availability?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       });
+      setShowConfirmation(false);
+      setPendingRequest(null);
       onClose();
+
+      // Navigate to client readings page
+      router.push('/client/readings');
     } catch (error) {
       console.error("Error submitting reading request:", error);
-      alert("Failed to submit reading request. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to submit reading request. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingRequest(null);
   };
 
   if (!reader) {
@@ -264,6 +343,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Request Reading</DialogTitle>
+          <h4 className="text-sm text-primary">credits available: {client.credits}</h4>
         </DialogHeader>
 
         {/* Reader Summary */}
@@ -271,27 +351,27 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           <div className="flex items-center gap-3">
             <div className="relative">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={reader.profileImage} alt={reader.username} />
-                <AvatarFallback>
-                  <User className="h-6 w-6" />
-                </AvatarFallback>
+          <AvatarImage src={reader.profileImage} alt={reader.username} />
+          <AvatarFallback>
+            <User className="h-6 w-6" />
+          </AvatarFallback>
               </Avatar>
               {reader.isOnline && (
-                <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
+          <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
               )}
             </div>
             <div className="flex-1">
               <h3 className="font-semibold">{reader.username}</h3>
               <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="ml-1 text-sm">{reader.stats.averageRating?.toFixed(1)}</span>
-                  <span className="ml-1 text-sm text-muted-foreground">({reader.reviews.length})</span>
-                </div>
-                <span className="text-muted-foreground">•</span>
-                <Badge variant={reader.isApproved ? "default" : "secondary"}>
-                  {reader.isApproved ? "Verified" : "Unverified"}
-                </Badge>
+          <div className="flex items-center">
+            <Star className="h-4 w-4 text-yellow-400 fill-current" />
+            <span className="ml-1 text-sm">{reader.stats.averageRating?.toFixed(1)}</span>
+            <span className="ml-1 text-sm text-muted-foreground">({reader.reviews.length})</span>
+          </div>
+          <span className="text-muted-foreground">•</span>
+          <Badge variant={reader.isApproved ? "default" : "secondary"}>
+            {reader.isApproved ? "Verified" : "Unverified"}
+          </Badge>
               </div>
             </div>
           </div>
@@ -299,7 +379,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           {reader.tagline && (
             <div className="pl-15">
               <p className="text-sm text-muted-foreground italic">
-                &quot;{reader.tagline}&quot;
+          &quot;{reader.tagline}&quot;
               </p>
             </div>
           )}
@@ -307,10 +387,26 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           {reader.attributes.abilities && reader.attributes.abilities.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {reader.attributes.abilities.map((ability, index) => (
-                <Badge key={index} variant="outline">
-                  {ability}
-                </Badge>
+          <Badge key={index} variant="outline">
+            {ability}
+          </Badge>
               ))}
+            </div>
+          )}
+          {reader.attributes.tools && reader.attributes.tools.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {reader.attributes.tools.map((tool, index) => (
+          <Badge key={index} variant="outline">
+            {tool}
+          </Badge>
+              ))}
+            </div>
+          )}
+          {reader.attributes.style && (
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">
+          {reader.attributes.style}
+              </Badge>
             </div>
           )}
         </div>
@@ -380,8 +476,41 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
                           {duration} minutes
                         </div>
                         <span className="text-muted-foreground text-sm ml-4">
-                          {Math.round((duration / 30) * selectedType.baseCredits)} credits
+                          {Math.round((duration / 30) * selectedType.baseCredits)} base credits
                         </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Reading Option */}
+          {selectedType && formData.duration && (
+            <div className="space-y-2">
+              <Label htmlFor="readingOption">Reading Format *</Label>
+              <Select 
+                value={formData.readingOption} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, readingOption: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reading format" />
+                </SelectTrigger>
+                <SelectContent>
+                  {readingOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{option.icon}</span>
+                        <div>
+                          <div className="font-medium">{option.label}</div>
+                          <div className="text-sm text-muted-foreground">{option.description}</div>
+                        </div>
+                        <div className="ml-auto text-sm text-muted-foreground">
+                          {option.multiplier === 1 ? 'Standard rate' : 
+                           option.multiplier < 1 ? `${Math.round((1 - option.multiplier) * 100)}% discount` :
+                           `${Math.round((option.multiplier - 1) * 100)}% premium`}
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
@@ -392,14 +521,13 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">What would you like to explore? *</Label>
+            <Label htmlFor="description">What would you like to explore?</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your situation and what guidance you're seeking..."
+              placeholder="Describe your situation and what guidance you're seeking... (Default: General)"
               className="min-h-20"
-              required
             />
           </div>
 
@@ -423,11 +551,12 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
                       {formData.scheduledDate ? format(formData.scheduledDate, "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 max-w-md" align="center">
                     <Calendar
                       mode="single"
                       selected={formData.scheduledDate}
                       onSelect={(date) => setFormData(prev => ({ ...prev, scheduledDate: date }))}
+                      className="rounded-md border shadow-lg scale-100 p-4 [&_button]:p-2 [&_th]:p-2 [&_td]:p-1"
                       disabled={(date) => {
                         // Disable past dates
                         if (date < new Date()) return true;
@@ -494,7 +623,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
           </div>
 
           {/* Credit Cost Display */}
-          {creditCost > 0 && (
+          {creditCost > 0 && selectedOption && (
             <div className="bg-muted/30 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -505,9 +634,19 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
                   {creditCost} Credits
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {formData.duration} minutes at {selectedType?.baseCredits} credits per 30 minutes
-              </p>
+              <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                <p>
+                  {formData.duration} minutes at {selectedType?.baseCredits} credits per 30 minutes
+                </p>
+                <p>
+                  {selectedOption.label} format: {selectedOption.multiplier}x multiplier
+                  {selectedOption.multiplier !== 1 && (
+                    <span className="ml-2">
+                      ({Math.round((parseInt(formData.duration) / 30) * selectedType!.baseCredits)} base × {selectedOption.multiplier})
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           )}
 
@@ -518,13 +657,113 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading 
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || creditCost === 0 || isLoadingCategories || !!categoriesError}
+              disabled={isSubmitting || creditCost === 0 || isLoadingCategories || !!categoriesError || !formData.readingOption}
             >
               {isSubmitting ? "Submitting..." : `Request Reading (${creditCost} Credits)`}
             </Button>
           </div>
         </form>
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      {showConfirmation && pendingRequest && (
+        <Dialog open={showConfirmation} onOpenChange={handleCancelConfirmation}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Reading Request</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={reader.profileImage} alt={reader.username} />
+                    <AvatarFallback>
+                      <User className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-semibold">{reader.username}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedType?.label} Reading
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Format:</span>
+                  <span className="text-sm">{selectedOption?.icon} {selectedOption?.label}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Duration:</span>
+                  <span className="text-sm">{formData.duration} minutes</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Description:</span>
+                  <span className="text-sm text-right max-w-[60%]">
+                    {formData.description.trim() || 'General'}
+                  </span>
+                </div>
+
+                {pendingRequest.scheduledDate && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Scheduled:</span>
+                    <span className="text-sm text-right">
+                      {format(pendingRequest.scheduledDate, "PPP")} at {formatTimeTo12Hour(formData.scheduledTime)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="border-t pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Total Cost:</span>
+                    <span className="text-lg font-semibold text-primary">
+                      {creditCost} Credits
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your remaining balance: {client.credits - creditCost} credits
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCancelConfirmation}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleConfirmSubmit}
+                  disabled={isSubmitting || client.credits < creditCost}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    `Confirm & Submit`
+                  )}
+                </Button>
+              </div>
+
+              {client.credits < creditCost && (
+                <div className="text-sm text-red-600 text-center">
+                  Insufficient credits. You need {creditCost - client.credits} more credits.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }

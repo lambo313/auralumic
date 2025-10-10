@@ -44,7 +44,7 @@ export function BookingDialog({
   const handleTimeSelected = (date: Date) => {
     setBookingData((prev) => ({
       ...prev,
-      scheduledDate: date,
+      scheduledDate: date.toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }))
     setCurrentStep(2)
@@ -61,7 +61,7 @@ export function BookingDialog({
         topic: bookingData.topic,
         description: bookingData.description || "",
         duration: bookingData.duration,
-        scheduledDate: bookingData.scheduledDate,
+        scheduledDate: new Date(bookingData.scheduledDate),
         timeZone: bookingData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
       })
 

@@ -8,6 +8,7 @@ const readingTimeSpanSchema = new mongoose.Schema({
 
 export enum ReadingStatus {
   REQUESTED = 'requested',
+  SUGGESTED = 'suggested',
   ACCEPTED = 'accepted',
   DECLINED = 'declined',
   IN_PROGRESS = 'in_progress',
@@ -30,8 +31,14 @@ const readingSchema = new mongoose.Schema({
   readerId: { type: String, required: true }, // Clerk user ID
   topic: { 
     type: String,
-    enum: Object.values(Topic),
-    required: true
+    required: true,
+    validate: {
+      validator: function(v: string) {
+        // Allow any non-empty string
+        return typeof v === 'string' && v.length > 0;
+      },
+      message: 'Topic must be a non-empty string'
+    }
   },
   question: String,
   readingOption: {
@@ -76,4 +83,9 @@ readingSchema.statics.findByReader = function(readerId: string) {
   return this.find({ readerId }).sort({ createdAt: -1 });
 };
 
-export default mongoose.models.Reading || mongoose.model('Reading', readingSchema);
+// Clear any cached model to ensure fresh schema
+if (mongoose.models.Reading) {
+  delete mongoose.models.Reading;
+}
+
+export default mongoose.model('Reading', readingSchema);

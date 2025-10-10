@@ -17,6 +17,16 @@ const INITIAL_BOOKING_DATA: ReadingRequest = {
   duration: 30,
   creditCost: 0,
   description: "",
+  readingOption: {
+    type: 'video_message',
+    basePrice: 0,
+    timeSpan: {
+      duration: 30,
+      label: '30 minutes',
+      multiplier: 1,
+    },
+    finalPrice: 0,
+  },
   scheduledDate: undefined,
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   status: "pending",

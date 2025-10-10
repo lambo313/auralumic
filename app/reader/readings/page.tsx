@@ -7,7 +7,8 @@ import { useReadings } from '@/hooks/use-readings';
 export default function ReaderReadingsPage() {
   const { 
     acceptedReadings, 
-    requestedReadings, 
+    requestedReadings,
+    suggestedReadings, 
     archivedReadings, 
     loading, 
     error 
@@ -31,13 +32,17 @@ export default function ReaderReadingsPage() {
       </div>
 
       <Tabs defaultValue="requested">
-        <TabsList className="w-full justify-start">
+        <TabsList className="w-full justify-start flex-wrap">
           <TabsTrigger value="requested">Incoming Requests</TabsTrigger>
+          <TabsTrigger value="suggested">Outgoing Suggestions</TabsTrigger>
           <TabsTrigger value="accepted">Active Readings</TabsTrigger>
           <TabsTrigger value="archived">Completed</TabsTrigger>
         </TabsList>
         <TabsContent value="requested" className="mt-6">
           <ReadingList readings={requestedReadings} loading={loading} />
+        </TabsContent>
+        <TabsContent value="suggested" className="mt-6">
+          <ReadingList readings={suggestedReadings} loading={loading} />
         </TabsContent>
         <TabsContent value="accepted" className="mt-6">
           <ReadingList readings={acceptedReadings} loading={loading} />

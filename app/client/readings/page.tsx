@@ -7,7 +7,8 @@ import { useReadings } from '@/hooks/use-readings';
 export default function ClientReadingsPage() {
   const { 
     acceptedReadings, 
-    requestedReadings, 
+    requestedReadings,
+    suggestedReadings,
     archivedReadings, 
     loading, 
     error 
@@ -34,6 +35,7 @@ export default function ClientReadingsPage() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="accepted">Accepted</TabsTrigger>
           <TabsTrigger value="requested">Requested</TabsTrigger>
+          <TabsTrigger value="suggested">Suggested</TabsTrigger>
           <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="accepted" className="mt-6">
@@ -41,6 +43,9 @@ export default function ClientReadingsPage() {
         </TabsContent>
         <TabsContent value="requested" className="mt-6">
           <ReadingList readings={requestedReadings} loading={loading} />
+        </TabsContent>
+        <TabsContent value="suggested" className="mt-6">
+          <ReadingList readings={suggestedReadings} loading={loading} />
         </TabsContent>
         <TabsContent value="archived" className="mt-6">
           <ReadingList readings={archivedReadings} loading={loading} />

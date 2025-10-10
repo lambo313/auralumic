@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/utils"
+import { useState, useEffect } from "react"
 
 interface ReadingCardProps {
   reading: {
@@ -20,16 +21,8 @@ interface ReadingCardProps {
     duration: number
     credits: number
     createdAt: Date
-    reader: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-    client: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
+    readerId: string
+    clientId: string
   }
   userRole: "reader" | "client"
   onAccept?: () => void
@@ -48,6 +41,49 @@ export function ReadingCard({
   onViewDetails,
   loading,
 }: ReadingCardProps) {
+  const [readerData, setReaderData] = useState<{ username: string; profileImage?: string } | null>(null)
+  const [clientData, setClientData] = useState<{ username: string; profileImage?: string } | null>(null)
+  const [fetchingUsers, setFetchingUsers] = useState(true)
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (loading) return
+      
+      try {
+        setFetchingUsers(true)
+        
+        // Fetch reader data using readerId (Clerk user ID)
+        const readerResponse = await fetch(`/api/readers/${reading.readerId}`)
+        if (readerResponse.ok) {
+          const readerInfo = await readerResponse.json()
+          setReaderData({
+            username: readerInfo.username,
+            profileImage: readerInfo.profileImage
+          })
+        }
+
+        // Fetch client data using clientId (Clerk user ID)
+        const clientResponse = await fetch(`/api/users/${reading.clientId}`)
+        if (clientResponse.ok) {
+          const clientInfo = await clientResponse.json()
+          setClientData({
+            username: clientInfo.username || clientInfo.firstName || 'Client',
+            profileImage: clientInfo.profileImage || clientInfo.imageUrl
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Set fallback data
+        setReaderData({ username: 'Reader', profileImage: undefined })
+        setClientData({ username: 'Client', profileImage: undefined })
+      } finally {
+        setFetchingUsers(false)
+      }
+    }
+
+    fetchUserData()
+  }, [reading.readerId, reading.clientId, loading])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -116,26 +152,30 @@ export function ReadingCard({
             {userRole === "client" ? (
               <div className="flex items-center space-x-2">
                 <Avatar>
-                  <AvatarImage src={reading.reader.avatarUrl} alt={reading.reader.name} />
-                  <AvatarFallback>{reading.reader.name[0]}</AvatarFallback>
+                  <AvatarImage src={readerData?.profileImage} alt={readerData?.username} />
+                  <AvatarFallback>
+                    {fetchingUsers ? '...' : (readerData?.username?.[0]?.toUpperCase() || 'R')}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">Reader</p>
                   <p className="text-xs text-muted-foreground">
-                    {reading.reader.name}
+                    {fetchingUsers ? 'Loading...' : (readerData?.username || 'Unknown Reader')}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Avatar>
-                  <AvatarImage src={reading.client.avatarUrl} alt={reading.client.name} />
-                  <AvatarFallback>{reading.client.name[0]}</AvatarFallback>
+                  <AvatarImage src={clientData?.profileImage} alt={clientData?.username} />
+                  <AvatarFallback>
+                    {fetchingUsers ? '...' : (clientData?.username?.[0]?.toUpperCase() || 'C')}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">Client</p>
                   <p className="text-xs text-muted-foreground">
-                    {reading.client.name}
+                    {fetchingUsers ? 'Loading...' : (clientData?.username || 'Unknown Client')}
                   </p>
                 </div>
               </div>

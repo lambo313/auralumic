@@ -12,7 +12,7 @@ import { NotificationType } from "@/models/Notification"
 // Enhanced validation schema
 const createReadingSchema = z.object({
   readerId: z.string(),
-  topic: z.enum(['Career & Work', 'Lost & Seeking', 'Love & Relationships', 'Past Life', 'Life Path', 'Future Life']),
+  topic: z.string(), // Allow any string topic from categories
   question: z.string().optional(),
   readingOption: z.object({
     type: z.enum(['phone_call', 'video_message', 'live_video']),
@@ -51,14 +51,27 @@ export async function GET(request: Request) {
     const readings = await Reading.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(limit)
-      .populate({
-        path: "scheduledReading",
-        model: ScheduledReading,
-      });
+      .limit(limit);
+
+    // Fetch scheduled readings separately for readings that have scheduledDate
+    const readingsWithScheduleInfo = await Promise.all(
+      readings.map(async (reading) => {
+        const readingObj = reading.toObject() as Record<string, unknown>;
+        
+        // If this reading has a scheduledDate, fetch the corresponding ScheduledReading
+        if (reading.scheduledDate) {
+          const scheduledReading = await ScheduledReading.findOne({ readingId: reading._id });
+          if (scheduledReading) {
+            readingObj.scheduledReading = scheduledReading.toObject();
+          }
+        }
+        
+        return readingObj;
+      })
+    );
 
     return NextResponse.json({
-      readings,
+      readings: readingsWithScheduleInfo,
       pagination: {
         total,
         page,

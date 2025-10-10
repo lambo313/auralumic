@@ -1,7 +1,7 @@
 import { ScheduledReading } from '@/models/ScheduledReading';
 import Reader from '@/models/Reader';
 import dbConnect from '@/lib/database';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 interface DaySchedule {
   isAvailable: boolean;
@@ -26,14 +26,22 @@ export class AvailabilityService {
   ): Promise<boolean> {
     await dbConnect();
 
-    // Get reader's schedule settings
-    const reader = await Reader.findOne({ clerkId: readerId });
+    // Get reader's schedule settings - try both userId and _id
+    let reader = await Reader.findOne({ userId: readerId });
+    
+    // If not found by userId, try by MongoDB _id (if it's a valid ObjectId)
+    if (!reader && mongoose.Types.ObjectId.isValid(readerId)) {
+      reader = await Reader.findById(readerId);
+    }
+    
     if (!reader) {
       throw new Error('Reader not found');
     }
 
     // Check if the requested time is within reader's working hours
-    if (!this.isWithinWorkingHours(scheduledDate, reader.availability.schedule)) {
+    const withinWorkingHours = this.isWithinWorkingHours(scheduledDate, reader.availability.schedule);
+    
+    if (!withinWorkingHours) {
       return false;
     }
 
@@ -72,21 +80,32 @@ export class AvailabilityService {
     return conflictingBookings.length === 0;
   }
 
-  static isWithinWorkingHours(date: Date, schedule: WeeklySchedule): boolean {
-    const dayOfWeek = date.getDay();
+  static isWithinWorkingHours(date: Date, schedule: any): boolean {
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayName = dayNames[dayOfWeek];
+    
     const hours = date.getHours();
     const minutes = date.getMinutes();
     const timeInMinutes = hours * 60 + minutes;
 
-    const daySchedule = schedule[dayOfWeek];
-    if (!daySchedule || !daySchedule.isAvailable) {
+    const daySchedule = schedule[dayName];
+    
+    if (!daySchedule || !Array.isArray(daySchedule) || daySchedule.length === 0) {
       return false;
     }
 
-    const startTime = this.parseTimeToMinutes(daySchedule.startTime);
-    const endTime = this.parseTimeToMinutes(daySchedule.endTime);
+    // Check if the time falls within any of the available time slots for this day
+    for (const timeSlot of daySchedule) {
+      const startTime = this.parseTimeToMinutes(timeSlot.start);
+      const endTime = this.parseTimeToMinutes(timeSlot.end);
+      
+      if (timeInMinutes >= startTime && timeInMinutes <= endTime) {
+        return true;
+      }
+    }
 
-    return timeInMinutes >= startTime && timeInMinutes <= endTime;
+    return false;
   }
 
   static parseTimeToMinutes(time: string): number {
@@ -101,7 +120,14 @@ export class AvailabilityService {
   ): Promise<Date[]> {
     await dbConnect();
 
-    const reader = await Reader.findOne({ clerkId: readerId });
+    // Try both userId and _id lookup
+    let reader = await Reader.findOne({ userId: readerId });
+    
+    // If not found by userId, try by MongoDB _id (if it's a valid ObjectId)
+    if (!reader && mongoose.Types.ObjectId.isValid(readerId)) {
+      reader = await Reader.findById(readerId);
+    }
+    
     if (!reader) {
       throw new Error('Reader not found');
     }

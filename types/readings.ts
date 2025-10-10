@@ -1,4 +1,4 @@
-export type ReadingStatus = 'requested' | 'accepted' | 'declined' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
+export type ReadingStatus = 'requested' | 'suggested' | 'accepted' | 'declined' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
 
 export interface Reading {
   id: string;
@@ -29,8 +29,19 @@ export interface ReadingRequest {
   readerId: string;
   topic: string;
   description: string;
+  question?: string; // Add for API compatibility
   duration: number;
-  scheduledDate?: Date;
+  readingOption: {
+    type: 'phone_call' | 'video_message' | 'live_video';
+    basePrice: number;
+    timeSpan: {
+      duration: number;
+      label: string;
+      multiplier: number;
+    };
+    finalPrice: number;
+  };
+  scheduledDate?: string; // String for API compatibility
   timeZone: string;
   creditCost: number;
   status: string;

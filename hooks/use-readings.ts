@@ -7,6 +7,7 @@ import type { Reading } from '@/types/readings';
 interface ReadingsData {
   acceptedReadings: Reading[];
   requestedReadings: Reading[];
+  suggestedReadings: Reading[];
   archivedReadings: Reading[];
   loading: boolean;
   error: Error | null;
@@ -17,6 +18,7 @@ export function useReadings(): ReadingsData {
   const [data, setData] = useState<ReadingsData>({
     acceptedReadings: [],
     requestedReadings: [],
+    suggestedReadings: [],
     archivedReadings: [],
     loading: true,
     error: null,
@@ -37,15 +39,16 @@ export function useReadings(): ReadingsData {
           throw new Error('Failed to fetch readings');
         }
 
-        const readings = await response.json();
+        const data = await response.json();
         
-        // Ensure readings is an array
-        const readingsArray: Reading[] = Array.isArray(readings) ? readings : [];
+        // Extract readings array from the response object
+        const readingsArray: Reading[] = Array.isArray(data.readings) ? data.readings : [];
 
         // Sort readings into categories
         const sorted = readingsArray.reduce<{
           accepted: Reading[];
           requested: Reading[];
+          suggested: Reading[];
           archived: Reading[];
         }>(
           (acc, reading) => {
@@ -55,15 +58,18 @@ export function useReadings(): ReadingsData {
               acc.accepted.push(reading);
             } else if (reading.status === 'requested') {
               acc.requested.push(reading);
+            } else if (reading.status === 'suggested') {
+              acc.suggested.push(reading);
             }
             return acc;
           },
-          { accepted: [], requested: [], archived: [] }
+          { accepted: [], requested: [], suggested: [], archived: [] }
         );
 
         setData({
           acceptedReadings: sorted.accepted,
           requestedReadings: sorted.requested,
+          suggestedReadings: sorted.suggested,
           archivedReadings: sorted.archived,
           loading: false,
           error: null,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
+import { useCredits } from '@/hooks/use-credits';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { withSafeRendering } from '@/components/ui/with-safe-rendering';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +73,7 @@ interface ReaderProfileViewPageProps {
 
 function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
   const { user } = useAuth();
+  const { credits } = useCredits();
   const router = useRouter();
   const { isLoading: isRequestLoading, withLoading } = useLoadingState();
   const [readerData, setReaderData] = useState<ReaderData | null>(null);
@@ -605,6 +607,7 @@ function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
         <RequestReadingModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          client={{ credits }}
           reader={{
             id: readerData.userId,
             userId: readerData.userId,

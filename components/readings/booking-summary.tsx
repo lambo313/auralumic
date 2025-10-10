@@ -38,10 +38,10 @@ export function BookingSummary({
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Date & Time</dt>
               <dd>
-                {bookingData.scheduledDate?.toLocaleString(undefined, {
+                {bookingData.scheduledDate ? new Date(bookingData.scheduledDate).toLocaleString(undefined, {
                   dateStyle: "full",
                   timeStyle: "short",
-                })}
+                }) : 'Not scheduled'}
               </dd>
             </div>
           </dl>
