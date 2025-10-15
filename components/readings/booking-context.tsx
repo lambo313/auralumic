@@ -29,7 +29,7 @@ const INITIAL_BOOKING_DATA: ReadingRequest = {
   },
   scheduledDate: undefined,
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  status: "pending",
+  status: "instant_queue",
 }
 
 const DEFAULT_CONTEXT_VALUE: BookingContextValue = {

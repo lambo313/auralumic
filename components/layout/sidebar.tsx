@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { UserStateSwitcher } from "@/components/admin/user-state-switcher"
+import { ReaderStatusToggle } from "@/components/readers/reader-status-toggle"
 import { useTheme } from "@/context/theme-context"
+import { useAuth } from "@/hooks/use-auth"
 import { usePathname } from "next/navigation"
 import {
   Home,
@@ -18,6 +20,7 @@ import {
   Shield,
   Users,
   BarChart3,
+  LogOut,
   type LucideIcon,
   BookOpen,
 } from "lucide-react"
@@ -40,6 +43,7 @@ interface SidebarProps {
 export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, className }: SidebarProps) {
   const pathname = usePathname()
   const { theme } = useTheme()
+  const { signOut } = useAuth()
 
   // Admin navigation
   const adminNavigation: NavigationItem[] = [
@@ -143,6 +147,14 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
     },
   ]
 
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+    }
+  }
+
   // Choose navigation based on user role
   // Show admin navigation only if baseRole is admin and userRole is admin
   let navigation: NavigationItem[]
@@ -200,6 +212,14 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
             <ThemeToggle />
           </div>
         </div>
+        
+        {/* Reader Status Toggle */}
+        {/* {(baseRole === "reader" || userRole === "reader") && (
+          <div className="px-3 mt-3 mb-[-2rem]">
+            <ReaderStatusToggle variant="compact" className="justify-center" />
+          </div>
+        )} */}
+        
         <nav className="mt-8 flex-1 space-y-2 px-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href
@@ -281,6 +301,16 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
                 </Button>
               )
             })}
+            <Button
+              onClick={handleSignOut}
+              variant="ghost"
+              className="w-full justify-start rounded-lg transition-all duration-200 hover:bg-destructive/10 group mt-2"
+            >
+              <div className="flex items-center space-x-3 px-3 w-full">
+                <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-destructive transition-colors duration-200" />
+                <span className="text-sm text-muted-foreground group-hover:text-destructive transition-colors duration-200">Sign Out</span>
+              </div>
+            </Button>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-export type ReadingStatus = 'requested' | 'suggested' | 'accepted' | 'declined' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
+export type ReadingStatus = 'suggested' | 'instant_queue' | 'scheduled' | 'message_queue' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
 
 export interface Reading {
   id: string;
@@ -25,11 +25,12 @@ export interface Reading {
   updatedAt: Date;
 }
 
+// UI state for reading request form
 export interface ReadingRequest {
   readerId: string;
   topic: string;
   description: string;
-  question?: string; // Add for API compatibility
+  question?: string; // For API compatibility
   duration: number;
   readingOption: {
     type: 'phone_call' | 'video_message' | 'live_video';
@@ -41,8 +42,28 @@ export interface ReadingRequest {
     };
     finalPrice: number;
   };
-  scheduledDate?: string; // String for API compatibility
+  scheduledDate?: string;
   timeZone: string;
   creditCost: number;
-  status: string;
+  status: 'instant_queue' | 'scheduled' | 'message_queue';
+}
+
+// API payload type (matches the Zod schema in API route)
+export interface CreateReadingPayload {
+  readerId: string;
+  topic: string;
+  question?: string;
+  readingOption: {
+    type: 'phone_call' | 'video_message' | 'live_video';
+    basePrice: number;
+    timeSpan: {
+      duration: number;
+      label: string;
+      multiplier: number;
+    };
+    finalPrice: number;
+  };
+  scheduledDate?: string;
+  timeZone?: string;
+  status?: 'instant_queue' | 'scheduled' | 'message_queue';
 }

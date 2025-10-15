@@ -145,7 +145,7 @@ export function ReadingManagement() {
           id: "2",
           readerId: "reader2",
           clientId: "client2",
-          status: "requested",
+          status: "scheduled",
           scheduledDate: new Date("2024-09-29T16:00:00Z"),
           topic: "Career Guidance",
           readingOption: {
@@ -169,7 +169,7 @@ export function ReadingManagement() {
           id: "3",
           readerId: "reader1",
           clientId: "client3",
-          status: "accepted",
+          status: "scheduled",
           scheduledDate: new Date("2024-09-30T10:00:00Z"),
           topic: "Life Purpose",
           readingOption: {
@@ -193,7 +193,7 @@ export function ReadingManagement() {
           id: "4",
           readerId: "reader3",
           clientId: "client4",
-          status: "declined",
+          status: "refunded",
           topic: "Family Issues",
           readingOption: {
             type: "video_message",
@@ -247,13 +247,13 @@ export function ReadingManagement() {
 
   const getStatusColor = (status: ReadingStatus) => {
     switch (status) {
-      case "requested":
+      case "instant_queue":
         return "bg-yellow-500";
-      case "accepted":
+      case "scheduled":
         return "bg-blue-500";
       case "completed":
         return "bg-green-500";
-      case "declined":
+      case "refunded":
         return "bg-red-500";
       default:
         return "bg-gray-500";
@@ -262,13 +262,13 @@ export function ReadingManagement() {
 
   const getStatusVariant = (status: ReadingStatus) => {
     switch (status) {
-      case "requested":
+      case "instant_queue":
         return "secondary";
-      case "accepted":
+      case "scheduled":
         return "default";
       case "completed":
         return "default";
-      case "declined":
+      case "refunded":
         return "destructive";
       default:
         return "outline";
@@ -446,10 +446,10 @@ export function ReadingManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="requested">Requested</SelectItem>
-                  <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="instant_queue">Instant Queue</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={dateRange} onValueChange={(value) => setDateRange(value as "all" | "today" | "week" | "month")}>
@@ -553,7 +553,7 @@ export function ReadingManagement() {
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
             {filteredReadings
-              .filter(reading => reading.status === "requested" || reading.status === "accepted")
+              .filter(reading => reading.status === "instant_queue" || reading.status === "scheduled")
               .map((reading) => (
                 <Card key={reading.id}>
                   <CardHeader>
@@ -801,11 +801,11 @@ function ReadingDetailsDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="requested">Requested</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="instant_queue">Instant Queue</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="declined">Declined</SelectItem>
+                <SelectItem value="message_queue">Message Queue</SelectItem>
                 <SelectItem value="disputed">Disputed</SelectItem>
                 <SelectItem value="refunded">Refunded</SelectItem>
               </SelectContent>
@@ -828,13 +828,13 @@ function ReadingDetailsDialog({
 
 function getStatusVariant(status: ReadingStatus) {
   switch (status) {
-    case "requested":
+    case "instant_queue":
       return "secondary" as const;
-    case "accepted":
+    case "scheduled":
       return "default" as const;
     case "completed":
       return "default" as const;
-    case "declined":
+    case "refunded":
       return "destructive" as const;
     default:
       return "outline" as const;

@@ -3,16 +3,42 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReadingList } from '@/components/readings/reading-list';
 import { useReadings } from '@/hooks/use-readings';
+import { useAuth } from '@/hooks/use-auth';
+import { useMemo } from 'react';
 
 export default function ReaderReadingsPage() {
+  const { user } = useAuth();
   const { 
     acceptedReadings, 
-    requestedReadings,
+    instantQueueReadings,
+    scheduledReadings,
+    messageQueueReadings,
     suggestedReadings, 
     archivedReadings, 
     loading, 
     error 
   } = useReadings();
+
+  // Filter readings to only show those where current user is the reader
+  const filteredReadings = useMemo(() => {
+    if (!user?.id) return {
+      accepted: [],
+      instantQueue: [],
+      scheduled: [],
+      messageQueue: [],
+      suggested: [],
+      archived: []
+    };
+
+    return {
+      accepted: acceptedReadings.filter(r => r.readerId === user.id),
+      instantQueue: instantQueueReadings.filter(r => r.readerId === user.id),
+      scheduled: scheduledReadings.filter(r => r.readerId === user.id),
+      messageQueue: messageQueueReadings.filter(r => r.readerId === user.id),
+      suggested: suggestedReadings.filter(r => r.readerId === user.id),
+      archived: archivedReadings.filter(r => r.readerId === user.id)
+    };
+  }, [user, acceptedReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
 
   if (error) {
     return (
@@ -31,24 +57,32 @@ export default function ReaderReadingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="requested">
+      <Tabs defaultValue="instant">
         <TabsList className="w-full justify-start flex-wrap">
-          <TabsTrigger value="requested">Incoming Requests</TabsTrigger>
+          <TabsTrigger value="instant">Instant Queue</TabsTrigger>
+          <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
+          <TabsTrigger value="messages">Message Queue</TabsTrigger>
           <TabsTrigger value="suggested">Outgoing Suggestions</TabsTrigger>
           <TabsTrigger value="accepted">Active Readings</TabsTrigger>
           <TabsTrigger value="archived">Completed</TabsTrigger>
         </TabsList>
-        <TabsContent value="requested" className="mt-6">
-          <ReadingList readings={requestedReadings} loading={loading} />
+        <TabsContent value="instant" className="mt-6">
+          <ReadingList readings={filteredReadings.instantQueue} loading={loading} />
+        </TabsContent>
+        <TabsContent value="scheduled" className="mt-6">
+          <ReadingList readings={filteredReadings.scheduled} loading={loading} />
+        </TabsContent>
+        <TabsContent value="messages" className="mt-6">
+          <ReadingList readings={filteredReadings.messageQueue} loading={loading} />
         </TabsContent>
         <TabsContent value="suggested" className="mt-6">
-          <ReadingList readings={suggestedReadings} loading={loading} />
+          <ReadingList readings={filteredReadings.suggested} loading={loading} />
         </TabsContent>
         <TabsContent value="accepted" className="mt-6">
-          <ReadingList readings={acceptedReadings} loading={loading} />
+          <ReadingList readings={filteredReadings.accepted} loading={loading} />
         </TabsContent>
         <TabsContent value="archived" className="mt-6">
-          <ReadingList readings={archivedReadings} loading={loading} />
+          <ReadingList readings={filteredReadings.archived} loading={loading} />
         </TabsContent>
       </Tabs>
     </main>

@@ -7,10 +7,10 @@ const readingTimeSpanSchema = new mongoose.Schema({
 }, { _id: false });
 
 export enum ReadingStatus {
-  REQUESTED = 'requested',
   SUGGESTED = 'suggested',
-  ACCEPTED = 'accepted',
-  DECLINED = 'declined',
+  INSTANT_QUEUE = 'instant_queue',
+  SCHEDULED = 'scheduled', 
+  MESSAGE_QUEUE = 'message_queue',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   DISPUTED = 'disputed',
@@ -51,7 +51,7 @@ const readingSchema = new mongoose.Schema({
   status: { 
     type: String,
     enum: Object.values(ReadingStatus),
-    default: ReadingStatus.REQUESTED
+    default: ReadingStatus.INSTANT_QUEUE
   },
   credits: { type: Number, required: true },
   deliveryUrl: String,

@@ -1,4 +1,4 @@
-import { ReadingRequest } from '@/types/readings';
+import { CreateReadingPayload } from '@/types/readings';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -116,7 +116,8 @@ export const readerService = {
 
 // Reading related API calls
 export const readingService = {
-  async createReading(data: ReadingRequest) {
+  async createReading(data: CreateReadingPayload) {
+    console.log('API Service - Sending data:', JSON.stringify(data, null, 2));
     const response = await fetch(`${API_BASE_URL}/api/readings`, {
       method: 'POST',
       headers: {
@@ -125,6 +126,13 @@ export const readingService = {
       body: JSON.stringify(data),
       credentials: 'include',
     });
+    
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('API Error Response:', text);
+      throw new Error(`API returned ${response.status}: ${text}`);
+    }
+    
     return response.json();
   },
 

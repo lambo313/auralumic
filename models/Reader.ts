@@ -28,7 +28,11 @@ const readerSchema = new mongoose.Schema({
   additionalInfo: { type: String }, // Added additionalInfo field
   isOnline: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: false },
-  status: { type: String, default: "pending" }, // Reader status (e.g., pending, approved, rejected, suspended)
+  status: { 
+    type: String, 
+    enum: ['available', 'busy', 'offline', 'pending', 'approved', 'rejected', 'suspended'],
+    default: "pending" 
+  }, // Reader status for availability and approval
   
   // Approval tracking
   approvedAt: { type: Date },

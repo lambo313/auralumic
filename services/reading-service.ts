@@ -1,4 +1,5 @@
 import { Reading } from "@/types"
+import { CreateReadingPayload } from "@/types/readings"
 
 class ReadingService {
   private baseUrl = "/api/readings"
@@ -45,6 +46,27 @@ class ReadingService {
 
     if (!response.ok) {
       throw new Error("Failed to create reading request")
+    }
+
+    return response.json()
+  }
+
+  async createReading(data: CreateReadingPayload): Promise<{ reading: any; creditBalance: number; error?: string }> {
+    const response = await fetch(this.baseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return { 
+        reading: {}, 
+        creditBalance: 0, 
+        error: `Failed to create reading: ${response.status} ${errorText}` 
+      }
     }
 
     return response.json()

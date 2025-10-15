@@ -12,7 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Shield, Settings, HelpCircle } from 'lucide-react'
+import { MoreVertical, Shield, Settings, HelpCircle, LogOut } from 'lucide-react'
+import { ReaderStatusToggle } from '@/components/readers/reader-status-toggle'
 import { cn } from "@/lib/utils"
 
 interface HeaderProps {
@@ -22,8 +23,16 @@ interface HeaderProps {
 }
 
 export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) {
-  const { role } = useAuth();
+  const { role, signOut } = useAuth();
   const { theme } = useTheme();
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+    }
+  }
 
   return (
     <header className={cn(
@@ -72,6 +81,17 @@ export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            {/* {(baseRole === "reader" || role === "reader") && (
+              <>
+                <DropdownMenuItem asChild>
+                  <div className="flex flex-col items-start w-full p-2">
+                    <ReaderStatusToggle variant="compact" />
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )} */}
+            
             <DropdownMenuItem asChild>
               <div className="flex items-center justify-between w-full">
                 <span>Theme</span>
@@ -102,6 +122,13 @@ export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) 
                 <HelpCircle className="h-4 w-4" />
                 <span>Help</span>
               </Link>
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 w-full text-destructive focus:text-destructive">
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

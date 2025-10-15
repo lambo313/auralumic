@@ -219,7 +219,7 @@ function ClientProfileViewPage() {
         <p className="page-description">
           {isOwnProfile
             ? "Manage your client profile and preferences"
-            : `Viewing Client: ${profile?.username || 'Unknown'}`}
+            : `Explore the client's interests and recent activity`}
         </p>
       </div>
 

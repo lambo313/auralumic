@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { LoadingState } from '@/components/ui/loading-state';
 import { RequestReadingModal } from '@/components/readers/request-reading-modal';
+import { ReaderStatusBadge } from '@/components/readers/reader-status-badge';
 import { useLoadingState } from '@/hooks/use-loading-state';
 import { useCredits } from '@/hooks/use-credits';
 import { cn } from '@/lib/utils';
@@ -22,18 +23,11 @@ interface ReaderCardProps {
 
 export function ReaderCard({ reader, showRequestReading = true, onRequestReading, onSelectReader }: ReaderCardProps) {
   const { isLoading, withLoading } = useLoadingState();
-  const { credits } = useCredits();
+  const { credits, refreshBalance } = useCredits();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleRequestReading = () => {
     setIsModalOpen(true);
-  };
-
-  const handleModalRequestReading = async (request: ReadingRequest) => {
-    if (onRequestReading) {
-      await withLoading(() => onRequestReading(request));
-    }
-    setIsModalOpen(false);
   };
 
   return (
@@ -48,14 +42,26 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
             <AvatarImage src={reader.profileImage} alt={`${reader.username}'s avatar`} className="transition-transform group-hover:scale-105" />
             <AvatarFallback>{(reader.username?.[0] || "U").toUpperCase()}</AvatarFallback>
           </Avatar>
-          {reader.isOnline && (
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
-          )}
+          <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-white ${
+            reader.status === 'available' && reader.isOnline
+              ? 'bg-green-500'
+              : reader.status === 'busy' && reader.isOnline
+              ? 'bg-yellow-500' 
+              : 'bg-gray-400'
+          }`} />
         </div>
-        <div className="flex flex-col">
-          <span className="font-semibold hover:underline">
-            {reader.username}
-          </span>
+        <div className="flex flex-col flex-1">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold hover:underline">
+              {reader.username}
+            </span>
+            {/* Status Badge */}
+            <ReaderStatusBadge 
+              status={reader.status} 
+              isOnline={reader.isOnline} 
+              variant="compact" 
+            />
+          </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="flex items-center">
               <svg
@@ -109,17 +115,13 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
           )}
           <Button
             className="w-full transition-transform active:scale-95 disabled:transform-none hover:scale-105"
-            disabled={isLoading || reader.status !== "available"}
+            disabled={isLoading}
             onClick={handleRequestReading}
           >
             {isLoading ? (
               <LoadingState size="sm" />
-            ) : reader.status === "available" ? (
-              "Request Reading"
             ) : (
-              reader.status
-                ? reader.status.charAt(0).toUpperCase() + reader.status.slice(1)
-                : "Unavailable"
+              "Request Reading"
             )}
           </Button>
         </CardFooter>
@@ -130,7 +132,10 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
         onClose={() => setIsModalOpen(false)}
         client={{ credits }}
         reader={reader}
-        onRequestReading={handleModalRequestReading}
+        onCreditsUpdated={(newBalance) => {
+          // Refresh the credits from the server to ensure accuracy
+          refreshBalance();
+        }}
       />
     </Card>
   );

@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ReadingRequest } from "@/types/readings";
+import { ReadingRequest, CreateReadingPayload } from "@/types/readings";
 import type { Reader, WeeklySchedule } from "@/types/index";
 import { User, Clock, CreditCard, MessageCircle, Calendar as CalendarIcon, Star, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -27,6 +27,7 @@ interface RequestReadingModalProps {
   reader: Reader | null;
   onRequestReading?: (request: ReadingRequest) => Promise<void>; // Optional - kept for backward compatibility
   client: { credits: number };
+  onCreditsUpdated?: (newBalance: number) => void;
 }
 
 interface Category {
@@ -145,7 +146,7 @@ const isDateAvailable = (date: Date, schedule: WeeklySchedule): boolean => {
   const daySchedule = schedule[dayName];
   return daySchedule && daySchedule.length > 0;
 };
-export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading, client }: RequestReadingModalProps) {
+export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading, client, onCreditsUpdated }: RequestReadingModalProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -159,6 +160,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
     readingOption: "",
     description: "",
     duration: "",
+    queueType: "", // 'instant', 'scheduled', or 'message' - determined by reading option and user choice
     scheduledDate: undefined as Date | undefined,
     scheduledTime: "",
     timeZone: reader?.availability?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -229,8 +231,65 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
     }
   }, [formData.scheduledDate, formData.duration, reader?.availability?.schedule]);
 
+  // Auto-set queue type based on reading option and reader capabilities
+  useEffect(() => {
+    if (formData.readingOption) {
+      if (formData.readingOption === 'video_message') {
+        setFormData(prev => ({ ...prev, queueType: 'message' }));
+      } else if (['phone_call', 'live_video'].includes(formData.readingOption)) {
+        // If reader doesn't have instant booking, auto-select scheduled
+        if (!reader?.availability?.instantBooking) {
+          setFormData(prev => ({ ...prev, queueType: 'scheduled' }));
+        }
+        // If reader has instant booking but no queue type is selected, don't auto-select
+        // Let user choose between instant and scheduled
+      }
+    }
+  }, [formData.readingOption, reader?.availability?.instantBooking]);
+
   const selectedType = readingTypes.find(type => type.value === formData.readingType);
   const selectedOption = readingOptions.find(option => option.value === formData.readingOption);
+  
+  // Determine queue type based on reading option and user choice
+  const getQueueType = (): 'instant_queue' | 'scheduled' | 'message_queue' => {
+    if (formData.readingOption === 'video_message') {
+      return 'message_queue';
+    }
+    
+    // For phone/video calls
+    if (formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption)) {
+      // If reader doesn't have instant booking, always use scheduled
+      if (!reader?.availability?.instantBooking) {
+        return 'scheduled';
+      }
+      
+      // If reader has instant booking, respect user's choice
+      if (formData.queueType === 'scheduled' || (formData.scheduledDate && formData.scheduledTime)) {
+        return 'scheduled';
+      }
+      
+      if (formData.queueType === 'instant') {
+        return 'instant_queue';
+      }
+    }
+    
+    return 'instant_queue';
+  };
+  
+  const queueType = getQueueType();
+  
+  // Validation logic
+  const isPhoneOrVideo = formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption);
+  const hasInstantBooking = reader?.availability?.instantBooking;
+  
+  // For phone/video calls:
+  // - If reader has instant booking enabled: queue type selection is required
+  // - If reader doesn't have instant booking: automatically use scheduled
+  const isQueueTypeRequired = isPhoneOrVideo && hasInstantBooking;
+  const isQueueTypeValid = !isQueueTypeRequired || formData.queueType || (!hasInstantBooking && isPhoneOrVideo);
+  
+  const isSchedulingRequired = formData.queueType === 'scheduled' || (isPhoneOrVideo && !hasInstantBooking);
+  const isSchedulingValid = !isSchedulingRequired || (formData.scheduledDate && formData.scheduledTime);
   
   // Calculate credit cost based on type, duration, and reading option
   const calculateCredits = () => {
@@ -245,7 +304,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reader || !onRequestReading) return;
+    if (!reader) return;
 
     // Combine date and time for scheduled reading
     let scheduledFor: Date | null = null;
@@ -275,7 +334,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
       creditCost: creditCost,
       scheduledDate: scheduledFor ? scheduledFor.toISOString() : undefined, // Convert to string for API
       timeZone: formData.timeZone,
-      status: 'pending'
+      status: queueType as 'instant_queue' | 'scheduled' | 'message_queue'
     };
 
     // Show confirmation dialog
@@ -288,17 +347,45 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
 
     setIsSubmitting(true);
     try {
-      // Use the reading service to create the reading request
-      const response = await readingService.createReading(pendingRequest);
+      // Convert ReadingRequest (UI state) to CreateReadingPayload (API format)
+      // ReadingRequest includes UI-only fields like description, duration, creditCost
+      // CreateReadingPayload only includes what the API expects
+      const payload: CreateReadingPayload = {
+        readerId: pendingRequest.readerId,
+        topic: pendingRequest.topic,
+        question: pendingRequest.question,
+        readingOption: pendingRequest.readingOption,
+        status: pendingRequest.status,
+        // Only include scheduledDate and timeZone for scheduled readings
+        ...(pendingRequest.status === 'scheduled' && pendingRequest.scheduledDate && {
+          scheduledDate: pendingRequest.scheduledDate,
+          timeZone: pendingRequest.timeZone
+        })
+      };
+      
+      console.log('Sending payload to API:', JSON.stringify(payload, null, 2));
+      
+      const response = await readingService.createReading(payload);
       
       if (!response || response.error) {
         throw new Error(response?.error || 'Failed to create reading request');
       }
 
+      // Update credits if callback is provided and we have a new balance
+      if (onCreditsUpdated && response.creditBalance !== undefined) {
+        onCreditsUpdated(response.creditBalance);
+      }
+
       // Show success toast
+      const queueMessages = {
+        instant_queue: "Your instant reading request has been added to the queue",
+        scheduled: "Your reading has been scheduled",
+        message_queue: "Your video message request has been submitted"
+      };
+      
       toast({
         title: "Reading Request Submitted!",
-        description: `Your ${selectedType?.label} reading request has been sent to ${reader?.username}. You'll be notified when they respond.`,
+        description: `${queueMessages[queueType]}. You'll be notified when ${reader?.username} responds.`,
       });
 
       // Reset form and close modal
@@ -307,6 +394,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
         readingOption: "",
         description: "",
         duration: "",
+        queueType: "",
         scheduledDate: undefined,
         scheduledTime: "",
         timeZone: reader?.availability?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -315,8 +403,10 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
       setPendingRequest(null);
       onClose();
 
-      // Navigate to client readings page
-      router.push('/client/readings');
+      // Navigate to client readings page (use setTimeout to ensure modal closes first)
+      setTimeout(() => {
+        router.push('/client/readings');
+      }, 100);
     } catch (error) {
       console.error("Error submitting reading request:", error);
       toast({
@@ -492,7 +582,11 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
               <Label htmlFor="readingOption">Reading Format *</Label>
               <Select 
                 value={formData.readingOption} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, readingOption: value }))}
+                onValueChange={(value) => setFormData(prev => ({ 
+                  ...prev, 
+                  readingOption: value,
+                  queueType: value === 'video_message' ? 'message' : ''
+                }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select reading format" />
@@ -519,6 +613,81 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
             </div>
           )}
 
+          {/* Queue Type Selection for Phone Call and Live Video */}
+          {formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption) && (
+            <div className="space-y-2">
+              <Label>Booking Type *</Label>
+              {reader?.availability?.instantBooking ? (
+                // Show both instant and scheduled options when instant booking is enabled
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant={formData.queueType === 'instant' ? 'default' : 'outline'}
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      queueType: 'instant',
+                      scheduledDate: undefined,
+                      scheduledTime: ''
+                    }))}
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                  >
+                    <div className="text-lg">⚡</div>
+                    <div className="font-medium">Instant Reading</div>
+                    <div className="text-xs text-muted-foreground text-center">
+                      Get connected immediately when reader is available
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.queueType === 'scheduled' ? 'default' : 'outline'}
+                    onClick={() => setFormData(prev => ({ ...prev, queueType: 'scheduled' }))}
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                  >
+                    <div className="text-lg">📅</div>
+                    <div className="font-medium">Schedule Reading</div>
+                    <div className="text-xs text-muted-foreground text-center">
+                      Book for a specific date and time
+                    </div>
+                  </Button>
+                </div>
+              ) : (
+                // Show only scheduled option when instant booking is disabled
+                <div className="w-full">
+                  <Button
+                    type="button"
+                    variant={formData.queueType === 'scheduled' ? 'default' : 'outline'}
+                    onClick={() => setFormData(prev => ({ ...prev, queueType: 'scheduled' }))}
+                    className="w-full h-auto p-4 flex flex-col items-center gap-2"
+                  >
+                    <div className="text-lg">📅</div>
+                    <div className="font-medium">Schedule Reading</div>
+                    <div className="text-xs text-muted-foreground text-center">
+                      Book for a specific date and time
+                    </div>
+                  </Button>
+                  <div className="text-xs text-muted-foreground mt-2 text-center">
+                    This reader requires scheduled appointments for phone and video calls
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Auto-set message queue for video messages */}
+          {formData.readingOption === 'video_message' && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                <div className="text-lg">🎥</div>
+                <div>
+                  <div className="font-medium">Video Message Request</div>
+                  <div className="text-sm text-blue-600 dark:text-blue-300">
+                    Your request will be added to the message queue. The reader will create a personalized video response for you.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">What would you like to explore?</Label>
@@ -531,9 +700,14 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
             />
           </div>
 
-          {/* Scheduling */}
-          <div className="space-y-4">
-            <Label>Preferred Schedule (Optional)</Label>
+          {/* Scheduling - Required for scheduled queue type */}
+          {(formData.queueType === 'scheduled' || 
+            (['phone_call', 'live_video'].includes(formData.readingOption) && !reader?.availability?.instantBooking)) && (
+            <div className="space-y-4">
+              <Label>
+                {formData.queueType === 'scheduled' ? 'Schedule' : 'Preferred Schedule (Optional)'}
+                {formData.queueType === 'scheduled' && <span className="text-red-500"> *</span>}
+              </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Date Picker */}
               <div className="space-y-2">
@@ -621,6 +795,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
               }
             </p>
           </div>
+          )}
 
           {/* Credit Cost Display */}
           {creditCost > 0 && selectedOption && (
@@ -657,7 +832,15 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || creditCost === 0 || isLoadingCategories || !!categoriesError || !formData.readingOption}
+              disabled={
+                isSubmitting || 
+                creditCost === 0 || 
+                isLoadingCategories || 
+                !!categoriesError || 
+                !formData.readingOption ||
+                !isQueueTypeValid ||
+                !isSchedulingValid
+              }
             >
               {isSubmitting ? "Submitting..." : `Request Reading (${creditCost} Credits)`}
             </Button>
@@ -698,14 +881,41 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
                 </div>
                 
                 <div className="flex justify-between">
+                  <span className="text-sm font-medium">Type:</span>
+                  <span className="text-sm flex items-center gap-1">
+                    {queueType === 'instant_queue' && (
+                      <>
+                        <span className="text-orange-600">⚡</span>
+                        <span className="text-orange-600 font-medium">Instant Reading</span>
+                      </>
+                    )}
+                    {queueType === 'scheduled' && (
+                      <>
+                        <span className="text-blue-600">📅</span>
+                        <span className="text-blue-600 font-medium">Scheduled Reading</span>
+                      </>
+                    )}
+                    {queueType === 'message_queue' && (
+                      <>
+                        <span className="text-purple-600">🔴</span>
+                        <span className="text-purple-600 font-medium">Pre-Recorded Video</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
                   <span className="text-sm font-medium">Duration:</span>
                   <span className="text-sm">{formData.duration} minutes</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">Description:</span>
-                  <span className="text-sm text-right max-w-[60%]">
-                    {formData.description.trim() || 'General'}
+                  <span className="text-sm text-right max-w-[60%] break-words" title={formData.description.trim() || 'General'}>
+                    {(formData.description.trim() || 'General').length > 50 
+                      ? `${(formData.description.trim() || 'General').substring(0, 50)}...`
+                      : formData.description.trim() || 'General'
+                    }
                   </span>
                 </div>
 
@@ -715,6 +925,52 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
                     <span className="text-sm text-right">
                       {format(pendingRequest.scheduledDate, "PPP")} at {formatTimeTo12Hour(formData.scheduledTime)}
                     </span>
+                  </div>
+                )}
+
+                {/* Queue-specific messaging */}
+                {queueType === 'instant_queue' && (
+                  <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                    <div className="flex items-start gap-2 text-orange-800 dark:text-orange-200">
+                      <span className="text-base mt-0.5">⚡</span>
+                      <div className="text-sm">
+                        <div className="font-medium">Instant Reading Request</div>
+                        <div className="text-orange-600 dark:text-orange-300 mt-1">
+                          You&apos;ll be added to the instant queue. {reader.username} will connect with you as soon as they&apos;re available.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {queueType === 'scheduled' && (
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div className="flex items-start gap-2 text-blue-800 dark:text-blue-200">
+                      <span className="text-base mt-0.5">📅</span>
+                      <div className="text-sm">
+                        <div className="font-medium">Scheduled Reading</div>
+                        <div className="text-blue-600 dark:text-blue-300 mt-1">
+                          {pendingRequest.scheduledDate 
+                            ? `Your reading is scheduled for the selected date and time.`
+                            : `${reader.username} will contact you to confirm a suitable time.`
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {queueType === 'message_queue' && (
+                  <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                    <div className="flex items-start gap-2 text-purple-800 dark:text-purple-200">
+                      <span className="text-base mt-0.5">🎥</span>
+                      <div className="text-sm">
+                        <div className="font-medium">Video Message Request</div>
+                        <div className="text-purple-600 dark:text-purple-300 mt-1">
+                          {reader.username} will create a personalized video response for you within their usual response time.
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 

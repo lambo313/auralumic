@@ -2,6 +2,9 @@ import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
+import dbConnect from "@/lib/database";
+import User from "@/models/User";
+import Reader from "@/models/Reader";
 
 export async function POST(req: Request) {
   // Get the webhook signature from the headers
@@ -38,6 +41,44 @@ export async function POST(req: Request) {
 
   // Handle the webhook
   const eventType = evt.type;
+  
+  await dbConnect();
+
+  if (eventType === "session.created") {
+    // User signed in - set reader isOnline to true if they're a reader
+    try {
+      const user = await User.findOne({ clerkId: evt.data.user_id });
+      if (user && user.role === 'reader') {
+        await Reader.findOneAndUpdate(
+          { userId: evt.data.user_id },
+          { 
+            isOnline: true,
+            lastActive: new Date()
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error updating reader online status on sign in:', error);
+    }
+  }
+
+  if (eventType === "session.ended") {
+    // User signed out - set reader isOnline to false if they're a reader
+    try {
+      const user = await User.findOne({ clerkId: evt.data.user_id });
+      if (user && user.role === 'reader') {
+        await Reader.findOneAndUpdate(
+          { userId: evt.data.user_id },
+          { 
+            isOnline: false,
+            lastActive: new Date()
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error updating reader online status on sign out:', error);
+    }
+  }
 
   if (eventType === "user.created") {
     // Create the user in your database

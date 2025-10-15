@@ -33,7 +33,7 @@ export interface Reader {
   additionalInfo?: string;
   isOnline: boolean;
   isApproved: boolean;
-  status: string;
+  status: 'available' | 'busy' | 'offline' | 'pending' | 'approved' | 'rejected' | 'suspended';
   languages: string[];
   attributes: {
     tools: string[];
@@ -160,7 +160,7 @@ export interface Reading {
     finalPrice: number;
   };
   scheduledDate?: Date;
-  status: 'requested' | 'accepted' | 'declined' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
+  status: 'suggested' | 'instant_queue' | 'scheduled' | 'message_queue' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
   credits: number;
   deliveryUrl?: string;
   createdAt: Date;

@@ -85,9 +85,10 @@ export const readingTopicSchema = z.enum([
 ]);
 
 export const readingStatusSchema = z.enum([
-  'requested',
-  'accepted', 
-  'declined',
+  'suggested',
+  'instant_queue',
+  'scheduled', 
+  'message_queue',
   'in_progress',
   'completed',
   'disputed',

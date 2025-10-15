@@ -27,10 +27,28 @@ export function useAuth() {
           const data = await response.json();
           const userBaseRole = data.role as "client" | "reader" | "admin";
           setBaseRole(userBaseRole || "client");
+          
+
+          
           // Restore persisted view state for admins
           const persistedRole = localStorage.getItem("adminViewState");
           if (userBaseRole === "admin" && persistedRole && ["client","reader","admin"].includes(persistedRole)) {
             setRole(persistedRole as "client" | "reader" | "admin");
+            
+            // Update reader online status for admin when restoring reader view
+            if (persistedRole === 'reader') {
+              try {
+                await fetch('/api/admin/reader-online-status', {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ isOnline: true }),
+                });
+              } catch (error) {
+                console.error('Failed to update reader online status on load:', error);
+              }
+            }
           } else {
             setRole(userBaseRole || "client");
           }
@@ -88,6 +106,22 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
+      // If admin is in reader view, set reader offline before signing out
+      if (baseRole === 'admin' && role === 'reader') {
+        try {
+          await fetch('/api/admin/reader-online-status', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ isOnline: false }),
+          });
+        } catch (error) {
+          console.error('Failed to update reader online status on sign out:', error);
+          // Continue with sign out even if status update fails
+        }
+      }
+      
       await clerk.signOut()
     } catch (err) {
       throw new Error("Failed to sign out")

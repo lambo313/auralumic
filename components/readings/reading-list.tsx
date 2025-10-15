@@ -47,7 +47,9 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
         // Map ReadingStatus to the expected status values for ReadingCard
         const mapStatus = (status: string) => {
           switch (status) {
-            case 'requested': return 'pending' as const;
+            case 'instant_queue': return 'pending' as const;
+            case 'scheduled': return 'pending' as const; 
+            case 'message_queue': return 'pending' as const;
             case 'in_progress': return 'accepted' as const;
             default: return status as 'pending' | 'accepted' | 'declined' | 'completed';
           }

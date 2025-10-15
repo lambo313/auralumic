@@ -27,6 +27,7 @@ import {
 import attributesData from '@/data/attributes.json';
 import type { ReadingRequest } from '@/types/readings';
 import { getTimezoneByValue, formatTimezoneLabel } from '@/lib/timezone-utils';
+import { ReaderStatusBadge } from '@/components/readers/reader-status-badge';
 
 interface ReaderData {
   userId: string;
@@ -39,6 +40,7 @@ interface ReaderData {
   additionalInfo?: string;
   isOnline: boolean;
   isApproved: boolean;
+  status: 'available' | 'busy' | 'offline' | 'pending' | 'approved' | 'rejected' | 'suspended';
   languages: string[];
   attributes?: {
     abilities?: string[];
@@ -73,7 +75,7 @@ interface ReaderProfileViewPageProps {
 
 function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
   const { user } = useAuth();
-  const { credits } = useCredits();
+  const { credits, refreshBalance } = useCredits();
   const router = useRouter();
   const { isLoading: isRequestLoading, withLoading } = useLoadingState();
   const [readerData, setReaderData] = useState<ReaderData | null>(null);
@@ -222,6 +224,14 @@ function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
         <ChevronLeft className="h-4 w-4 mr-2" />
         Back
       </Button>
+      <div className="mb-6">
+        <h1 className="page-title">
+          Reader Profile
+        </h1>
+        <p className="page-description">
+          Explore the reader&apos;s specialties, availability, and more
+        </p>
+      </div>
 
       <div className="space-y-8">
         {/* Profile Header */}
@@ -246,15 +256,13 @@ function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
                 </Avatar>
                 
                 {/* Status Indicator */}
-                <div className={`absolute -bottom-2 -right-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-lg ${
-                  readerData.isOnline 
-                    ? 'bg-green-500/90 text-white border border-green-400/50' 
-                    : 'bg-gray-500/90 text-white border border-gray-400/50'
-                }`}>
-                  <div className={`h-2 w-2 rounded-full ${
-                    readerData.isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'
-                  }`} />
-                  {readerData.isOnline ? 'Online' : 'Offline'}
+                <div className="absolute -bottom-2 -right-2">
+                  <ReaderStatusBadge 
+                    status={readerData.status} 
+                    isOnline={readerData.isOnline} 
+                    variant="compact"
+                    className="backdrop-blur-md shadow-lg border-2 border-white/50"
+                  />
                 </div>
               </div>
               
@@ -657,7 +665,7 @@ function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
             },
             badges: readerData.badges || [],
             reviews: [], // This might need to be fetched separately or added to ReaderData
-            status: readerData.isApproved ? 'available' : 'unavailable',
+            status: readerData.status,
             readingOptions: readerData.readingOptions?.map(option => ({
               type: option.type as "phone_call" | "video_message" | "live_video",
               name: option.name,
@@ -691,7 +699,10 @@ function ReaderProfileViewPage({ params }: ReaderProfileViewPageProps) {
             lastActive: new Date(), // Add current date as default or fetch from API
             updatedAt: new Date(readerData.createdAt) // Use createdAt as fallback or fetch actual updatedAt
           }}
-          onRequestReading={handleModalRequestReading}
+          onCreditsUpdated={(newBalance) => {
+            // Refresh the credits from the server to ensure accuracy
+            refreshBalance();
+          }}
         />
       )}
     </main>

@@ -2,12 +2,13 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import { z } from "zod"
-import { validateCredits } from "@/lib/credit-validation"
+import { validateCredits, deductCredits } from "@/lib/credit-validation"
 import { AvailabilityService } from "@/services/availability-service"
 import { sendNotification } from "@/services/notification-service"
 import Reading, { ReadingStatus } from "@/models/Reading"
 import { ScheduledReading } from "@/models/ScheduledReading"
 import { NotificationType } from "@/models/Notification"
+import User from "@/models/User"
 
 // Enhanced validation schema
 const createReadingSchema = z.object({
@@ -20,12 +21,13 @@ const createReadingSchema = z.object({
     timeSpan: z.object({
       duration: z.number().min(15).max(120),
       label: z.string(),
-      multiplier: z.number().min(1)
+      multiplier: z.number().min(0).max(2) // Allow discounts (0.8) and premiums (1.2)
     }),
     finalPrice: z.number().min(1)
   }),
-  scheduledDate: z.string().transform(str => new Date(str)).optional(),
+  scheduledDate: z.string().min(1).transform(str => new Date(str)).optional(),
   timeZone: z.string().optional(),
+  status: z.enum(['instant_queue', 'scheduled', 'message_queue']).optional(),
 })
 
 export async function GET(request: Request) {
@@ -116,48 +118,87 @@ export async function POST(request: Request) {
       });
     }
 
-    // Create the reading request
-    const reading = await Reading.create({
-      clientId: userId,
-      readerId: body.readerId,
-      topic: body.topic,
-      question: body.question,
-      readingOption: body.readingOption,
-      scheduledDate: body.scheduledDate,
-      status: ReadingStatus.REQUESTED,
-      credits: body.readingOption.finalPrice,
-    });
+    // Deduct credits from user account
+    const creditResult = await deductCredits(userId, body.readingOption.finalPrice);
 
-    // Create the scheduled reading only if we have a scheduled date
-    let scheduledReading = null;
-    if (body.scheduledDate && body.timeZone) {
-      scheduledReading = await ScheduledReading.create({
-        readingId: reading._id,
+    try {
+      // Create the reading request
+      // Determine status based on the request
+      let status = ReadingStatus.INSTANT_QUEUE; // default
+      if (body.status && Object.values(ReadingStatus).includes(body.status as ReadingStatus)) {
+        status = body.status as ReadingStatus;
+      } else if (body.scheduledDate) {
+        status = ReadingStatus.SCHEDULED;
+      } else if (body.readingOption?.type === 'video_message') {
+        status = ReadingStatus.MESSAGE_QUEUE;
+      }
+
+      const reading = await Reading.create({
+        clientId: userId,
+        readerId: body.readerId,
+        topic: body.topic,
+        question: body.question,
+        readingOption: body.readingOption,
         scheduledDate: body.scheduledDate,
-        timeZone: body.timeZone,
+        status: status,
+        credits: body.readingOption.finalPrice,
       });
+
+      // Create the scheduled reading only if we have a scheduled date
+      let scheduledReading = null;
+      if (body.scheduledDate && body.timeZone) {
+        scheduledReading = await ScheduledReading.create({
+          readingId: reading._id,
+          scheduledDate: body.scheduledDate,
+          timeZone: body.timeZone,
+        });
+      }
+
+      // Send notification to reader
+      await sendNotification({
+        userId: body.readerId,
+        type: NotificationType.READING_REQUEST,
+        message: "You have a new reading request",
+        data: {
+          readingId: reading._id.toString(),
+          readerId: body.readerId
+        },
+      });
+
+      return NextResponse.json({
+        reading: {
+          ...reading.toObject(),
+          ...(scheduledReading && { scheduledReading: scheduledReading.toObject() }),
+        },
+        creditBalance: creditResult.newBalance,
+      });
+    } catch (error) {
+      // If reading creation fails after credits were deducted, we should refund the credits
+      console.error("[READINGS_POST] Error after credit deduction:", error);
+      
+      // Attempt to refund credits
+      try {
+        const user = await User.findOne({ clerkId: userId });
+        if (user) {
+          user.credits += body.readingOption.finalPrice;
+          await user.save();
+        }
+      } catch (refundError) {
+        console.error("[READINGS_POST] Failed to refund credits:", refundError);
+      }
+      
+      throw error; // Re-throw the original error
     }
-
-    // Send notification to reader
-    await sendNotification({
-      userId: body.readerId,
-      type: NotificationType.READING_REQUEST,
-      message: "You have a new reading request",
-      data: {
-        readingId: reading._id.toString(),
-        readerId: body.readerId
-      },
-    });
-
-    return NextResponse.json({
-      reading: {
-        ...reading.toObject(),
-        ...(scheduledReading && { scheduledReading: scheduledReading.toObject() }),
-      },
-    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse("Invalid request data", { status: 422 })
+      console.error("[READINGS_POST] Zod validation error:", error.issues);
+      return NextResponse.json(
+        { 
+          error: "Invalid request data", 
+          details: error.issues 
+        }, 
+        { status: 422 }
+      );
     }
 
     console.error("[READINGS_POST]", error)

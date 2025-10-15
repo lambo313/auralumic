@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import attributesData from '@/data/attributes.json';
 import { getTimezoneByValue, formatTimezoneLabel } from '@/lib/timezone-utils';
+import { ReaderStatusToggle } from '@/components/readers/reader-status-toggle';
+import { ReaderStatusBadge } from '@/components/readers/reader-status-badge';
 
 interface ReaderData {
   userId: string;
@@ -39,7 +41,7 @@ interface ReaderData {
   additionalInfo?: string;
   isOnline: boolean;
   isApproved: boolean;
-  status: string;
+  status: 'available' | 'busy' | 'offline' | 'pending' | 'approved' | 'rejected' | 'suspended';
   languages: string[];
   attributes?: {
     abilities?: string[];
@@ -198,13 +200,20 @@ function ReaderProfilePage() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
-          Reader Profile
+        <h1 className="page-title">
+          Your Reader Profile
         </h1>
-        <p className="text-lg text-muted-foreground font-medium mt-2">
+        <p className="page-description">
           Manage your reader profile and track your performance
         </p>
       </div>
+
+      {/* Reader Status Control */}
+      {/* <Card className="mb-6">
+        <CardContent className="pt-6">
+          <ReaderStatusToggle variant="full" />
+        </CardContent>
+      </Card> */}
 
       <div className="space-y-8">
         {/* Profile Header */}
@@ -230,15 +239,13 @@ function ReaderProfilePage() {
                 </div>
                 
                 {/* Status Indicator */}
-                <div className={`absolute -bottom-2 -right-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-lg ${
-                  readerData.isOnline 
-                    ? 'bg-green-500/90 text-white border border-green-400/50' 
-                    : 'bg-gray-500/90 text-white border border-gray-400/50'
-                }`}>
-                  <div className={`h-2 w-2 rounded-full ${
-                    readerData.isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'
-                  }`} />
-                  {readerData.isOnline ? 'Online' : 'Offline'}
+                <div className="absolute -bottom-2 -right-2">
+                  <ReaderStatusBadge 
+                    status={readerData.status} 
+                    isOnline={readerData.isOnline} 
+                    variant="compact"
+                    className="backdrop-blur-md shadow-lg border-2 border-white/50"
+                  />
                 </div>
               </div>
               
@@ -326,14 +333,13 @@ function ReaderProfilePage() {
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${
-                  readerData.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
-                }`} />
-                <span className="text-sm font-medium">
-                  {readerData.isOnline ? 'Online' : 'Offline'}
-                </span>
-              </div>
+              {/* <div className="flex items-center gap-2">
+                <ReaderStatusBadge 
+                  status={readerData.status} 
+                  isOnline={readerData.isOnline} 
+                  variant="dot" 
+                />
+              </div> */}
             </div>
           </CardContent>
         </Card>

@@ -6,7 +6,9 @@ import type { Reading } from '@/types/readings';
 
 interface ReadingsData {
   acceptedReadings: Reading[];
-  requestedReadings: Reading[];
+  instantQueueReadings: Reading[];
+  scheduledReadings: Reading[];
+  messageQueueReadings: Reading[];
   suggestedReadings: Reading[];
   archivedReadings: Reading[];
   loading: boolean;
@@ -17,7 +19,9 @@ export function useReadings(): ReadingsData {
   const { user } = useAuth();
   const [data, setData] = useState<ReadingsData>({
     acceptedReadings: [],
-    requestedReadings: [],
+    instantQueueReadings: [],
+    scheduledReadings: [],
+    messageQueueReadings: [],
     suggestedReadings: [],
     archivedReadings: [],
     loading: true,
@@ -47,28 +51,36 @@ export function useReadings(): ReadingsData {
         // Sort readings into categories
         const sorted = readingsArray.reduce<{
           accepted: Reading[];
-          requested: Reading[];
+          instantQueue: Reading[];
+          scheduled: Reading[];
+          messageQueue: Reading[];
           suggested: Reading[];
           archived: Reading[];
         }>(
           (acc, reading) => {
-            if (reading.status === 'completed' || reading.status === 'declined') {
+            if (reading.status === 'completed' || reading.status === 'disputed' || reading.status === 'refunded') {
               acc.archived.push(reading);
-            } else if (reading.status === 'accepted') {
+            } else if (reading.status === 'in_progress') {
               acc.accepted.push(reading);
-            } else if (reading.status === 'requested') {
-              acc.requested.push(reading);
+            } else if (reading.status === 'instant_queue') {
+              acc.instantQueue.push(reading);
+            } else if (reading.status === 'scheduled') {
+              acc.scheduled.push(reading);
+            } else if (reading.status === 'message_queue') {
+              acc.messageQueue.push(reading);
             } else if (reading.status === 'suggested') {
               acc.suggested.push(reading);
             }
             return acc;
           },
-          { accepted: [], requested: [], suggested: [], archived: [] }
+          { accepted: [], instantQueue: [], scheduled: [], messageQueue: [], suggested: [], archived: [] }
         );
 
         setData({
           acceptedReadings: sorted.accepted,
-          requestedReadings: sorted.requested,
+          instantQueueReadings: sorted.instantQueue,
+          scheduledReadings: sorted.scheduled,
+          messageQueueReadings: sorted.messageQueue,
           suggestedReadings: sorted.suggested,
           archivedReadings: sorted.archived,
           loading: false,

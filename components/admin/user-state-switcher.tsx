@@ -34,9 +34,30 @@ export function UserStateSwitcher() {
     
     setIsLoading(true);
     try {
+      // Update reader online status when admin switches to/from reader view
+      try {
+        const response = await fetch('/api/admin/reader-online-status', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            isOnline: newRole === 'reader' 
+          }),
+        });
+        
+        if (!response.ok) {
+          console.warn('Failed to update reader online status, but continuing with view switch');
+        }
+      } catch (error) {
+        console.error('Error updating reader online status:', error);
+        // Continue with view switch even if status update fails
+      }
+
       await switchViewState(newRole);
-  // Persist view state for admin
-  localStorage.setItem("adminViewState", newRole);
+      // Persist view state for admin
+      localStorage.setItem("adminViewState", newRole);
+      
       // Redirect to appropriate dashboard
       switch (newRole) {
         case "client":

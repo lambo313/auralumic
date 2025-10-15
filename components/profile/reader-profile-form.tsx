@@ -75,6 +75,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [scheduleHours, setScheduleHours] = useState<Record<string, { start: string; end: string }>>({});
   const [timezone, setTimezone] = useState<string>("UTC");
+  const [instantBooking, setInstantBooking] = useState<boolean>(false);
   const [usernameStatus, setUsernameStatus] = useState<{
     available: boolean | null;
     message: string;
@@ -114,6 +115,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           setSelectedStyle(data.attributes?.style || null);
           // Update availability
           setTimezone(data.availability?.timezone || "UTC");
+          setInstantBooking(data.availability?.instantBooking || false);
           const days = Object.keys(data.availability?.schedule || {}).filter(
             day => data.availability.schedule[day].length > 0
           );
@@ -226,7 +228,7 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
     const availability = {
       schedule,
       timezone,
-      instantBooking: false // default, can be added to form later
+      instantBooking
     };
 
     try {
@@ -652,6 +654,26 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           </div>
           <FormDescription>
             Select your timezone for accurate scheduling. The timezone will be automatically detected based on your selected location.
+          </FormDescription>
+        </div>
+
+        {/* Instant Booking Toggle */}
+        <div className="space-y-2">
+          <FormLabel>Instant Booking</FormLabel>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="instantBooking"
+              checked={instantBooking}
+              onChange={(e) => setInstantBooking(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="instantBooking" className="text-sm font-medium">
+              Enable instant booking for phone and video calls
+            </label>
+          </div>
+          <FormDescription>
+            When enabled, clients can choose between instant readings or scheduled readings for phone and video calls. Video messages are always queued regardless of this setting.
           </FormDescription>
         </div>
 
