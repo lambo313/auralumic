@@ -54,7 +54,7 @@ const readingSchema = new mongoose.Schema({
     default: ReadingStatus.INSTANT_QUEUE
   },
   credits: { type: Number, required: true },
-  deliveryUrl: String,
+  readingLink: String, // Renamed from deliveryUrl
   createdAt: { type: Date, default: Date.now },
   completedDate: Date
 }, {

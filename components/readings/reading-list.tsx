@@ -4,9 +4,13 @@ import type { Reading } from "@/types/readings"
 interface ReadingListProps {
   readings: Reading[];
   loading?: boolean;
+  currentCredits?: number;
+  onReadingUpdated?: () => void;
+  onCreditsUpdated?: (newBalance: number) => void;
+  userRole: "reader" | "client";
 }
 
-export function ReadingList({ readings, loading }: ReadingListProps) {
+export function ReadingList({ readings, loading, currentCredits, onReadingUpdated, onCreditsUpdated, userRole }: ReadingListProps) {
   if (loading) {
     return (
       <div className="space-y-4">
@@ -24,8 +28,7 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
               readerId: '',
               clientId: ''
             }}
-            userRole="client"
-            onViewDetails={() => {}}
+            userRole={userRole}
             loading
           />
         ))}
@@ -50,13 +53,19 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
             case 'instant_queue': return 'pending' as const;
             case 'scheduled': return 'pending' as const; 
             case 'message_queue': return 'pending' as const;
-            case 'in_progress': return 'accepted' as const;
-            default: return status as 'pending' | 'accepted' | 'declined' | 'completed';
+            case 'in_progress': return 'inProgress' as const;
+            default: return status as 'pending' | 'inProgress' | 'cancelled' | 'completed';
           }
         };
 
-        // Use _id if id is not available, or fallback to index
-        const readingId = reading.id || (reading as unknown as { _id?: string })._id || `reading-${index}`;
+        // Ensure we have a valid ID - prefer id over _id
+        const readingId = reading.id || (reading as unknown as { _id?: string })._id?.toString() || `reading-${index}`;
+        
+        // Pass the full reading with consistent ID
+        const fullReadingWithId = {
+          ...reading,
+          id: readingId
+        };
 
         return (
           <ReadingCard
@@ -72,17 +81,11 @@ export function ReadingList({ readings, loading }: ReadingListProps) {
               readerId: reading.readerId,
               clientId: reading.clientId
             }}
-            userRole="client"
-            onViewDetails={() => {
-              const pathname = window.location.pathname;
-              if (pathname.includes('/client/')) {
-                window.location.href = `/client/reading/${readingId}`;
-              } else if (pathname.includes('/reader/')) {
-                window.location.href = `/reader/reading/${readingId}`;
-              } else {
-                window.location.href = `/dashboard/reading/${readingId}`; // fallback
-              }
-            }}
+            fullReading={fullReadingWithId}
+            currentCredits={currentCredits}
+            userRole={userRole}
+            onReadingUpdated={onReadingUpdated}
+            onCreditsUpdated={onCreditsUpdated}
           />
         );
       })}

@@ -1,14 +1,15 @@
 import mongoose from 'mongoose';
 
 export enum NotificationType {
-  READING_REQUEST = 'reading_request',
-  READING_ACCEPTED = 'reading_accepted',
-  READING_DECLINED = 'reading_declined',
+  READING_IN_PROGRESS = 'reading_in_progress',
+  READING_CANCELLED = 'reading_cancelled',
   READING_COMPLETED = 'reading_completed',
+  READING_REQUEST = 'reading_request',
   REVIEW_REQUEST = 'review_request',
   NEW_COMMENT = 'new_comment',
   POST_LIKED = 'post_liked',
-  DISPUTE_FILED = 'dispute_filed'
+  DISPUTE_FILED = 'dispute_filed',
+  READER_APPLICATION_REJECTED = 'reader_application_rejected'
 }
 
 const notificationSchema = new mongoose.Schema({

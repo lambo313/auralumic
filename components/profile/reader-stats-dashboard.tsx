@@ -20,7 +20,7 @@ export function ReaderStatsDashboard({ user }: ReaderStatsDashboardProps) {
     repeatClientRate: 0, // Not available in current stats
     profileViews: 0, // Not available in current stats
     bookingRequests: 0, // Not available in current stats
-    acceptedBookings: user?.stats?.totalReadings ?? 0, // Use totalReadings as proxy
+    totalBookings: user?.stats?.totalReadings ?? 0, // Use totalReadings as proxy
     pendingReviews: [],
     badges: user?.badges ?? [],
   };

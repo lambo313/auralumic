@@ -38,8 +38,8 @@ export const sendNotification = async ({
 };
 
 export const notificationTypes: Record<string, NotificationType> = {
-  READING_ACCEPTED: NotificationType.READING_ACCEPTED,
-  READING_DECLINED: NotificationType.READING_DECLINED,
+  READING_IN_PROGRESS: NotificationType.READING_IN_PROGRESS,
+  READING_CANCELLED: NotificationType.READING_CANCELLED,
   READING_COMPLETED: NotificationType.READING_COMPLETED,
   REVIEW_REQUEST: NotificationType.REVIEW_REQUEST,
   NEW_COMMENT: NotificationType.NEW_COMMENT,

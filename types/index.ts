@@ -162,7 +162,7 @@ export interface Reading {
   scheduledDate?: Date;
   status: 'suggested' | 'instant_queue' | 'scheduled' | 'message_queue' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
   credits: number;
-  deliveryUrl?: string;
+  readingLink?: string; // Renamed from deliveryUrl
   createdAt: Date;
   completedDate?: Date;
   updatedAt: Date;
@@ -211,7 +211,7 @@ export interface NotificationData {
 export interface Notification {
   id: string;
   userId: string;
-  type: 'reading_accepted' | 'reading_declined' | 'reading_completed' | 'review_request' | 'new_comment' | 'post_liked' | 'dispute_filed';
+  type: 'reading_in_progress' | 'reading_cancelled' | 'reading_completed' | 'review_request' | 'new_comment' | 'post_liked' | 'dispute_filed';
   title: string;
   message: string;
   isRead: boolean;

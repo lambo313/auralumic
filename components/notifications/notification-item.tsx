@@ -20,8 +20,8 @@ interface NotificationItemProps {
 
 const notificationIcons: Record<string, React.ReactNode> = {
   reading_request: <Calendar className="h-4 w-4" />,
-  reading_accepted: <Check className="h-4 w-4" />,
-  reading_declined: <X className="h-4 w-4" />,
+  reading_in_progress: <Check className="h-4 w-4" />,
+  reading_cancelled: <X className="h-4 w-4" />,
   reading_completed: <Star className="h-4 w-4" />,
   new_message: <MessageSquare className="h-4 w-4" />,
   alert: <AlertCircle className="h-4 w-4" />,

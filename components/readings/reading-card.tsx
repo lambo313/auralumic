@@ -11,13 +11,15 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import { ReadingDetailsModal } from "./reading-details-modal"
+import type { Reading } from "@/types/readings"
 
 interface ReadingCardProps {
   reading: {
     id: string
     topic: string
     description: string
-    status: "pending" | "accepted" | "declined" | "completed"
+    status: "pending" | "inProgress" | "cancelled" | "completed"
     duration: number
     credits: number
     createdAt: Date
@@ -25,25 +27,34 @@ interface ReadingCardProps {
     clientId: string
   }
   userRole: "reader" | "client"
+  fullReading?: Reading // Full reading object for modal
+  currentCredits?: number // Current user credits for edit calculations
   onAccept?: () => void
   onDecline?: () => void
   onComplete?: () => void
-  onViewDetails: () => void
+  onViewDetails?: () => void // Made optional since we'll use modal
+  onReadingUpdated?: () => void
+  onCreditsUpdated?: (newBalance: number) => void
   loading?: boolean
 }
 
 export function ReadingCard({
   reading,
   userRole,
+  fullReading,
+  currentCredits = 0,
   onAccept,
   onDecline,
   onComplete,
   onViewDetails,
+  onReadingUpdated,
+  onCreditsUpdated,
   loading,
 }: ReadingCardProps) {
   const [readerData, setReaderData] = useState<{ username: string; profileImage?: string } | null>(null)
   const [clientData, setClientData] = useState<{ username: string; profileImage?: string } | null>(null)
   const [fetchingUsers, setFetchingUsers] = useState(true)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   useEffect(() => {
     async function fetchUserData() {
@@ -88,11 +99,11 @@ export function ReadingCard({
     switch (status) {
       case "pending":
         return "bg-yellow-500"
-      case "accepted":
+      case "inProgress":
         return "bg-blue-500"
       case "completed":
         return "bg-green-500"
-      case "declined":
+      case "cancelled":
         return "bg-red-500"
       default:
         return "bg-gray-500"
@@ -184,21 +195,35 @@ export function ReadingCard({
         </div>
       </CardContent>
       <CardFooter className="flex justify-end space-x-2">
-        <Button variant="ghost" onClick={onViewDetails}>
+        <Button 
+          variant="ghost" 
+          onClick={() => {
+            if (onViewDetails) {
+              onViewDetails();
+            } else if (fullReading) {
+              setShowDetailsModal(true);
+            }
+          }}
+        >
           View Details
         </Button>
-        {userRole === "reader" && reading.status === "pending" && (
-          <>
-            <Button variant="outline" onClick={onDecline}>
-              Decline
-            </Button>
-            <Button onClick={onAccept}>Accept</Button>
-          </>
-        )}
-        {userRole === "reader" && reading.status === "accepted" && (
-          <Button onClick={onComplete}>Mark as Complete</Button>
-        )}
       </CardFooter>
+
+      {/* Reading Details Modal */}
+      {fullReading && showDetailsModal && (
+        <ReadingDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          reading={fullReading}
+          userRole={userRole}
+          currentCredits={currentCredits}
+          onCreditsUpdated={onCreditsUpdated}
+          onReadingUpdated={() => {
+            setShowDetailsModal(false);
+            onReadingUpdated?.();
+          }}
+        />
+      )}
     </Card>
   )
 }

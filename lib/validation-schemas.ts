@@ -117,13 +117,15 @@ export const createReadingSchema = z.object({
 
 // Notification validation schemas
 export const notificationTypeSchema = z.enum([
-  'reading_accepted',
-  'reading_declined', 
+  'reading_in_progress',
+  'reading_cancelled', 
   'reading_completed',
+  'reading_request',
   'review_request',
   'new_comment',
   'post_liked',
-  'dispute_filed'
+  'dispute_filed',
+  'reader_application_rejected'
 ]);
 
 export const createNotificationSchema = z.object({

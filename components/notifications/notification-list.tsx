@@ -11,12 +11,12 @@ interface NotificationListProps {
 
 function NotificationIcon({ type }: { type: Notification['type'] }) {
   const iconMap: Record<Notification['type'], React.ReactElement> = {
-    reading_accepted: (
+    reading_in_progress: (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 6 9 17l-5-5"/>
       </svg>
     ),
-    reading_declined: (
+    reading_cancelled: (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 6 6 18"/>
         <path d="m6 6 12 12"/>
@@ -68,9 +68,9 @@ function NotificationIcon({ type }: { type: Notification['type'] }) {
 
 function getTypeColor(type: Notification['type']): string {
   switch (type) {
-    case 'reading_accepted':
+    case 'reading_in_progress':
       return 'bg-green-500/20 text-green-500';
-    case 'reading_declined':
+    case 'reading_cancelled':
       return 'bg-red-500/20 text-red-500';
     case 'reading_completed':
       return 'bg-blue-500/20 text-blue-500';
@@ -89,8 +89,8 @@ function getTypeColor(type: Notification['type']): string {
 
 function NotificationCard({ notification }: { notification: Notification }) {
   const actionMap: Record<Notification['type'], string> = {
-    reading_accepted: 'View Reading',
-    reading_declined: 'Find Another Reader',
+    reading_in_progress: 'View Reading',
+    reading_cancelled: 'Find Another Reader',
     reading_completed: 'Leave Review',
     review_request: 'View Review',
     new_comment: 'View Comment',
@@ -103,8 +103,8 @@ function NotificationCard({ notification }: { notification: Notification }) {
     
     if (relatedId) {
       switch (type) {
-        case 'reading_accepted':
-        case 'reading_declined':
+        case 'reading_in_progress':
+        case 'reading_cancelled':
         case 'reading_completed':
           return `/dashboard/readings/${relatedId}`;
         case 'review_request':
@@ -119,8 +119,8 @@ function NotificationCard({ notification }: { notification: Notification }) {
     }
 
     switch (type) {
-      case 'reading_accepted':
-      case 'reading_declined':
+      case 'reading_in_progress':
+      case 'reading_cancelled':
       case 'reading_completed':
         return '/dashboard/readings';
       default:
@@ -166,3 +166,6 @@ export function NotificationList({ notifications }: NotificationListProps) {
     </div>
   );
 }
+
+// Updated NotificationType to include reading_in_progress and reading_cancelled
+type NotificationType = 'reading_in_progress' | 'reading_cancelled' | 'reading_completed' | 'review_request' | 'new_comment' | 'post_liked' | 'dispute_filed';

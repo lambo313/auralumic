@@ -60,6 +60,10 @@ export async function GET(request: Request) {
       readings.map(async (reading) => {
         const readingObj = reading.toObject() as Record<string, unknown>;
         
+        // Map _id to id for frontend consistency
+        readingObj.id = readingObj._id?.toString();
+        delete readingObj._id;
+        
         // If this reading has a scheduledDate, fetch the corresponding ScheduledReading
         if (reading.scheduledDate) {
           const scheduledReading = await ScheduledReading.findOne({ readingId: reading._id });

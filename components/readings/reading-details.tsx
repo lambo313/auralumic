@@ -16,7 +16,7 @@ interface ReadingDetailsProps {
     id: string
     topic: string
     description: string
-    status: "pending" | "accepted" | "declined" | "completed"
+    status: "pending" | "inProgress" | "cancelled" | "completed"
     duration: number
     credits: number
     createdAt: Date
@@ -54,11 +54,11 @@ export function ReadingDetails({
     switch (status) {
       case "pending":
         return "bg-yellow-500"
-      case "accepted":
+      case "inProgress":
         return "bg-blue-500"
       case "completed":
         return "bg-green-500"
-      case "declined":
+      case "cancelled":
         return "bg-red-500"
       default:
         return "bg-gray-500"
@@ -150,12 +150,12 @@ export function ReadingDetails({
           {userRole === "reader" && reading.status === "pending" && (
             <>
               <Button variant="outline" onClick={onDecline}>
-                Decline
+                Cancel
               </Button>
-              <Button onClick={onAccept}>Accept</Button>
+              <Button onClick={onAccept}>Start</Button>
             </>
           )}
-          {userRole === "reader" && reading.status === "accepted" && (
+          {userRole === "reader" && reading.status === "inProgress" && (
             <Button onClick={onComplete}>Mark as Complete</Button>
           )}
         </DialogFooter>

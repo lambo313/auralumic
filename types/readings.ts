@@ -1,4 +1,4 @@
-export type ReadingStatus = 'suggested' | 'instant_queue' | 'scheduled' | 'message_queue' | 'in_progress' | 'completed' | 'disputed' | 'refunded';
+export type ReadingStatus = 'suggested' | 'instant_queue' | 'scheduled' | 'message_queue' | 'in_progress' | 'completed' | 'disputed' | 'refunded' | 'archived';
 
 export interface Reading {
   id: string;
@@ -19,7 +19,7 @@ export interface Reading {
   scheduledDate?: Date;
   status: ReadingStatus;
   credits: number;
-  deliveryUrl?: string;
+  readingLink?: string; // Renamed from deliveryUrl
   createdAt: Date;
   completedDate?: Date;
   updatedAt: Date;

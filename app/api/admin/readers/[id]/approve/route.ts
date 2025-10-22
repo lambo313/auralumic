@@ -36,7 +36,7 @@ export async function POST(
     // Send notification to reader
     await sendNotification({
       userId: reader.userId, // This is the Clerk user ID
-      type: NotificationType.READING_ACCEPTED,
+      type: NotificationType.READING_IN_PROGRESS,
       message: "Your reader application has been approved! You can now start accepting reading requests.",
       data: {
         readerId: reader._id

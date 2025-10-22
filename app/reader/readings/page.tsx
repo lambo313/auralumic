@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 export default function ReaderReadingsPage() {
   const { user } = useAuth();
   const { 
-    acceptedReadings, 
+    inProgressReadings, 
     instantQueueReadings,
     scheduledReadings,
     messageQueueReadings,
@@ -22,7 +22,7 @@ export default function ReaderReadingsPage() {
   // Filter readings to only show those where current user is the reader
   const filteredReadings = useMemo(() => {
     if (!user?.id) return {
-      accepted: [],
+      inProgress: [],
       instantQueue: [],
       scheduled: [],
       messageQueue: [],
@@ -31,14 +31,14 @@ export default function ReaderReadingsPage() {
     };
 
     return {
-      accepted: acceptedReadings.filter(r => r.readerId === user.id),
+      inProgress: inProgressReadings.filter(r => r.readerId === user.id),
       instantQueue: instantQueueReadings.filter(r => r.readerId === user.id),
       scheduled: scheduledReadings.filter(r => r.readerId === user.id),
       messageQueue: messageQueueReadings.filter(r => r.readerId === user.id),
       suggested: suggestedReadings.filter(r => r.readerId === user.id),
       archived: archivedReadings.filter(r => r.readerId === user.id)
     };
-  }, [user, acceptedReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
+  }, [user, inProgressReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
 
   if (error) {
     return (
@@ -57,32 +57,32 @@ export default function ReaderReadingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="instant">
+      <Tabs defaultValue="inProgress">
         <TabsList className="w-full justify-start flex-wrap">
+          <TabsTrigger value="inProgress">In Progress</TabsTrigger>
           <TabsTrigger value="instant">Instant Queue</TabsTrigger>
           <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           <TabsTrigger value="messages">Message Queue</TabsTrigger>
-          <TabsTrigger value="suggested">Outgoing Suggestions</TabsTrigger>
-          <TabsTrigger value="accepted">Active Readings</TabsTrigger>
-          <TabsTrigger value="archived">Completed</TabsTrigger>
+          <TabsTrigger value="suggested">Suggested</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
+        <TabsContent value="inProgress" className="mt-6">
+          <ReadingList readings={filteredReadings.inProgress} loading={loading} userRole="reader" />
+        </TabsContent>
         <TabsContent value="instant" className="mt-6">
-          <ReadingList readings={filteredReadings.instantQueue} loading={loading} />
+          <ReadingList readings={filteredReadings.instantQueue} loading={loading} userRole="reader" />
         </TabsContent>
         <TabsContent value="scheduled" className="mt-6">
-          <ReadingList readings={filteredReadings.scheduled} loading={loading} />
+          <ReadingList readings={filteredReadings.scheduled} loading={loading} userRole="reader" />
         </TabsContent>
         <TabsContent value="messages" className="mt-6">
-          <ReadingList readings={filteredReadings.messageQueue} loading={loading} />
+          <ReadingList readings={filteredReadings.messageQueue} loading={loading} userRole="reader" />
         </TabsContent>
         <TabsContent value="suggested" className="mt-6">
-          <ReadingList readings={filteredReadings.suggested} loading={loading} />
-        </TabsContent>
-        <TabsContent value="accepted" className="mt-6">
-          <ReadingList readings={filteredReadings.accepted} loading={loading} />
+          <ReadingList readings={filteredReadings.suggested} loading={loading} userRole="reader" />
         </TabsContent>
         <TabsContent value="archived" className="mt-6">
-          <ReadingList readings={filteredReadings.archived} loading={loading} />
+          <ReadingList readings={filteredReadings.archived} loading={loading} userRole="reader" />
         </TabsContent>
       </Tabs>
     </main>

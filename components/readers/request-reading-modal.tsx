@@ -237,15 +237,14 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
       if (formData.readingOption === 'video_message') {
         setFormData(prev => ({ ...prev, queueType: 'message' }));
       } else if (['phone_call', 'live_video'].includes(formData.readingOption)) {
-        // If reader doesn't have instant booking, auto-select scheduled
-        if (!reader?.availability?.instantBooking) {
+        // If reader doesn't have instant booking enabled OR is offline, auto-select scheduled
+        if (!reader?.availability?.instantBooking || !reader?.isOnline) {
           setFormData(prev => ({ ...prev, queueType: 'scheduled' }));
         }
-        // If reader has instant booking but no queue type is selected, don't auto-select
-        // Let user choose between instant and scheduled
+        // If reader has instant booking enabled AND is online, let user choose between instant and scheduled
       }
     }
-  }, [formData.readingOption, reader?.availability?.instantBooking]);
+  }, [formData.readingOption, reader?.availability?.instantBooking, reader?.isOnline]);
 
   const selectedType = readingTypes.find(type => type.value === formData.readingType);
   const selectedOption = readingOptions.find(option => option.value === formData.readingOption);
@@ -258,12 +257,12 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
     
     // For phone/video calls
     if (formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption)) {
-      // If reader doesn't have instant booking, always use scheduled
-      if (!reader?.availability?.instantBooking) {
+      // If reader doesn't have instant booking enabled OR is offline, always use scheduled
+      if (!reader?.availability?.instantBooking || !reader?.isOnline) {
         return 'scheduled';
       }
       
-      // If reader has instant booking, respect user's choice
+      // If reader has instant booking enabled AND is online, respect user's choice
       if (formData.queueType === 'scheduled' || (formData.scheduledDate && formData.scheduledTime)) {
         return 'scheduled';
       }
@@ -280,11 +279,11 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
   
   // Validation logic
   const isPhoneOrVideo = formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption);
-  const hasInstantBooking = reader?.availability?.instantBooking;
+  const hasInstantBooking = reader?.availability?.instantBooking && reader?.isOnline;
   
   // For phone/video calls:
-  // - If reader has instant booking enabled: queue type selection is required
-  // - If reader doesn't have instant booking: automatically use scheduled
+  // - If reader has instant booking enabled AND is online: queue type selection is required
+  // - If reader doesn't have instant booking OR is offline: automatically use scheduled
   const isQueueTypeRequired = isPhoneOrVideo && hasInstantBooking;
   const isQueueTypeValid = !isQueueTypeRequired || formData.queueType || (!hasInstantBooking && isPhoneOrVideo);
   
@@ -316,7 +315,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
 
     // Create the reading request
     const readingRequest: ReadingRequest = {
-      readerId: reader.id,
+      readerId: reader.userId, // Use userId
       topic: formData.readingType,
       description: formData.description.trim() || 'General', // Keep for our interface
       question: formData.description.trim() || 'General',     // Add for API compatibility  
@@ -617,7 +616,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
           {formData.readingOption && ['phone_call', 'live_video'].includes(formData.readingOption) && (
             <div className="space-y-2">
               <Label>Booking Type *</Label>
-              {reader?.availability?.instantBooking ? (
+              {reader?.availability?.instantBooking && reader?.isOnline ? (
                 // Show both instant and scheduled options when instant booking is enabled
                 <div className="grid grid-cols-2 gap-3">
                   <Button
@@ -666,7 +665,9 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
                     </div>
                   </Button>
                   <div className="text-xs text-muted-foreground mt-2 text-center">
-                    This reader requires scheduled appointments for phone and video calls
+                    {!reader?.availability?.instantBooking 
+                      ? 'This reader requires scheduled appointments for phone and video calls'
+                      : 'Instant booking is only available when the reader is online. Please schedule an appointment instead.'}
                   </div>
                 </div>
               )}
@@ -898,7 +899,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
                     {queueType === 'message_queue' && (
                       <>
                         <span className="text-purple-600">🔴</span>
-                        <span className="text-purple-600 font-medium">Pre-Recorded Video</span>
+                        <span className="text-purple-600 font-medium">Pre-Recorded Reading</span>
                       </>
                     )}
                   </span>

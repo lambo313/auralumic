@@ -36,7 +36,7 @@ export async function POST(
     // Send notification to reader
     await sendNotification({
       userId: reader.userId, // This is the Clerk user ID
-      type: NotificationType.READING_DECLINED,
+      type: NotificationType.READER_APPLICATION_REJECTED,
       message: "Your reader application has not been approved at this time. You may submit a new application after addressing the feedback provided.",
       data: {
         readerId: reader._id,

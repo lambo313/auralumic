@@ -4,25 +4,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReadingList } from '@/components/readings/reading-list';
 import { useReadings } from '@/hooks/use-readings';
 import { useAuth } from '@/hooks/use-auth';
+import { useCredits } from '@/hooks/use-credits';
 import { useMemo } from 'react';
 
 export default function ClientReadingsPage() {
   const { user } = useAuth();
+  const { credits, refreshBalance } = useCredits();
   const { 
-    acceptedReadings, 
+    inProgressReadings, 
     instantQueueReadings,
     scheduledReadings,
     messageQueueReadings,
     suggestedReadings,
     archivedReadings, 
     loading, 
-    error 
+    error,
+    refetch
   } = useReadings();
 
   // Filter readings to only show those where current user is the client
   const filteredReadings = useMemo(() => {
     if (!user?.id) return {
-      accepted: [],
+      inProgress: [],
       instantQueue: [],
       scheduled: [],
       messageQueue: [],
@@ -31,14 +34,14 @@ export default function ClientReadingsPage() {
     };
 
     return {
-      accepted: acceptedReadings.filter(r => r.clientId === user.id),
+      inProgress: inProgressReadings.filter(r => r.clientId === user.id),
       instantQueue: instantQueueReadings.filter(r => r.clientId === user.id),
       scheduled: scheduledReadings.filter(r => r.clientId === user.id),
       messageQueue: messageQueueReadings.filter(r => r.clientId === user.id),
       suggested: suggestedReadings.filter(r => r.clientId === user.id),
       archived: archivedReadings.filter(r => r.clientId === user.id)
     };
-  }, [user, acceptedReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
+  }, [user, inProgressReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
 
   if (error) {
     return (
@@ -67,22 +70,64 @@ export default function ClientReadingsPage() {
           <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="accepted" className="mt-6">
-          <ReadingList readings={filteredReadings.accepted} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.inProgress} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
         <TabsContent value="instant" className="mt-6">
-          <ReadingList readings={filteredReadings.instantQueue} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.instantQueue} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
         <TabsContent value="scheduled" className="mt-6">
-          <ReadingList readings={filteredReadings.scheduled} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.scheduled} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
         <TabsContent value="messages" className="mt-6">
-          <ReadingList readings={filteredReadings.messageQueue} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.messageQueue} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
         <TabsContent value="suggested" className="mt-6">
-          <ReadingList readings={filteredReadings.suggested} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.suggested} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
         <TabsContent value="archived" className="mt-6">
-          <ReadingList readings={filteredReadings.archived} loading={loading} />
+          <ReadingList 
+            readings={filteredReadings.archived} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
         </TabsContent>
       </Tabs>
     </main>

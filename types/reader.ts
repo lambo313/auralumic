@@ -4,7 +4,7 @@ export interface ReadingRequest {
   id: string;
   readerId: string;
   clientId: string;
-  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  status: 'pending' | 'inProgress' | 'cancelled' | 'completed';
   topic: string;
   message?: string;
   createdAt: Date;
@@ -15,7 +15,7 @@ export interface Reading {
   id: string;
   readerId: string;
   clientId: string;
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'inProgress' | 'completed' | 'cancelled';
   type: 'video' | 'audio' | 'chat';
   topic: string;
   duration: number;
