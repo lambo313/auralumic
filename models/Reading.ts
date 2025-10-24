@@ -13,6 +13,7 @@ export enum ReadingStatus {
   MESSAGE_QUEUE = 'message_queue',
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
+  ARCHIVED = 'archived',
   DISPUTED = 'disputed',
   REFUNDED = 'refunded'
 }
@@ -55,6 +56,12 @@ const readingSchema = new mongoose.Schema({
   },
   credits: { type: Number, required: true },
   readingLink: String, // Renamed from deliveryUrl
+  title: String, // Reading title for notes
+  notes: String, // Reading notes
+  review: {
+    rating: { type: Number },
+    review: { type: String }
+  },
   createdAt: { type: Date, default: Date.now },
   completedDate: Date
 }, {

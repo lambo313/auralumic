@@ -25,6 +25,7 @@ interface ReadingCardProps {
     createdAt: Date
     readerId: string
     clientId: string
+    title?: string // Added optional title property
   }
   userRole: "reader" | "client"
   fullReading?: Reading // Full reading object for modal
@@ -143,7 +144,10 @@ export function ReadingCard({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
-          <CardTitle className="text-xl font-bold">{reading.topic}</CardTitle>
+          <CardTitle className="text-xl font-bold">
+            {reading.topic}
+            {reading.title ? ` • ${reading.title}` : ''}
+          </CardTitle>
           <CardDescription>
             {formatDate(reading.createdAt)} • {reading.duration} minutes •{" "}
             {reading.credits} credits

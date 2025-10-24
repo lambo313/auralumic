@@ -19,6 +19,8 @@ const updateReadingSchema = z.object({
     finalPrice: z.number().min(1)
   }).optional(),
   scheduledDate: z.string().transform(str => new Date(str)).optional(),
+  title: z.string().optional(),
+  notes: z.string().optional(),
 })
 
 export async function GET(
@@ -26,22 +28,22 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = await params
-    await dbConnect()
+    const { id } = await params;
+    await dbConnect();
 
-    const reading = await Reading.findById(id)
+    const reading = await Reading.findById(id);
     if (!reading) {
-      return NextResponse.json({ error: "Reading not found" }, { status: 404 })
+      return NextResponse.json({ error: "Reading not found" }, { status: 404 });
     }
 
     // Ensure user is either the client or reader
     if (reading.clientId !== userId && reading.readerId !== userId) {
-      return new NextResponse("Forbidden", { status: 403 })
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     // Transform _id to id for frontend consistency
@@ -49,13 +51,16 @@ export async function GET(
     readingObj.id = readingObj._id?.toString();
     delete readingObj._id;
 
-    return NextResponse.json(readingObj)
+    // Include title in the response
+    readingObj.title = reading.title;
+
+    return NextResponse.json(readingObj);
   } catch (error) {
-    console.error("Error fetching reading:", error)
+    console.error("Error fetching reading:", error);
     return NextResponse.json(
       { error: "Failed to fetch reading" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -64,17 +69,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { id } = await params
-    await dbConnect()
+    const { id } = await params;
+    await dbConnect();
 
-    const reading = await Reading.findById(id)
+    const reading = await Reading.findById(id);
     if (!reading) {
-      return NextResponse.json({ error: "Reading not found" }, { status: 404 })
+      return NextResponse.json({ error: "Reading not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -83,19 +88,83 @@ export async function PATCH(
     const isClient = reading.clientId === userId;
     const isReader = reading.readerId === userId;
 
-    // If client, only allow editing in pending status
-    if (isClient) {
-      const editableStatuses = ['instant_queue', 'scheduled', 'message_queue'];
-      if (!editableStatuses.includes(reading.status)) {
+  // Diagnostic logging removed in production - use request tracing or
+  // explicit debug mode to inspect request payloads when needed.
+
+    // If the authenticated user is the reader, prefer reader-handling first.
+    // This prevents situations where both IDs match (edge cases) but the
+    // request should be handled as a reader action.
+    if (isReader) {
+      const allowedStatusUpdates = ["in_progress", "archived"];
+
+      // Build updateData defensively. Readers should be allowed to:
+      // - update their readingLink while the reading is in_progress
+      // - change status to in_progress or archived
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+
+      // Allow updating readingLink if either the reading is already in_progress
+      // or the incoming request is setting status to in_progress.
+      if (body.readingLink) {
+        if (reading.status === "in_progress" || body.status === "in_progress") {
+          updateData.readingLink = body.readingLink;
+        } else {
+          return NextResponse.json(
+            { error: "Cannot update readingLink unless reading is (or will be) in_progress", details: { field: "readingLink" } },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (body.status) {
+        if (!allowedStatusUpdates.includes(body.status)) {
+          return NextResponse.json(
+            { error: "Invalid status update", details: { provided: body.status } },
+            { status: 400 }
+          );
+        }
+        updateData.status = body.status;
+      }
+
+      // If nothing valid to update, return an error
+      const keysToUpdate = Object.keys(updateData).filter(k => k !== 'updatedAt');
+      if (keysToUpdate.length === 0) {
         return NextResponse.json(
-          { error: "Cannot edit reading in current status" },
+          { error: "No valid fields to update" },
+          { status: 400 }
+        );
+      }
+
+      const updatedReading = await Reading.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true }
+      );
+
+      return NextResponse.json({ reading: updatedReading });
+    }
+
+    if (isClient) {
+      const editableStatuses = ["instant_queue", "scheduled", "message_queue"];
+
+      // Allow limited "soft" updates (title, notes, question) even when the
+      // reading has progressed (e.g. in_progress). Full edits that change
+      // pricing, duration, schedule or credits must still be blocked.
+      const softEditableFields = ["title", "notes", "question"];
+      const bodyKeys = Object.keys(body || {});
+      const onlySoftUpdates = bodyKeys.length > 0 && bodyKeys.every((k) => softEditableFields.includes(k));
+
+      if (!editableStatuses.includes(reading.status) && !onlySoftUpdates) {
+        // Determine which fields are not allowed in the current status so the
+        // client can present a clearer error message.
+        const disallowedFields = bodyKeys.filter((k) => !softEditableFields.includes(k));
+        return NextResponse.json(
+          { error: "Cannot edit reading in current status", details: { disallowedFields } },
           { status: 400 }
         );
       }
 
       const validatedData = updateReadingSchema.parse(body);
 
-      // Calculate credit difference if reading option changed
       let creditDifference = 0;
       if (validatedData.readingOption) {
         const oldCredits = reading.credits;
@@ -103,10 +172,8 @@ export async function PATCH(
         creditDifference = newCredits - oldCredits;
       }
 
-      // Handle credit adjustment
       let newCreditBalance;
       if (creditDifference > 0) {
-        // Need to deduct additional credits
         const creditCheck = await deductCredits(userId, creditDifference);
         if (!creditCheck.success) {
           return NextResponse.json(
@@ -116,7 +183,6 @@ export async function PATCH(
         }
         newCreditBalance = creditCheck.newBalance;
       } else if (creditDifference < 0) {
-        // Refund credits
         const creditCheck = await refundCredits(userId, Math.abs(creditDifference));
         if (!creditCheck.success) {
           return NextResponse.json(
@@ -126,12 +192,10 @@ export async function PATCH(
         }
         newCreditBalance = creditCheck.newBalance;
       } else {
-        // No credit change, just get current balance
         const user = await User.findOne({ clerkUserId: userId });
         newCreditBalance = user?.credits || 0;
       }
 
-      // Update reading
       const updateData: Record<string, unknown> = {
         updatedAt: new Date(),
       };
@@ -149,6 +213,14 @@ export async function PATCH(
         updateData.scheduledDate = validatedData.scheduledDate;
       }
 
+      if (validatedData.title !== undefined) {
+        updateData.title = validatedData.title;
+      }
+
+      if (validatedData.notes !== undefined) {
+        updateData.notes = validatedData.notes;
+      }
+
       const updatedReading = await Reading.findByIdAndUpdate(
         id,
         { $set: updateData },
@@ -158,17 +230,15 @@ export async function PATCH(
       return NextResponse.json({
         reading: updatedReading,
         creditBalance: newCreditBalance,
-        creditDifference
+        creditDifference,
       });
     }
 
-    // If reader, allow status and readingLink update
     if (isReader) {
-      // Only allow status change to in_progress or archived, and readingLink update
-      const allowedStatusUpdates = ['in_progress', 'archived'];
+      const allowedStatusUpdates = ["in_progress", "archived"];
       if (!body.status || !allowedStatusUpdates.includes(body.status)) {
         return NextResponse.json(
-          { error: "Invalid status update" },
+          { error: "Invalid status update", details: { provided: body.status } },
           { status: 400 }
         );
       }
@@ -192,21 +262,19 @@ export async function PATCH(
       });
     }
 
-    // Otherwise, forbidden
     return new NextResponse("Forbidden", { status: 403 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.issues },
         { status: 400 }
-      )
+      );
     }
 
-    console.error("Error updating reading:", error)
     return NextResponse.json(
       { error: "Failed to update reading" },
       { status: 500 }
-    )
+    );
   }
 }
 

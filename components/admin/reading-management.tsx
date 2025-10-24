@@ -64,8 +64,8 @@ interface ReadingWithDetails extends Reading {
   clientName: string;
   readerAvatar?: string;
   clientAvatar?: string;
-  rating?: number;
-  review?: string;
+  // Use the same review shape as the core Reading type
+  review?: Reading["review"];
   type?: string;
   duration?: number;
   notes?: string;
@@ -132,8 +132,7 @@ export function ReadingManagement() {
           updatedAt: new Date("2024-09-25T15:00:00Z"),
           readerName: "Sarah Moon",
           clientName: "Emily Johnson",
-          rating: 5,
-          review: "Amazing reading! Very insightful and accurate.",
+          review: { rating: 5, review: "Amazing reading! Very insightful and accurate." },
           type: "Tarot Reading",
           duration: 60,
           notes: "Detailed reading about future romantic prospects",
@@ -772,7 +771,7 @@ function ReadingDetailsDialog({
             </div>
           )}
 
-          {reading.rating && reading.review && (
+          {reading.review && (
             <div>
               <Label className="text-sm font-medium">Client Review</Label>
               <div className="mt-2 p-3 bg-muted rounded-lg">
@@ -782,14 +781,14 @@ function ReadingDetailsDialog({
                       <Star
                         key={i}
                         className={`h-4 w-4 ${
-                          i < reading.rating! ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                          i < (reading.review?.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-medium">{reading.rating}/5</span>
+                  <span className="text-sm font-medium">{reading.review?.rating}/5</span>
                 </div>
-                <p className="text-sm">{reading.review}</p>
+                <p className="text-sm">{reading.review?.review}</p>
               </div>
             </div>
           )}

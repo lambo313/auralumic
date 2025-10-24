@@ -20,9 +20,15 @@ export interface Reading {
   status: ReadingStatus;
   credits: number;
   readingLink?: string; // Renamed from deliveryUrl
+  title?: string; // Reading title for notes
+  notes?: string; // Reading notes
   createdAt: Date;
   completedDate?: Date;
   updatedAt: Date;
+  review?: {
+    rating: number;
+    review?: string;
+  };
 }
 
 // UI state for reading request form

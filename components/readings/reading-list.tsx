@@ -79,7 +79,8 @@ export function ReadingList({ readings, loading, currentCredits, onReadingUpdate
               credits: reading.credits,
               createdAt: new Date(reading.createdAt),
               readerId: reading.readerId,
-              clientId: reading.clientId
+              clientId: reading.clientId,
+              title: reading.title // Include title field
             }}
             fullReading={fullReadingWithId}
             currentCredits={currentCredits}
