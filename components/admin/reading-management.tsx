@@ -78,11 +78,16 @@ interface ReadingStats {
   totalReadings: number;
   pendingReadings: number;
   completedReadings: number;
+  disputedReadings: number;
   cancelledReadings: number;
-  totalRevenue: number;
+  activeReadings: number;
+  totalRevenue: number; // Backward compatibility
+  monthlyRevenue: number;
+  revenuePerReading: number;
   averageRating: number;
   averageDuration: number;
   popularCategories: { category: string; count: number }[];
+  prevMonthlyRevenue?: number | null;
 }
 
 export function ReadingManagement() {
@@ -91,14 +96,20 @@ export function ReadingManagement() {
     totalReadings: 0,
     pendingReadings: 0,
     completedReadings: 0,
+    disputedReadings: 0,
+    activeReadings: 0,
     cancelledReadings: 0,
-    totalRevenue: 0,
+    totalRevenue: 0, // Backward compatibility
+    monthlyRevenue: 0,
+    revenuePerReading: 0,
     averageRating: 0,
     averageDuration: 0,
     popularCategories: []
   });
   const [loading, setLoading] = useState(true);
   const [selectedReading, setSelectedReading] = useState<ReadingWithDetails | null>(null);
+  const [clientMap, setClientMap] = useState<Record<string, { username?: string; profileImage?: string }>>({});
+  const [readerMap, setReaderMap] = useState<Record<string, { username?: string; profileImage?: string }>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | ReadingStatus>("all");
   const [dateRange, setDateRange] = useState<"all" | "today" | "week" | "month">("all");
@@ -111,107 +122,55 @@ export function ReadingManagement() {
   const loadReadings = async () => {
     try {
       setLoading(true);
-      // Simulated data - replace with actual API call
-      const mockReadings: ReadingWithDetails[] = [
-        {
-          id: "1",
-          readerId: "reader1",
-          clientId: "client1",
-          status: "completed",
-          scheduledDate: new Date("2024-09-25T14:00:00Z"),
-          completedDate: new Date("2024-09-25T15:00:00Z"),
-          topic: "Love and Relationships",
-          readingOption: {
-            type: "video_message",
-            basePrice: 100,
-            timeSpan: { duration: 60, label: "1 hour", multiplier: 1 },
-            finalPrice: 150
-          },
-          credits: 150,
-          createdAt: new Date("2024-09-20T10:00:00Z"),
-          updatedAt: new Date("2024-09-25T15:00:00Z"),
-          readerName: "Sarah Moon",
-          clientName: "Emily Johnson",
-          review: { rating: 5, review: "Amazing reading! Very insightful and accurate." },
-          type: "Tarot Reading",
-          duration: 60,
-          notes: "Detailed reading about future romantic prospects",
-          timeZone: "UTC",
-          scheduledFor: new Date("2024-09-25T14:00:00Z"),
-          completedAt: new Date("2024-09-25T15:00:00Z")
-        },
-        {
-          id: "2",
-          readerId: "reader2",
-          clientId: "client2",
-          status: "scheduled",
-          scheduledDate: new Date("2024-09-29T16:00:00Z"),
-          topic: "Career Guidance",
-          readingOption: {
-            type: "phone_call",
-            basePrice: 80,
-            timeSpan: { duration: 45, label: "45 minutes", multiplier: 1.5 },
-            finalPrice: 120
-          },
-          credits: 120,
-          createdAt: new Date("2024-09-26T09:00:00Z"),
-          updatedAt: new Date("2024-09-26T09:00:00Z"),
-          readerName: "Marcus Stars",
-          clientName: "David Chen",
-          type: "Astrology Chart",
-          duration: 45,
-          notes: "Birth chart analysis for career decisions",
-          timeZone: "UTC",
-          scheduledFor: new Date("2024-09-29T16:00:00Z")
-        },
-        {
-          id: "3",
-          readerId: "reader1",
-          clientId: "client3",
-          status: "scheduled",
-          scheduledDate: new Date("2024-09-30T10:00:00Z"),
-          topic: "Life Purpose",
-          readingOption: {
-            type: "live_video",
-            basePrice: 60,
-            timeSpan: { duration: 30, label: "30 minutes", multiplier: 1.3 },
-            finalPrice: 80
-          },
-          credits: 80,
-          createdAt: new Date("2024-09-27T14:30:00Z"),
-          updatedAt: new Date("2024-09-28T08:00:00Z"),
-          readerName: "Sarah Moon",
-          clientName: "Lisa Anderson",
-          type: "Oracle Cards",
-          duration: 30,
-          notes: "Seeking clarity on life direction and purpose",
-          timeZone: "UTC",
-          scheduledFor: new Date("2024-09-30T10:00:00Z")
-        },
-        {
-          id: "4",
-          readerId: "reader3",
-          clientId: "client4",
-          status: "refunded",
-          topic: "Family Issues",
-          readingOption: {
-            type: "video_message",
-            basePrice: 100,
-            timeSpan: { duration: 60, label: "1 hour", multiplier: 1.5 },
-            finalPrice: 150
-          },
-          credits: 150,
-          createdAt: new Date("2024-09-24T11:15:00Z"),
-          updatedAt: new Date("2024-09-24T16:30:00Z"),
-          readerName: "Luna Mystic",
-          clientName: "Robert Wilson",
-          type: "Psychic Reading",
-          duration: 60,
-          notes: "Concerns about family relationships and dynamics",
-          timeZone: "UTC"
-        }
-      ];
-      setReadings(mockReadings);
+      // Fetch real readings from admin API
+      const res = await fetch('/api/admin/readings?page=1&limit=200');
+      if (!res.ok) throw new Error('Failed to load readings');
+      const data = await res.json();
+      // Ensure createdAt/updatedAt are Date instances for display helpers
+      const normalized: ReadingWithDetails[] = (data.readings || []).map((r: unknown) => {
+        const rr = r as ReadingWithDetails;
+        return {
+          ...rr,
+          // derive friendly fields for UI from the readingOption stored in DB
+          type: rr.readingOption?.type ?? rr.type ?? "",
+          duration: rr.readingOption?.timeSpan?.duration ?? rr.duration ?? undefined,
+          createdAt: rr.createdAt ? new Date(String(rr.createdAt)) : new Date(),
+          updatedAt: rr.updatedAt ? new Date(String(rr.updatedAt)) : new Date(),
+          scheduledDate: rr.scheduledDate ? new Date(String(rr.scheduledDate)) : undefined,
+          completedDate: rr.completedDate ? new Date(String(rr.completedDate)) : undefined,
+        };
+      });
+      setReadings(normalized);
+      // kick off fetching display info for users referenced in readings
+      const clientIds = Array.from(new Set(normalized.map(r => r.clientId).filter(Boolean)));
+      const readerIds = Array.from(new Set(normalized.map(r => r.readerId).filter(Boolean)));
+      // fetch any ids not already present in maps
+      const missingClients = clientIds.filter(id => !clientMap[id]);
+      const missingReaders = readerIds.filter(id => !readerMap[id]);
+      if (missingClients.length > 0) {
+        missingClients.forEach(async (id) => {
+          try {
+            const res = await fetch(`/api/users/${id}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            setClientMap(prev => ({ ...prev, [id]: { username: data.username || data.firstName || data.name, profileImage: data.profileImage || data.imageUrl } }));
+          } catch (err) {
+            // ignore individual failures
+          }
+        });
+      }
+      if (missingReaders.length > 0) {
+        missingReaders.forEach(async (id) => {
+          try {
+            const res = await fetch(`/api/readers/${id}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            setReaderMap(prev => ({ ...prev, [id]: { username: data.username || data.displayName || data.name, profileImage: data.profileImage || data.imageUrl } }));
+          } catch (err) {
+            // ignore
+          }
+        });
+      }
     } catch (error) {
       console.error("Error loading readings:", error);
     } finally {
@@ -221,43 +180,58 @@ export function ReadingManagement() {
 
   const loadStats = async () => {
     try {
-      // Simulated stats - replace with actual API call
-      const mockStats: ReadingStats = {
-        totalReadings: 245,
-        pendingReadings: 18,
-        completedReadings: 198,
-        cancelledReadings: 29,
-        totalRevenue: 28750,
-        averageRating: 4.7,
-        averageDuration: 52,
-        popularCategories: [
-          { category: "Love & Relationships", count: 89 },
-          { category: "Career Guidance", count: 67 },
-          { category: "Life Purpose", count: 45 },
-          { category: "Family Issues", count: 34 },
-          { category: "Spiritual Growth", count: 10 }
-        ]
+      const res = await fetch('/api/admin/stats');
+      if (!res.ok) throw new Error('Failed to load stats');
+      const data = await res.json();
+      // Map returned stats shape to ReadingStats where possible
+      const mapped: ReadingStats = {
+        totalReadings: data.totalReadings ?? data.totalReadings ?? 0,
+        // Prefer server-provided pendingReadings (readings in instant_queue, message_queue, scheduled)
+        pendingReadings: data.pendingReadings ?? data.pendingApprovals ?? 0,
+          completedReadings: data.completedReadings ?? data.activeReadings ?? 0,
+          disputedReadings: data.disputesOpen ?? 0,
+          // activeReadings represents in-progress readings
+          activeReadings: data.activeReadings ?? data.inProgressCount ?? 0,
+        // Prefer server-provided cancelledReadings (refunded)
+        cancelledReadings: data.cancelledReadings ?? data.disputesOpen ?? 0,
+        totalRevenue: data.monthlyRevenue ?? 0, // Backward compatibility
+        monthlyRevenue: data.monthlyRevenue ?? 0,
+  prevMonthlyRevenue: data.prevMonthlyRevenue ?? data.previousMonthlyRevenue ?? null,
+        revenuePerReading: data.revenuePerReading ?? 0,
+        averageRating: data.averageRating ?? 0,
+        averageDuration: data.averageDuration ?? 0,
+        popularCategories: data.popularCategories ?? [],
       };
-      setStats(mockStats);
+      setStats(mapped);
     } catch (error) {
       console.error("Error loading stats:", error);
     }
   };
 
-  const getStatusColor = (status: ReadingStatus) => {
-    switch (status) {
-      case "instant_queue":
-        return "bg-yellow-500";
-      case "scheduled":
-        return "bg-blue-500";
-      case "completed":
-        return "bg-green-500";
-      case "refunded":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
+  const computePercent = (count: number, total: number) => {
+    if (!total || total <= 0) return 0;
+    return Math.round((count / total) * 100);
+  };
+
+  const formatCurrency = (value: number) => {
+    try {
+      return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    } catch (e) {
+      return String(value);
     }
   };
+
+  // Robust revenue per reading derivation (prefer server-provided value).
+  const revenuePerReadingValue = (() => {
+    if (stats.revenuePerReading && stats.revenuePerReading > 0) return stats.revenuePerReading;
+    const denom = stats.completedReadings && stats.completedReadings > 0 ? stats.completedReadings : 0;
+    if (!denom) return 0;
+    // Prefer totalRevenue when available (backwards-compat); fall back to monthlyRevenue.
+    const numerator = (stats.totalRevenue && stats.totalRevenue > 0) ? stats.totalRevenue : stats.monthlyRevenue;
+    if (!numerator || numerator <= 0) return 0;
+    return Math.round(numerator / denom);
+  })();
+ 
 
   const getStatusVariant = (status: ReadingStatus) => {
     switch (status) {
@@ -275,11 +249,12 @@ export function ReadingManagement() {
   };
 
   const filteredReadings = readings.filter((reading) => {
+    const lowerTerm = searchTerm.toLowerCase();
     const matchesSearch = 
-      reading.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reading.readerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reading.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (reading.type && reading.type.toLowerCase().includes(searchTerm.toLowerCase()));
+      (reading.topic ?? "").toLowerCase().includes(lowerTerm) ||
+      (reading.readerName ?? "").toLowerCase().includes(lowerTerm) ||
+      (reading.clientName ?? "").toLowerCase().includes(lowerTerm) ||
+      (reading.type ?? "").toLowerCase().includes(lowerTerm);
     
     const matchesStatus = statusFilter === "all" || reading.status === statusFilter;
     
@@ -342,7 +317,7 @@ export function ReadingManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalReadings}</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
+                <p className="text-xs text-muted-foreground">Total readings to date</p>
               </CardContent>
             </Card>
             
@@ -364,18 +339,29 @@ export function ReadingManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.averageRating}/5</div>
-                <p className="text-xs text-muted-foreground">+0.2 from last month</p>
+                <p className="text-xs text-muted-foreground">Based on completed readings</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+8% from last month</p>
+                      <div className="text-2xl font-bold">${formatCurrency(stats.monthlyRevenue)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.prevMonthlyRevenue && stats.prevMonthlyRevenue > 0 ? (
+                      (() => {
+                        const diff = stats.monthlyRevenue - (stats.prevMonthlyRevenue ?? 0);
+                        const pct = Math.round((diff / (stats.prevMonthlyRevenue ?? 1)) * 100);
+                        const sign = pct > 0 ? "+" : "";
+                        return `${sign}${pct}% from last month`;
+                      })()
+                    ) : (
+                      "Monthly revenue"
+                    )}
+                  </p>
               </CardContent>
             </Card>
           </div>
@@ -391,21 +377,50 @@ export function ReadingManagement() {
                     <div className="h-3 w-3 bg-green-500 rounded-full"></div>
                     <span className="text-sm">Completed</span>
                   </div>
-                  <span className="text-sm font-medium">{stats.completedReadings}</span>
+                  <div className="text-sm font-medium">
+                    {stats.completedReadings}
+                    <span className="ml-2 text-xs text-muted-foreground">{computePercent(stats.completedReadings, Math.max(stats.totalReadings, stats.completedReadings + stats.activeReadings + stats.pendingReadings + stats.cancelledReadings))}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm">In Progress</span>
+                    </div>
+                    <div className="text-sm font-medium">
+                      {stats.activeReadings}
+                      <span className="ml-2 text-xs text-muted-foreground">{computePercent(stats.activeReadings, Math.max(stats.totalReadings, stats.completedReadings + stats.activeReadings + stats.pendingReadings + stats.cancelledReadings))}%</span>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-gray-500 rounded-full"></div>
+                    <span className="text-sm">Pending</span>
+                  </div>
+                  <div className="text-sm font-medium">
+                    {stats.pendingReadings}
+                    <span className="ml-2 text-xs text-muted-foreground">{computePercent(stats.pendingReadings, Math.max(stats.totalReadings, stats.completedReadings + stats.activeReadings + stats.pendingReadings + stats.cancelledReadings))}%</span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 bg-yellow-500 rounded-full"></div>
-                    <span className="text-sm">Pending</span>
+                    <span className="text-sm">Disputed</span>
                   </div>
-                  <span className="text-sm font-medium">{stats.pendingReadings}</span>
+                  <div className="text-sm font-medium">
+                    {stats.disputedReadings}
+                    <span className="ml-2 text-xs text-muted-foreground">{computePercent(stats.disputedReadings, Math.max(stats.totalReadings, stats.completedReadings + stats.activeReadings + stats.pendingReadings + stats.cancelledReadings))}%</span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 bg-red-500 rounded-full"></div>
                     <span className="text-sm">Cancelled</span>
                   </div>
-                  <span className="text-sm font-medium">{stats.cancelledReadings}</span>
+                  <div className="text-sm font-medium">
+                    {stats.cancelledReadings}
+                    <span className="ml-2 text-xs text-muted-foreground">{computePercent(stats.cancelledReadings, Math.max(stats.totalReadings, stats.completedReadings + stats.activeReadings + stats.pendingReadings + stats.cancelledReadings))}%</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -418,7 +433,10 @@ export function ReadingManagement() {
                 {stats.popularCategories.map((category, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm">{category.category}</span>
-                    <Badge variant="secondary">{category.count}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{category.count}</Badge>
+                      <span className="text-xs text-muted-foreground">{computePercent(category.count, stats.completedReadings)}%</span>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -446,9 +464,14 @@ export function ReadingManagement() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="instant_queue">Instant Queue</SelectItem>
+                  <SelectItem value="message_queue">Message Queue</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="disputed">Disputed</SelectItem>
                   <SelectItem value="refunded">Refunded</SelectItem>
+                  <SelectItem value="suggested">Suggested</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={dateRange} onValueChange={(value) => setDateRange(value as "all" | "today" | "week" | "month")}>
@@ -503,31 +526,31 @@ export function ReadingManagement() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{reading.topic}</div>
-                          <div className="text-sm text-muted-foreground">{reading.type}</div>
+                          <div className="text-sm text-muted-foreground">{reading.type ?? reading.readingOption?.type ?? ""}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={reading.clientAvatar} />
-                            <AvatarFallback>{reading.clientName[0]}</AvatarFallback>
+                            <AvatarImage src={clientMap[reading.clientId ?? ""]?.profileImage ?? reading.clientAvatar} />
+                            <AvatarFallback>{(clientMap[reading.clientId ?? ""]?.username ?? reading.clientName)?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{reading.clientName}</span>
+                          <span className="text-sm">{clientMap[reading.clientId ?? ""]?.username ?? reading.clientName}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={reading.readerAvatar} />
-                            <AvatarFallback>{reading.readerName[0]}</AvatarFallback>
+                            <AvatarImage src={readerMap[reading.readerId ?? ""]?.profileImage ?? reading.readerAvatar} />
+                            <AvatarFallback>{(readerMap[reading.readerId ?? ""]?.username ?? reading.readerName)?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{reading.readerName}</span>
+                          <span className="text-sm">{readerMap[reading.readerId ?? ""]?.username ?? reading.readerName}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(reading.status)}>
-                          {reading.status.charAt(0).toUpperCase() + reading.status.slice(1)}
-                        </Badge>
+                        <Badge className={`${getStatusColor(reading.status).color} text-white`}> 
+                            {getStatusColor(reading.status).label}
+                          </Badge>
                       </TableCell>
                       <TableCell>{reading.credits}</TableCell>
                       <TableCell>{formatDate(reading.createdAt)}</TableCell>
@@ -552,17 +575,17 @@ export function ReadingManagement() {
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
             {filteredReadings
-              .filter(reading => reading.status === "instant_queue" || reading.status === "scheduled")
+              .filter(reading => reading.status === "in_progress" )
               .map((reading) => (
                 <Card key={reading.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">{reading.topic}</CardTitle>
-                        <CardDescription>{reading.type} • {reading.duration} minutes</CardDescription>
+                        <CardDescription>{reading.type ?? reading.readingOption?.type ?? ""} • {(reading.duration ?? reading.readingOption?.timeSpan?.duration) ?? ""} minutes</CardDescription>
                       </div>
-                      <Badge variant={getStatusVariant(reading.status)}>
-                        {reading.status.charAt(0).toUpperCase() + reading.status.slice(1)}
+                      <Badge className={`${getStatusColor(reading.status).color} text-white`}>
+                        {getStatusColor(reading.status).label}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -572,20 +595,20 @@ export function ReadingManagement() {
                         <Label className="text-sm font-medium">Client</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={reading.clientAvatar} />
-                            <AvatarFallback>{reading.clientName[0]}</AvatarFallback>
+                            <AvatarImage src={clientMap[reading.clientId ?? ""]?.profileImage ?? reading.clientAvatar} />
+                            <AvatarFallback>{(clientMap[reading.clientId ?? ""]?.username ?? reading.clientName)?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{reading.clientName}</span>
+                          <span className="text-sm">{clientMap[reading.clientId ?? ""]?.username ?? reading.clientName}</span>
                         </div>
                       </div>
                       <div>
                         <Label className="text-sm font-medium">Reader</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={reading.readerAvatar} />
-                            <AvatarFallback>{reading.readerName[0]}</AvatarFallback>
+                            <AvatarImage src={readerMap[reading.readerId ?? ""]?.profileImage ?? reading.readerAvatar} />
+                            <AvatarFallback>{(readerMap[reading.readerId ?? ""]?.username ?? reading.readerName)?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{reading.readerName}</span>
+                          <span className="text-sm">{readerMap[reading.readerId ?? ""]?.username ?? reading.readerName}</span>
                         </div>
                       </div>
                       <div>
@@ -637,9 +660,9 @@ export function ReadingManagement() {
                 <CardTitle className="text-base">Revenue per Reading</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  ${Math.round(stats.totalRevenue / stats.completedReadings)}
-                </div>
+                  <div className="text-2xl font-bold">
+                    ${formatCurrency(revenuePerReadingValue)}
+                  </div>
                 <p className="text-xs text-muted-foreground">Average revenue per reading</p>
               </CardContent>
             </Card>
@@ -684,6 +707,42 @@ function ReadingDetailsDialog({
   onUpdateStatus: (id: string, status: ReadingStatus) => void;
 }) {
   const [newStatus, setNewStatus] = useState<ReadingStatus>(reading.status);
+  const [clientUser, setClientUser] = useState<{ username?: string; profileImage?: string } | null>(null);
+  const [readerUser, setReaderUser] = useState<{ username?: string; profileImage?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      try {
+        // Fetch client username
+        if (reading.clientId) {
+          const res = await fetch(`/api/users/${reading.clientId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setClientUser({
+              username: data.username || data.firstName || data.name,
+              profileImage: data.profileImage || data.imageUrl,
+            });
+          }
+        }
+
+        // Fetch reader username
+        if (reading.readerId) {
+          const res2 = await fetch(`/api/readers/${reading.readerId}`);
+          if (res2.ok) {
+            const rdata = await res2.json();
+            setReaderUser({
+              username: rdata.username || rdata.displayName || rdata.name,
+              profileImage: rdata.profileImage || rdata.imageUrl,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user names for admin dialog:', err);
+      }
+    };
+
+    fetchNames();
+  }, [reading.clientId, reading.readerId]);
 
   const handleStatusUpdate = () => {
     onUpdateStatus(reading.id, newStatus);
@@ -692,7 +751,7 @@ function ReadingDetailsDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Reading Details</DialogTitle>
           <DialogDescription>View and manage reading information</DialogDescription>
@@ -704,22 +763,22 @@ function ReadingDetailsDialog({
               <Label className="text-sm font-medium">Topic</Label>
               <p className="text-sm mt-1">{reading.topic}</p>
             </div>
-            <div>
-              <Label className="text-sm font-medium">Type</Label>
-              <p className="text-sm mt-1">{reading.type}</p>
-            </div>
+              <div>
+                <Label className="text-sm font-medium">Type</Label>
+                <p className="text-sm mt-1">{reading.type ?? reading.readingOption?.type ?? ""}</p>
+              </div>
             <div>
               <Label className="text-sm font-medium">Duration</Label>
-              <p className="text-sm mt-1">{reading.duration} minutes</p>
+              <p className="text-sm mt-1">{(reading.duration ?? reading.readingOption?.timeSpan?.duration) ?? ""} minutes</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Credits</Label>
               <p className="text-sm mt-1">{reading.credits}</p>
             </div>
-            <div>
+            <div className="flex flex-col">
               <Label className="text-sm font-medium">Status</Label>
-              <Badge variant={getStatusVariant(reading.status)} className="mt-1">
-                {reading.status.charAt(0).toUpperCase() + reading.status.slice(1)}
+              <Badge className={`${getStatusColor(reading.status).color} text-white mt-2 flex w-max`}>
+                {getStatusColor(reading.status).label}
               </Badge>
             </div>
             <div>
@@ -733,12 +792,12 @@ function ReadingDetailsDialog({
               <Label className="text-sm font-medium">Client</Label>
               <div className="flex items-center gap-3 mt-2">
                 <Avatar>
-                  <AvatarImage src={reading.clientAvatar} />
-                  <AvatarFallback>{reading.clientName[0]}</AvatarFallback>
+                  <AvatarImage src={clientUser?.profileImage ?? reading.clientAvatar} />
+                  <AvatarFallback>{clientUser?.username?.[0]?.toUpperCase() ?? reading.clientName?.[0] ?? "?"}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{reading.clientName}</p>
-                  <p className="text-xs text-muted-foreground">Client ID: {reading.clientId}</p>
+                  <p className="text-sm font-medium">{clientUser?.username}</p>
+                  {/* <p className="text-xs text-muted-foreground">{clientUser?.username ? `ID: ${reading.clientId}` : `Client ID: ${reading.clientId}`}</p> */}
                 </div>
               </div>
             </div>
@@ -746,12 +805,12 @@ function ReadingDetailsDialog({
               <Label className="text-sm font-medium">Reader</Label>
               <div className="flex items-center gap-3 mt-2">
                 <Avatar>
-                  <AvatarImage src={reading.readerAvatar} />
-                  <AvatarFallback>{reading.readerName[0]}</AvatarFallback>
+                  <AvatarImage src={readerUser?.profileImage ?? reading.readerAvatar} />
+                  <AvatarFallback>{readerUser?.username?.[0]?.toUpperCase() ?? reading.readerName?.[0] ?? "?"}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{reading.readerName}</p>
-                  <p className="text-xs text-muted-foreground">Reader ID: {reading.readerId}</p>
+                  <p className="text-sm font-medium">{readerUser?.username}</p>
+                  {/* <p className="text-xs text-muted-foreground">{readerUser?.username ? `ID: ${reading.readerId}` : `Reader ID: ${reading.readerId}`}</p> */}
                 </div>
               </div>
             </div>
@@ -837,5 +896,27 @@ function getStatusVariant(status: ReadingStatus) {
       return "destructive" as const;
     default:
       return "outline" as const;
+  }
+}
+
+// Top-level helper so it can be shared by the main component and the dialog
+function getStatusColor(status: ReadingStatus) {
+  switch (status) {
+    case 'instant_queue':
+      return { label: 'Instant Queue', color: 'bg-gray-500', icon: '⚡' };
+    case 'scheduled':
+      return { label: 'Scheduled', color: 'bg-gray-500', icon: '📅' };
+    case 'message_queue':
+      return { label: 'Message Queue', color: 'bg-gray-500', icon: '🎥' };
+    case 'in_progress':
+      return { label: 'In Progress', color: 'bg-blue-500', icon: '🔄' };
+    case 'archived':
+      return { label: 'Archived', color: 'bg-green-500', icon: '✅' };
+    case 'disputed':
+      return { label: 'Disputed', color: 'bg-yellow-500', icon: '⚠️' };
+    case 'refunded':
+      return { label: 'Refunded', color: 'bg-red-500', icon: '↩️' };
+    default:
+      return { label: status, color: 'bg-gray-500', icon: '❓' };
   }
 }

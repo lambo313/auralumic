@@ -58,7 +58,7 @@ export function TransactionHistory() {
 
   const statusColors = {
     completed: "text-green-600",
-    pending: "text-yellow-600",
+    pending: "text-gray-600",
     failed: "text-red-600",
   }
 

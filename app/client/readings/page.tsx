@@ -30,7 +30,8 @@ export default function ClientReadingsPage() {
       scheduled: [],
       messageQueue: [],
       suggested: [],
-      archived: []
+      archived: [],
+      refunded: []
     };
 
     return {
@@ -39,7 +40,8 @@ export default function ClientReadingsPage() {
       scheduled: scheduledReadings.filter(r => r.clientId === user.id),
       messageQueue: messageQueueReadings.filter(r => r.clientId === user.id),
       suggested: suggestedReadings.filter(r => r.clientId === user.id),
-      archived: archivedReadings.filter(r => r.clientId === user.id)
+  archived: archivedReadings.filter(r => r.clientId === user.id && r.status !== 'refunded'),
+  refunded: archivedReadings.concat([]).filter(r => r.clientId === user.id && r.status === 'refunded')
     };
   }, [user, inProgressReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
 
@@ -67,6 +69,7 @@ export default function ClientReadingsPage() {
           <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           <TabsTrigger value="messages">Message Queue</TabsTrigger>
           <TabsTrigger value="suggested">Suggested</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
           <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="accepted" className="mt-6">
@@ -122,6 +125,16 @@ export default function ClientReadingsPage() {
         <TabsContent value="archived" className="mt-6">
           <ReadingList 
             readings={filteredReadings.archived} 
+            loading={loading}
+            currentCredits={credits}
+            onReadingUpdated={refetch}
+            onCreditsUpdated={refreshBalance}
+            userRole="client"
+          />
+        </TabsContent>
+        <TabsContent value="cancelled" className="mt-6">
+          <ReadingList 
+            readings={filteredReadings.refunded} 
             loading={loading}
             currentCredits={credits}
             onReadingUpdated={refetch}

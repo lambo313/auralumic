@@ -99,12 +99,12 @@ export function ReadingCard({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500"
+        return "bg-grey-500"
       case "inProgress":
         return "bg-blue-500"
-      case "completed":
+      case "archived":
         return "bg-green-500"
-      case "cancelled":
+      case "refunded":
         return "bg-red-500"
       default:
         return "bg-gray-500"

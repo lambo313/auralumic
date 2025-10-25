@@ -451,12 +451,12 @@ export function ReadingDetailsModal({
         return { label: 'Message Queue', color: 'bg-purple-500', icon: '🎥' };
       case 'in_progress':
         return { label: 'In Progress', color: 'bg-blue-500', icon: '🔄' };
-      case 'completed':
-        return { label: 'Completed', color: 'bg-green-500', icon: '✅' };
+      case 'archived':
+        return { label: 'Archived', color: 'bg-green-500', icon: '✅' };
       case 'disputed':
         return { label: 'Disputed', color: 'bg-yellow-500', icon: '⚠️' };
       case 'refunded':
-        return { label: 'Refunded', color: 'bg-gray-500', icon: '↩️' };
+        return { label: 'Refunded', color: 'bg-red-500', icon: '↩️' };
       default:
         return { label: status, color: 'bg-gray-500', icon: '❓' };
     }

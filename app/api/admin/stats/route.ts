@@ -25,27 +25,97 @@ export async function GET() {
     const [
       totalUsers,
       totalReaders,
-      pendingReaders,
+      pendingReaderApprovals,
       totalReadings,
-      completedReadings,
-      activeReadings
+      archivedReadingsCount,
+      inProgressCount,
+      pendingReadingsCount,
+      refundedReadingsCount
     ] = await Promise.all([
       User.countDocuments(),
       Reader.countDocuments({ isApproved: true }),
       Reader.countDocuments({ isApproved: false }),
       Reading.countDocuments(),
-      Reading.countDocuments({ status: ReadingStatus.COMPLETED }),
-      Reading.countDocuments({ status: ReadingStatus.IN_PROGRESS })
+      // Treat "completedReadings" as readings that have been archived
+      Reading.countDocuments({ status: ReadingStatus.ARCHIVED }),
+      Reading.countDocuments({ status: ReadingStatus.IN_PROGRESS }),
+      // Pending reads include instant_queue, message_queue, scheduled
+      Reading.countDocuments({ status: { $in: [ReadingStatus.INSTANT_QUEUE, ReadingStatus.MESSAGE_QUEUE, ReadingStatus.SCHEDULED] } }),
+      // Cancelled/refunded
+      Reading.countDocuments({ status: ReadingStatus.REFUNDED })
     ]);
+
+  // Compute aggregated metrics from readings
+  // Average duration and average revenue per reading should be based only on archived (completed) readings
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+
+    // Use aggregation to compute averages and monthly revenue in a couple of efficient queries
+    // Use an effective completed date (fallback to updatedAt) because some records may not have completedDate set
+    const aggResults = await Reading.aggregate([
+      { $match: { status: ReadingStatus.ARCHIVED } },
+      { $addFields: { effectiveCompletedDate: { $ifNull: ["$completedDate", "$updatedAt"] } } },
+      {
+        $facet: {
+          overall: [
+            {
+              $group: {
+                _id: null,
+                avgDuration: { $avg: "$readingOption.timeSpan.duration" },
+                avgRating: { $avg: "$review.rating" },
+                avgFinalPrice: { $avg: "$readingOption.finalPrice" },
+                totalFinalPriceAllCompleted: { $sum: "$readingOption.finalPrice" }
+              }
+            }
+          ],
+          last30: [
+            { $match: { effectiveCompletedDate: { $gte: thirtyDaysAgo } } },
+            { $group: { _id: null, monthlyRevenue: { $sum: "$readingOption.finalPrice" } } }
+          ],
+          prev30: [
+            { $match: { effectiveCompletedDate: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } } },
+            { $group: { _id: null, prevMonthlyRevenue: { $sum: "$readingOption.finalPrice" } } }
+          ],
+          popular: [
+            // count top topics among archived readings
+            { $group: { _id: "$topic", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+            { $project: { _id: 0, category: "$_id", count: 1 } }
+          ]
+        }
+      }
+  ]).exec();
+
+    const overall = aggResults?.[0]?.overall?.[0] ?? null;
+    const last30 = aggResults?.[0]?.last30?.[0] ?? null;
+    const prev30 = aggResults?.[0]?.prev30?.[0] ?? null;
+    const popular = aggResults?.[0]?.popular ?? [];
+
+  const averageDuration = overall?.avgDuration ? Math.round(overall.avgDuration) : 0; // minutes
+  const averageRating = overall?.avgRating ? Number((overall.avgRating).toFixed(2)) : 0;
+  const revenuePerReading = overall?.avgFinalPrice ? Number((overall.avgFinalPrice).toFixed(2)) : 0; // currency/credits as stored
+    const monthlyRevenue = last30?.monthlyRevenue ? Number((last30.monthlyRevenue).toFixed(2)) : 0;
+    const prevMonthlyRevenue = prev30?.prevMonthlyRevenue ? Number((prev30.prevMonthlyRevenue).toFixed(2)) : 0;
+    const totalRevenue = overall?.totalFinalPriceAllCompleted ? Number((overall.totalFinalPriceAllCompleted).toFixed(2)) : 0;
 
     const stats = {
       totalReaders,
-      totalClients: totalUsers - totalReaders,
-      activeReadings,
+      totalClients: Math.max(0, totalUsers - totalReaders),
+      activeReadings: inProgressCount,
       totalReadings,
-      pendingApprovals: pendingReaders,
+      completedReadings: archivedReadingsCount,
+      pendingReadings: pendingReadingsCount,
+      cancelledReadings: refundedReadingsCount,
+      pendingApprovals: pendingReaderApprovals,
       disputesOpen: 0, // Would need dispute model
-      monthlyRevenue: 0, // Would need transaction data
+  monthlyRevenue,
+  prevMonthlyRevenue,
+  totalRevenue,
+  revenuePerReading,
+  averageRating,
+  averageDuration,
+      popularCategories: popular,
       readerGrowth: 0, // Would need time-series data
     };
 

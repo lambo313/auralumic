@@ -53,7 +53,7 @@ export function ReadingDetails({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500"
+        return "bg-gray-500"
       case "inProgress":
         return "bg-blue-500"
       case "completed":

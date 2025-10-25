@@ -27,7 +27,8 @@ export default function ReaderReadingsPage() {
       scheduled: [],
       messageQueue: [],
       suggested: [],
-      archived: []
+      archived: [],
+      refunded: []
     };
 
     return {
@@ -36,7 +37,8 @@ export default function ReaderReadingsPage() {
       scheduled: scheduledReadings.filter(r => r.readerId === user.id),
       messageQueue: messageQueueReadings.filter(r => r.readerId === user.id),
       suggested: suggestedReadings.filter(r => r.readerId === user.id),
-      archived: archivedReadings.filter(r => r.readerId === user.id)
+  archived: archivedReadings.filter(r => r.readerId === user.id && r.status !== 'refunded'),
+  refunded: archivedReadings.concat([]).filter(r => r.readerId === user.id && r.status === 'refunded')
     };
   }, [user, inProgressReadings, instantQueueReadings, scheduledReadings, messageQueueReadings, suggestedReadings, archivedReadings]);
 
@@ -64,6 +66,7 @@ export default function ReaderReadingsPage() {
           <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           <TabsTrigger value="messages">Message Queue</TabsTrigger>
           <TabsTrigger value="suggested">Suggested</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
           <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="inProgress" className="mt-6">
@@ -83,6 +86,9 @@ export default function ReaderReadingsPage() {
         </TabsContent>
         <TabsContent value="archived" className="mt-6">
           <ReadingList readings={filteredReadings.archived} loading={loading} userRole="reader" />
+        </TabsContent>
+        <TabsContent value="cancelled" className="mt-6">
+          <ReadingList readings={filteredReadings.refunded} loading={loading} userRole="reader" />
         </TabsContent>
       </Tabs>
     </main>
