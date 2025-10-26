@@ -35,6 +35,7 @@ const readerProfileSchema = z.object({
   location: z.string().min(1, "Please select your location"),
   aboutMe: z.string().optional(),
   additionalInfo: z.string().optional(),
+  languages: z.array(z.string()).max(3).optional(),
 });
 
 type ReaderProfileFormValues = z.infer<typeof readerProfileSchema>;
@@ -66,6 +67,31 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const [selectedAbilities, setSelectedAbilities] = useState<string[]>([]);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+
+  // Languages: primary first, up to 3
+  const languageOptions = [
+    "English",
+    "Spanish",
+    "French",
+    "German",
+    "Portuguese",
+    "Italian",
+    "Dutch",
+    "Russian",
+    "Chinese (Mandarin)",
+    "Japanese",
+    "Korean",
+    "Arabic",
+    "Hindi",
+    "Bengali",
+    "Turkish",
+    "Vietnamese",
+    "Polish",
+    "Swedish",
+    "Norwegian",
+    "Danish",
+  ];
+  const [languages, setLanguages] = useState<string[]>([]);
 
   // Get common timezones for quick access, with full list available
   const commonTimezones = getCommonTimezones();
@@ -116,6 +142,8 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           // Update availability
           setTimezone(data.availability?.timezone || "UTC");
           setInstantBooking(data.availability?.instantBooking || false);
+          // Load languages (if present)
+          setLanguages(data.languages || []);
           const days = Object.keys(data.availability?.schedule || {}).filter(
             day => data.availability.schedule[day].length > 0
           );
@@ -205,6 +233,17 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
     setSelectedStyle(prev => prev === name ? null : name);
   };
 
+  // Languages helpers (primary first, up to 3)
+  const addLanguage = () => {
+    setLanguages(prev => (prev.length < 3 ? [...prev, ""] : prev));
+  };
+  const removeLanguage = (index: number) => {
+    setLanguages(prev => prev.filter((_, i) => i !== index));
+  };
+  const updateLanguageAt = (index: number, value: string) => {
+    setLanguages(prev => prev.map((l, i) => i === index ? value : l));
+  };
+
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -212,6 +251,15 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
   const [profileImagePreview, setProfileImagePreview] = useState<string>("");
 
   async function onSubmit(data: ReaderProfileFormValues) {
+    // Enforce at least one language selected
+    if (!languages || languages.length === 0) {
+      toast({
+        title: "Select a primary language",
+        description: "Please select at least one language (primary first).",
+        variant: "destructive",
+      });
+      return;
+    }
     // Build schedule object with specific times for selected days
     const schedule: Record<string, { start: string; end: string }[]> = {};
     daysOfWeek.forEach(day => {
@@ -266,8 +314,9 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             style: selectedStyle || "",
           },
           availability,
-          aboutMe: data.aboutMe,
-          additionalInfo: data.additionalInfo,
+            aboutMe: data.aboutMe,
+            additionalInfo: data.additionalInfo,
+            languages,
         }),
       });
       if (!response.ok) {
@@ -657,6 +706,39 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           </FormDescription>
         </div>
 
+        {/* Languages selector (up to 3, primary first) */}
+        <div className="space-y-2">
+          <FormLabel>Languages <span className="text-xs text-muted-foreground">(primary first, up to 3)</span></FormLabel>
+          <div className="space-y-2">
+            {languages.length === 0 && (
+              <div className="text-sm text-muted-foreground">No languages set yet</div>
+            )}
+            {languages.map((lang, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <select
+                  className="flex-1 border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+                  value={lang}
+                  onChange={(e) => updateLanguageAt(idx, e.target.value)}
+                >
+                  <option value="">-- Select language --</option>
+                  {languageOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <Button type="button" variant="ghost" onClick={() => removeLanguage(idx)} size="sm">Remove</Button>
+              </div>
+            ))}
+            <div>
+              <Button type="button" onClick={addLanguage} disabled={languages.length >= 3} size="sm">
+                {languages.length === 0 ? 'Add primary language' : 'Add another language'}
+              </Button>
+            </div>
+          </div>
+          <FormDescription>
+            List the languages you can read in. Primary language should be first.
+          </FormDescription>
+        </div>
+
         {/* Instant Booking Toggle */}
         <div className="space-y-2">
           <FormLabel>Instant Booking</FormLabel>
@@ -690,9 +772,14 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting || usernameStatus.available === false} className="w-full">
-          {isSubmitting ? "Saving..." : "Save Changes"}
-        </Button>
+        <div>
+          {languages.length === 0 && (
+            <div className="text-sm text-red-600 mb-2">Please select at least one language (primary first).</div>
+          )}
+          <Button type="submit" disabled={isSubmitting || usernameStatus.available === false || languages.length === 0} className="w-full">
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

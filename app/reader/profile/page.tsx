@@ -23,12 +23,14 @@ import {
   CheckCircle2,
   XCircle,
   Globe,
-  MapPin
+  MapPin,
+  Languages
 } from 'lucide-react';
 import attributesData from '@/data/attributes.json';
 import { getTimezoneByValue, formatTimezoneLabel } from '@/lib/timezone-utils';
 import { ReaderStatusToggle } from '@/components/readers/reader-status-toggle';
 import { ReaderStatusBadge } from '@/components/readers/reader-status-badge';
+import { Langar } from 'next/font/google';
 
 interface ReaderData {
   userId: string;
@@ -201,7 +203,7 @@ function ReaderProfilePage() {
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6">
         <h1 className="page-title">
-          Your Reader Profile
+          My Reader Profile
         </h1>
         <p className="page-description">
           Manage your reader profile and track your performance
@@ -217,7 +219,7 @@ function ReaderProfilePage() {
 
       <div className="space-y-8">
         {/* Profile Header */}
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-gray-950 dark:via-gray-900/50 dark:to-gray-950">
+        <Card className="relative overflow-hidden  shadow-aura-lg">
           {readerData.backgroundImage && (
             <div 
               className="h-40 md:h-48 bg-cover bg-center relative"
@@ -230,7 +232,7 @@ function ReaderProfilePage() {
             <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
               {/* Avatar Section */}
               <div className="relative">
-                <div className={`h-28 w-28 md:h-32 md:w-32 rounded-full border-4 border-white/80 shadow-xl backdrop-blur-sm overflow-hidden ${readerData.backgroundImage ? '-mt-20 md:-mt-24' : ''}`}>
+                <div className={`h-28 w-28 md:h-32 md:w-32 rounded-full border-4 border-white/80 shadow-aura-xl backdrop-blur-sm overflow-hidden ${readerData.backgroundImage ? '-mt-20 md:-mt-24' : ''}`}>
                   <img 
                     src={readerData.profileImage} 
                     alt={readerData.username} 
@@ -244,7 +246,7 @@ function ReaderProfilePage() {
                     status={readerData.status} 
                     isOnline={readerData.isOnline} 
                     variant="compact"
-                    className="backdrop-blur-md shadow-lg border-2 border-white/50"
+                    className="backdrop-blur-md shadow-aura-lg border-2 border-white/50"
                   />
                 </div>
               </div>
@@ -275,6 +277,18 @@ function ReaderProfilePage() {
                           {readerData.stats.averageRating.toFixed(1)} · {readerData.stats.totalReadings} readings
                         </span>
                       </span>
+                      {/* <span className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="p-1 rounded-md bg-green-100 dark:bg-green-900/30">
+                          <Globe className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="font-medium">
+                          {readerData.languages.map((language) => (
+                            <Badge key={language} variant="outline" className="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                              {language}
+                            </Badge>
+                          ))}
+                        </span>  
+                      </span> */}
                     </div>
                   </div>
                   
@@ -295,7 +309,7 @@ function ReaderProfilePage() {
         </Card>
 
         {/* Status Banner */}
-        <Card className={`relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 ${
+        <Card className={`relative overflow-hidden  shadow-aura-md hover:shadow-aura-lg transition-all duration-300 ${
           readerData.isApproved 
             ? 'bg-gradient-to-br from-green-50 via-white to-green-50/50 dark:from-green-950/30 dark:via-gray-950 dark:to-green-950/30' 
             : 'bg-gradient-to-br from-yellow-50 via-white to-yellow-50/50 dark:from-yellow-950/30 dark:via-gray-950 dark:to-yellow-950/30'
@@ -344,71 +358,98 @@ function ReaderProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-blue-950/30 dark:via-gray-950 dark:to-blue-950/30 group hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Readings</CardTitle>
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalReadings}</div>
-              <p className="text-xs text-muted-foreground mt-1">All time</p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-yellow-50 via-white to-yellow-50/50 dark:from-yellow-950/30 dark:via-gray-950 dark:to-yellow-950/30 group hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Average Rating</CardTitle>
-              <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">
-                <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                {readerData.stats.averageRating.toFixed(1)}
-                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Out of 5.0</p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 via-white to-green-50/50 dark:from-green-950/30 dark:via-gray-950 dark:to-green-950/30 group hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Earnings</CardTitle>
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalEarnings} credits</div>
-              <p className="text-xs text-muted-foreground mt-1">Lifetime</p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/50 dark:from-purple-950/30 dark:via-gray-950 dark:to-purple-950/30 group hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Completion Rate</CardTitle>
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.completionRate}%</div>
-              <p className="text-xs text-muted-foreground mt-1">Of all bookings</p>
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="grid gap-8 lg:grid-cols-2">
+          {/* About Me Video & Additional Info */}
+          <div className="grid gap-8">
+            {/* If readerData.aboutMe is empty, show alternative content */}
+            {readerData.aboutMe ? (
+              <>  </>
+            ) : (
+              <div>
+              {/* About Me Video Placeholder (spruced up) */}
+                <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300 min-h-80">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-xl">
+                      <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
+                        <Video className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      About Me
+                    </CardTitle>
+                    <CardDescription className="text-base">
+                      A short intro video
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center gap-4 py-6">
+                      <div className="w-56 h-32 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-700">
+                        <svg className="w-12 h-12 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M10 8L16 12L10 16V8Z" fill="currentColor" />
+                        </svg>
+                      </div>
+  
+                      <p className="text-sm text-center text-muted-foreground max-w-xl">
+                        No about-me video has been added yet. A brief introduction (30–60s) lets clients hear your voice and personality.
+                      </p>
+  
+                      {/* {isOwnProfile ? (
+                        <Button onClick={() => router.push('/reader/profile/edit')}>
+                          Add About Me Video
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Check back later or message the reader for more information.</span>
+                      )} */}
+                    </div>
+                  </CardContent>
+                </Card>
+            </div>
+            )}
+
+            {readerData.aboutMe && (
+              <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                      <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    About Me
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                      A short intro video
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video rounded-lg overflow-hidden shadow-aura-lg">
+                    <iframe
+                      src={readerData.aboutMe}
+                      className="w-full h-full"
+                      allowFullScreen
+                      title="About Me Video"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {readerData.additionalInfo && (
+              <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-xl">
+                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    Additional Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    {readerData.additionalInfo}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           {/* Attributes & Specialties */}
-          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
@@ -447,7 +488,7 @@ function ReaderProfilePage() {
 
               {readerData.attributes?.style && (
                 <div>
-                  <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Reading Style</p>
+                  <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Style</p>
                   <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors px-3 py-1">
                     {getAttributeName(readerData.attributes.style, 'Styles')}
                   </Badge>
@@ -464,9 +505,34 @@ function ReaderProfilePage() {
               )}
             </CardContent>
           </Card>
+          </div>
+
+          <div className="grid gap-8">
+          {readerData.languages && readerData.languages.length > 0 && (
+            <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Languages className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  Languages
+                </CardTitle>
+                <CardDescription className="text-base">Languages you can conduct readings in</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {readerData.languages.map((language) => (
+                    <Badge key={language} variant="outline" className="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      {language}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Availability */}
-          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
@@ -479,6 +545,29 @@ function ReaderProfilePage() {
             <CardContent className="space-y-6">
               {readerData.availability ? (
                 <>
+                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <span className="font-medium">Instant Booking:</span>
+                    <span className={`font-medium ${readerData.availability.instantBooking ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                      {readerData.availability.instantBooking ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <span className="font-medium">Timezone:</span>
+                    <span className="text-muted-foreground">
+                      {(() => {
+                        const timezoneObj = getTimezoneByValue(readerData.availability.timezone);
+                        return timezoneObj ? formatTimezoneLabel(timezoneObj) : readerData.availability.timezone;
+                      })()}
+                    </span>
+                  </div>
+
                   <div>
                     <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Schedule</p>
                     {availableDays.length > 0 ? (
@@ -504,29 +593,6 @@ function ReaderProfilePage() {
                       <p className="text-sm text-muted-foreground">No availability set</p>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
-                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <span className="font-medium">Timezone:</span>
-                    <span className="text-muted-foreground">
-                      {(() => {
-                        const timezoneObj = getTimezoneByValue(readerData.availability.timezone);
-                        return timezoneObj ? formatTimezoneLabel(timezoneObj) : readerData.availability.timezone;
-                      })()}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
-                    <div className="p-1 rounded bg-gray-200 dark:bg-gray-700">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <span className="font-medium">Instant Booking:</span>
-                    <span className={`font-medium ${readerData.availability.instantBooking ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                      {readerData.availability.instantBooking ? 'Enabled' : 'Disabled'}
-                    </span>
-                  </div>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -535,11 +601,12 @@ function ReaderProfilePage() {
               )}
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Reading Options */}
         {readerData.readingOptions && readerData.readingOptions.length > 0 && (
-          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+          <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
@@ -552,7 +619,7 @@ function ReaderProfilePage() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
                 {readerData.readingOptions.map((option, index) => (
-                  <Card key={index} className={`border-0 shadow-sm hover:shadow-md transition-all duration-300 ${!option.isActive && 'opacity-50'}`}>
+                  <Card key={index} className={` shadow-aura-sm hover:shadow-aura-md transition-all duration-300 ${!option.isActive && 'opacity-50'}`}>
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-3">
                         {option.type === 'phone_call' && (
@@ -589,54 +656,10 @@ function ReaderProfilePage() {
           </Card>
         )}
 
-        {/* About Me Video & Additional Info */}
-        <div className="grid gap-8 lg:grid-cols-2">
-          {readerData.aboutMe && (
-            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                    <Video className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  About Me Video
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
-                  <iframe
-                    src={readerData.aboutMe}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title="About Me Video"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {readerData.additionalInfo && (
-            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                    <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  Additional Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  {readerData.additionalInfo}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
         {/* Badges & Languages */}
-        <div className="grid gap-8 lg:grid-cols-2">
+        {/* <div className="grid gap-8 lg:grid-cols-2">
           {readerData.badges && readerData.badges.length > 0 && (
-            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+            <Card className=" shadow-aura-md hover:shadow-aura-lg transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
@@ -660,29 +683,68 @@ function ReaderProfilePage() {
               </CardContent>
             </Card>
           )}
+        </div> */}
 
-          {readerData.languages && readerData.languages.length > 0 && (
-            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                    <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  Languages
-                </CardTitle>
-                <CardDescription className="text-base">Languages you can conduct readings in</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {readerData.languages.map((language) => (
-                    <Badge key={language} variant="outline" className="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      {language}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* Stats Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="relative overflow-hidden  shadow-aura-md hover:shadow-aura-lg transition-all duration-300 bg-gradient-to-br from-blue-50 via-white to-blue-50/50 dark:from-blue-950/30 dark:via-gray-950 dark:to-blue-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Readings</CardTitle>
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalReadings}</div>
+              <p className="text-xs text-muted-foreground mt-1">All time</p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden  shadow-aura-md hover:shadow-aura-lg transition-all duration-300 bg-gradient-to-br from-yellow-50 via-white to-yellow-50/50 dark:from-yellow-950/30 dark:via-gray-950 dark:to-yellow-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Average Rating</CardTitle>
+              <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">
+                <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                {readerData.stats.averageRating.toFixed(1)}
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Out of 5.0</p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden  shadow-aura-md hover:shadow-aura-lg transition-all duration-300 bg-gradient-to-br from-green-50 via-white to-green-50/50 dark:from-green-950/30 dark:via-gray-950 dark:to-green-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Earnings</CardTitle>
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.totalEarnings} credits</div>
+              <p className="text-xs text-muted-foreground mt-1">Lifetime</p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden  shadow-aura-md hover:shadow-aura-lg transition-all duration-300 bg-gradient-to-br from-purple-50 via-white to-purple-50/50 dark:from-purple-950/30 dark:via-gray-950 dark:to-purple-950/30 group hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-300">Completion Rate</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{readerData.stats.completionRate}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Of all bookings</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </main>

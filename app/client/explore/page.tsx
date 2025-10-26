@@ -15,9 +15,9 @@ export default function ClientExplorePage() {
       </div>
 
       <Tabs defaultValue="connect">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="connect">Connect</TabsTrigger>
-          <TabsTrigger value="attributes">Attributes</TabsTrigger>
+        <TabsList className="justify-start border border-ring-200 bg-ring-50">
+          <TabsTrigger value="connect" className='w-full'>Connect</TabsTrigger>
+          <TabsTrigger value="attributes" className='w-full'>Attributes</TabsTrigger>
         </TabsList>
         <TabsContent value="connect" className="mt-6">
           <ReaderConnect />

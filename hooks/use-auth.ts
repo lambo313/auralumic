@@ -121,6 +121,19 @@ export function useAuth() {
           // Continue with sign out even if status update fails
         }
       }
+      // If the current user is a reader (regular reader account), set their status to 'offline' before signing out.
+      // We treat 'unavailable' as the same as 'offline' in the Reader.status enum.
+      if (baseRole === 'reader' || role === 'reader') {
+        try {
+          await fetch('/api/readers/status', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'offline' })
+          });
+        } catch (err) {
+          console.error('Failed to update reader status to offline on sign out:', err);
+        }
+      }
       
       await clerk.signOut()
     } catch (err) {

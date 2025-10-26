@@ -731,7 +731,7 @@ export function RequestReadingModal({ isOpen, onClose, reader, onRequestReading,
                       mode="single"
                       selected={formData.scheduledDate}
                       onSelect={(date) => setFormData(prev => ({ ...prev, scheduledDate: date }))}
-                      className="rounded-md border shadow-lg scale-100 p-4 [&_button]:p-2 [&_th]:p-2 [&_td]:p-1"
+                      className="rounded-md border shadow-aura-lg scale-100 p-4 [&_button]:p-2 [&_th]:p-2 [&_td]:p-1"
                       disabled={(date) => {
                         // Disable past dates
                         if (date < new Date()) return true;

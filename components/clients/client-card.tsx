@@ -56,7 +56,7 @@ export function ClientCard({ client, onSuggestReading, onSelectClient }: ClientC
   };
 
   return (
-    <Card className="hover:shadow-aura-md transition-shadow duration-200">
+    <Card className="hover:shadow-aura-md transition-shadow-aura duration-200">
       <CardHeader 
         className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors duration-200"
         onClick={handleClientClick}

@@ -10,9 +10,13 @@ import { ReaderStatusBadge } from '@/components/readers/reader-status-badge';
 import { useLoadingState } from '@/hooks/use-loading-state';
 import { useCredits } from '@/hooks/use-credits';
 import { cn } from '@/lib/utils';
+import { 
+  Languages
+} from 'lucide-react';
 import type { Reader } from '@/types/index';
 import type { ReadingRequest } from '@/types/readings';
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface ReaderCardProps {
   reader: Reader;
@@ -30,10 +34,12 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
     setIsModalOpen(true);
   };
 
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <Card
-      className="flex flex-col group transition-all duration-300 hover:shadow-aura-lg "
-    >
+      <Card
+        className="flex flex-col group transition-all duration-300 hover:shadow-aura-lg "
+      >
       <CardHeader className="flex flex-row gap-4 space-y-0 cursor-pointer"
       onClick={onSelectReader}
       >
@@ -49,18 +55,57 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
               ? 'bg-yellow-500' 
               : 'bg-gray-400'
           }`} />
+          {/* Status dot with subtle blurred glow applied directly to the dot */}
+          {/* <div className="absolute bottom-0 right-0 h-8 w-8">
+            {
+              // keep the original conditional classes for the dot, but make it a motion element
+            }
+            <motion.span
+              aria-hidden
+              // center the dot inside the 8x8 container
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 h-3 w-3 rounded-full ring-2 ring-white ${
+                reader.status === 'available' && reader.isOnline
+                  ? 'bg-green-500'
+                  : reader.status === 'busy' && reader.isOnline
+                  ? 'bg-yellow-500'
+                  : 'bg-gray-400'
+              }`}
+              initial={shouldReduceMotion ? { opacity: 1, scale: 1 } : { opacity: 1, scale: 1 }}
+              // animate={reader.isOnline ? (shouldReduceMotion ? { opacity: 1, scale: 1 } : { scale: [1, 1, 1], opacity: [1, 1, 1] }) : { scale: 1, opacity: 1 }}
+              // transition={shouldReduceMotion ? undefined : { repeat: Infinity, repeatType: 'loop', duration: 1.0, ease: 'easeOut' }}
+            />
+          </div> */}
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex items-center justify-between">
             <span className="font-semibold hover:underline">
               {reader.username}
             </span>
-            {/* Status Badge */}
-            <ReaderStatusBadge 
-              status={reader.status} 
-              isOnline={reader.isOnline} 
-              variant="compact" 
-            />
+            {/* Instant booking badge (only show when reader is online) */}
+            {reader.availability?.instantBooking && reader.isOnline && (
+              <div className="relative inline-flex">
+                {/* subtle pulsing glow behind the instant-badge - animated via transform+opacity for good perf */}
+                <motion.span
+                  aria-hidden
+                  initial={shouldReduceMotion ? { opacity: 0.95, scale: 1 } : { opacity: 0.85, scale: 1 }}
+                  animate={shouldReduceMotion ? { opacity: 0.95 } : { scale: [1, 1.12, 1], opacity: [0.85, 0.28, 0.85] }}
+                  transition={shouldReduceMotion ? undefined : { repeat: Infinity, repeatType: 'loop', duration: 1.25, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    inset: '0px',
+                    borderRadius: 8,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                    background: 'transparent',
+                    boxShadow: '0 0 10px rgba(249,115,22,0.85), 0 0 22px rgba(249,115,22,0.35)'
+                  }}
+                />
+                <Badge variant="secondary" className="relative z-10 text-xs bg-orange-50 dark:bg-orange-950/20 border border-orange-800 dark:border-orange-400 shadow-aura-md">
+                  <span className="text-orange-600">⚡</span>
+                  {/* <span className="text-orange-800 dark:text-orange-200 font-medium">Instant Reading</span> */}
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="flex items-center">
@@ -84,7 +129,16 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 flex-1 my-[-0.5rem]">
+      <CardContent className="space-y-4 flex-1 mt-[-0.5rem]">
+        {reader.languages && (
+            <div className="flex flex-wrap gap-2 mb-[-0.5rem]">
+                  {reader.languages.map((language) => (
+                    <Badge key={language} variant="secondary">
+                      {language}
+                    </Badge>
+                  ))}
+                </div>
+          )}
         {reader.tagline && (
           <p className="text-sm">{reader.tagline}</p>
         )}
@@ -104,15 +158,23 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
       </CardContent>
       {showRequestReading && (
         <CardFooter className="flex flex-col gap-2 items-start">
-          {reader.attributes?.abilities && reader.attributes.abilities.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {reader.attributes.abilities.map((ability, index) => (
-              <Badge key={index} variant="secondary">
-                {ability}
-              </Badge>
-            ))}
-          </div>
-          )}
+          {/* Combine abilities, tools and style into a single attributes list and render once */}
+          {(() => {
+            const attrs: string[] = [
+              ...(reader.attributes?.abilities || []),
+              ...(reader.attributes?.tools || [])
+            ];
+            if (reader.attributes?.style) attrs.push(reader.attributes.style);
+            return attrs.length > 0 ? (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {attrs.map((attr, idx) => (
+                  <Badge key={`${attr}-${idx}`} variant="secondary">
+                    {attr}
+                  </Badge>
+                ))}
+              </div>
+            ) : null;
+          })()}
           <Button
             className="w-full transition-transform active:scale-95 disabled:transform-none hover:scale-105"
             disabled={isLoading}

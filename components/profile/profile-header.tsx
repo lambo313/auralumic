@@ -63,7 +63,7 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
   };
 
   return (
-    <Card className="p-6 ">
+    <Card className="p-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4">
           <Avatar className="h-20 w-20">

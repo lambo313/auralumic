@@ -5,6 +5,7 @@ import { z } from "zod"
 import { deductCredits, refundCredits } from "@/lib/credit-validation"
 import Reading from "@/models/Reading"
 import User from "@/models/User"
+import Reader from "@/models/Reader"
 
 const updateReadingSchema = z.object({
   question: z.string().optional(),
@@ -139,6 +140,33 @@ export async function PATCH(
         { $set: updateData },
         { new: true }
       );
+
+      // Side-effect: if reading moved to in_progress -> mark reader as busy
+      if (body.status === 'in_progress') {
+        try {
+          await Reader.findOneAndUpdate(
+            { userId: reading.readerId },
+            { $set: { status: 'busy', lastActive: new Date() } }
+          );
+        } catch (err) {
+          console.error('[READING_STATUS_SIDE_EFFECT] Failed to set reader busy:', err);
+        }
+      }
+
+      // If reading was archived, check if reader still has other in_progress readings.
+      if (body.status === 'archived') {
+        try {
+          const remaining = await Reading.countDocuments({ readerId: reading.readerId, status: 'in_progress' });
+          if (remaining === 0) {
+            await Reader.findOneAndUpdate(
+              { userId: reading.readerId },
+              { $set: { status: 'available', lastActive: new Date() } }
+            );
+          }
+        } catch (err) {
+          console.error('[READING_STATUS_SIDE_EFFECT] Failed to reconcile reader status after archive:', err);
+        }
+      }
 
       return NextResponse.json({ reading: updatedReading });
     }

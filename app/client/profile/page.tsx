@@ -124,7 +124,7 @@ function ClientProfilePage() {
   return (
     <main className="container py-6">
       <div className="mb-6">
-        <h1 className="page-title">Your Client Profile</h1>
+        <h1 className="page-title">My Client Profile</h1>
         <p className="page-description">
           Manage your profile information and preferences
         </p>

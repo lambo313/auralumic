@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { ReaderList } from './reader-list';
 import { useReaderFilter } from './use-reader-filter';
 import { useReaders } from '@/hooks/use-readers';
@@ -32,7 +34,23 @@ export function ReaderConnect({ onSelectReader }: { onSelectReader?: (readerId: 
     ...attributes.Styles.map(s => s.name)
   ];
 
-  const filteredReaders = filterReaders(readers);
+  // Local UI filters
+  const [filterAvailable, setFilterAvailable] = useState(false);
+  const [filterOnline, setFilterOnline] = useState(false);
+  const [filterInstant, setFilterInstant] = useState(false);
+  const [languageFilter, setLanguageFilter] = useState('');
+
+  // derive languages from fetched readers
+  const languages = Array.from(new Set((readers || []).flatMap(r => r.languages || []))).sort();
+
+  // First apply the existing readerFilter, then apply these local filters
+  const filteredReaders = filterReaders(readers).filter((r: Reader) => {
+    if (filterAvailable && r.status !== 'available') return false;
+    if (filterOnline && !r.isOnline) return false;
+    if (filterInstant && !r.availability?.instantBooking) return false;
+    if (languageFilter && !(r.languages || []).includes(languageFilter)) return false;
+    return true;
+  });
 
   const toggleSpecialty = (specialty: string) => {
     setSelectedSpecialties(
@@ -54,8 +72,9 @@ export function ReaderConnect({ onSelectReader }: { onSelectReader?: (readerId: 
 
   return (
     <div className="grid gap-6">
+      <div className="flex flex-row flex-wrap gap-4">
       {/* Search */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 min-w-72">
         <Input
           type="search"
           placeholder="Search by name or specialty..."
@@ -73,6 +92,59 @@ export function ReaderConnect({ onSelectReader }: { onSelectReader?: (readerId: 
             Retry
           </Button>
         )}
+      </div>
+
+      {/* Additional filters: status, online, instant booking, language */}
+        <label className="flex items-center space-x-2 text-sm ml-1">
+          {/* <span className="text-sm">Language</span> */}
+          <div className="ml-2 w-48">
+            {/* Use a non-empty sentinel value for "All" because SelectItem must not have an empty string value.
+                We map the sentinel to an empty string in the component state to represent "no filter". */}
+            <Select
+              value={languageFilter === '' ? '__all__' : languageFilter}
+              onValueChange={(v) => setLanguageFilter(v === '__all__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Languages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All Languages</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </label>
+      </div>
+      <div className="flex items-center gap-8 mt-2 ml-4">
+        <label className="flex items-center space-x-2 text-sm">
+          <Checkbox
+            checked={filterOnline}
+            onCheckedChange={(v) => setFilterOnline(Boolean(v))}
+            className="size-4"
+          />
+          <span>Online</span>
+        </label>
+
+        <label className="flex items-center space-x-2 text-sm">
+          <Checkbox
+            checked={filterAvailable}
+            onCheckedChange={(v) => setFilterAvailable(Boolean(v))}
+            className="size-4"
+          />
+          <span>Available</span>
+        </label>
+
+        <label className="flex items-center space-x-2 text-sm">
+          <Checkbox
+            checked={filterInstant}
+            onCheckedChange={(v) => setFilterInstant(Boolean(v))}
+            className="size-4"
+          />
+          <span>Instant Booking</span>
+        </label>
+
       </div>
 
       {/* Error State */}
