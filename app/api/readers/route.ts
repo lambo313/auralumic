@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
+import Reading from '@/models/Reading'
 import { mockReaders } from "@/components/readers/mock-reader-data"
 
 type SearchQuery = {
@@ -17,6 +18,12 @@ type LeanReader = {
     tools?: string[];
     abilities?: string[];
     style?: string;
+  };
+  stats?: {
+    totalReadings?: number;
+    averageRating?: number;
+    totalEarnings?: number;
+    completionRate?: number;
   };
   // Add other fields as needed
 };
@@ -53,10 +60,31 @@ export async function GET(request: Request) {
       .lean() as LeanReader[]
 
     // Convert MongoDB _id to id for consistency
-    const formattedReaders = readers.map(reader => ({
+    let formattedReaders = readers.map(reader => ({
       ...reader,
       id: reader._id.toString(),
     }));
+
+    // Aggregate ratings and review counts from readings for the returned page
+    try {
+      const readerIds = formattedReaders.map(r => r.id);
+      if (readerIds.length > 0) {
+        const ratingAgg = await Reading.aggregate([
+          { $match: { readerId: { $in: readerIds }, 'review.rating': { $exists: true } } },
+          { $group: { _id: '$readerId', avgRating: { $avg: '$review.rating' }, count: { $sum: 1 } } }
+        ]);
+        const ratingMap = new Map(ratingAgg.map((r: any) => [r._id, r.avgRating]));
+        const countMap = new Map(ratingAgg.map((r: any) => [r._id, r.count]));
+
+        formattedReaders = formattedReaders.map(r => ({
+          ...r,
+          rating: ratingMap.get(r.id) ?? r.stats?.averageRating ?? 0,
+          reviewCount: countMap.get(r.id) ?? 0,
+        }));
+      }
+    } catch (err) {
+      console.warn('[READERS_GET] rating aggregation failed', err);
+    }
 
     const total = await Reader.countDocuments(searchQuery)
 

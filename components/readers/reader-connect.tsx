@@ -129,20 +129,20 @@ export function ReaderConnect({ onSelectReader }: { onSelectReader?: (readerId: 
 
         <label className="flex items-center space-x-2 text-sm">
           <Checkbox
-            checked={filterAvailable}
-            onCheckedChange={(v) => setFilterAvailable(Boolean(v))}
-            className="size-4"
-          />
-          <span>Available</span>
-        </label>
-
-        <label className="flex items-center space-x-2 text-sm">
-          <Checkbox
             checked={filterInstant}
             onCheckedChange={(v) => setFilterInstant(Boolean(v))}
             className="size-4"
           />
           <span>Instant Booking</span>
+        </label>
+
+        <label className="flex items-center space-x-2 text-sm">
+          <Checkbox
+            checked={filterAvailable}
+            onCheckedChange={(v) => setFilterAvailable(Boolean(v))}
+            className="size-4"
+          />
+          <span>Available</span>
         </label>
 
       </div>

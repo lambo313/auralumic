@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import dbConnect from "@/lib/database"
 import Reader from "@/models/Reader"
-import Review from "@/models/Review"
+import Reading, { ReadingStatus } from '@/models/Reading'
 import { getMockReaderById } from "@/components/readers/mock-reader-data"
 import mongoose from "mongoose"
 
@@ -10,6 +10,13 @@ interface LeanReaderDocument {
   _id: mongoose.Types.ObjectId;
   userId: string;
   isApproved: boolean;
+  stats?: {
+    totalReadings?: number;
+    averageRating?: number;
+    totalEarnings?: number;
+    completionRate?: number;
+    archivedCount?: number;
+  };
   [key: string]: unknown;
 }
 
@@ -75,10 +82,96 @@ export async function GET(
     }
 
     // Convert _id to id for consistency with frontend expectations
-    const formattedReader = {
+    const formattedReader: any = {
       ...reader,
       id: reader._id.toString()
     };
+
+    // Attach computed stats by aggregating readings for this reader so profile UI can show metrics
+    try {
+      const readerIdForMatch = reader.userId || String(reader._id)
+      const agg = await Reading.aggregate([
+        { $match: { readerId: readerIdForMatch } },
+        {
+          $facet: {
+            metrics: [
+              {
+                $group: {
+                  _id: '$readerId',
+                  totalReadings: { $sum: 1 },
+                  archivedCount: { $sum: { $cond: [{ $eq: ['$status', ReadingStatus.ARCHIVED] }, 1, 0] } },
+                  avgRating: { $avg: { $ifNull: ['$review.rating', null] } },
+                  ratingCount: { $sum: { $cond: [{ $ifNull: ['$review.rating', false] }, 1, 0] } },
+                  totalEarnings: { $sum: { $cond: [{ $eq: ['$status', ReadingStatus.ARCHIVED] }, '$readingOption.finalPrice', 0] } }
+                }
+              }
+            ],
+            clientCounts: [
+              { $group: { _id: '$clientId', count: { $sum: 1 } } },
+              { $group: { _id: null, uniqueClients: { $sum: 1 }, repeatClients: { $sum: { $cond: [{ $gte: ['$count', 2] }, 1, 0] } } } }
+            ],
+            pendingReadings: [
+              { $match: { status: { $in: [ReadingStatus.INSTANT_QUEUE, ReadingStatus.SCHEDULED, ReadingStatus.MESSAGE_QUEUE] } } },
+              // attach basic client info via lookup
+              { $lookup: { from: 'users', localField: 'clientId', foreignField: 'clerkId', as: 'client' } },
+              { $unwind: { path: '$client', preserveNullAndEmptyArrays: true } },
+              // derive a readable client username: prefer username, then full name, then email
+              { $project: { _id: 1, clientId: 1, status: 1, scheduledDate: 1, createdAt: 1, readingOption: 1,
+                  clientUsername: {
+                    $ifNull: [
+                      '$client.username',
+                      { $ifNull: [ { $trim: { input: { $concat: [ { $ifNull: ['$client.firstName', ''] }, ' ', { $ifNull: ['$client.lastName', ''] } ] } } }, '$client.email' ] }
+                    ]
+                  }
+              } }
+            ]
+          }
+        }
+      ])
+
+      const metrics = agg?.[0]?.metrics?.[0] || null
+      const clientStats = agg?.[0]?.clientCounts?.[0] || { uniqueClients: 0, repeatClients: 0 }
+  const pending = agg?.[0]?.pendingReadings || []
+
+      const totalReadings = Number(metrics?.totalReadings ?? reader.stats?.totalReadings ?? 0)
+      const archivedCount = Number(metrics?.archivedCount ?? 0)
+      const avgRaw = metrics?.avgRating != null ? Number(metrics.avgRating) : (reader.stats?.averageRating ?? 0)
+      const averageRating = Number(Number.isFinite(avgRaw) ? Number(avgRaw).toFixed(2) : 0)
+      const totalEarnings = Number(metrics?.totalEarnings ?? (reader.stats?.totalEarnings ?? 0))
+      const completionRate = totalReadings > 0 ? Math.round((archivedCount / totalReadings) * 100) : (reader.stats?.completionRate ?? 0)
+
+      const repeatClientCount = Number(clientStats?.repeatClients ?? 0)
+      const uniqueClients = Number(clientStats?.uniqueClients ?? 0)
+      const repeatClientRate = uniqueClients > 0 ? Math.round((repeatClientCount / uniqueClients) * 100) : 0
+
+      formattedReader.stats = {
+        totalReadings,
+        archivedCount,
+        averageRating,
+        totalEarnings,
+        completionRate,
+        repeatClientCount,
+        repeatClientRate
+      }
+
+      // include reviewCount and pendingReviews for UI where useful
+    formattedReader.reviewCount = Number(metrics?.ratingCount ?? 0)
+    formattedReader.pendingReadings = pending.map((p: any) => ({ id: String(p._id), clientId: p.clientId, clientUsername: p.clientUsername ?? p.client?.username ?? null, status: p.status, scheduledDate: p.scheduledDate, createdAt: p.createdAt, readingOption: p.readingOption }))
+    } catch (err) {
+      console.warn('[READER_GET] stats aggregation failed', err)
+      // fallback to any existing stats on the reader
+      formattedReader.stats = {
+        totalReadings: reader.stats?.totalReadings ?? 0,
+        archivedCount: reader.stats?.archivedCount ?? 0,
+        averageRating: reader.stats?.averageRating ?? 0,
+        totalEarnings: reader.stats?.totalEarnings ?? 0,
+        completionRate: reader.stats?.completionRate ?? 0,
+        repeatClientCount: 0,
+        repeatClientRate: 0
+      }
+      formattedReader.reviewCount = 0
+  formattedReader.pendingReadings = []
+    }
 
     return NextResponse.json(formattedReader)
 

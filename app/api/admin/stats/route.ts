@@ -30,7 +30,8 @@ export async function GET() {
       archivedReadingsCount,
       inProgressCount,
       pendingReadingsCount,
-      refundedReadingsCount
+      refundedReadingsCount,
+      disputesOpenCount
     ] = await Promise.all([
       User.countDocuments(),
       Reader.countDocuments({ isApproved: true }),
@@ -42,7 +43,14 @@ export async function GET() {
       // Pending reads include instant_queue, message_queue, scheduled
       Reading.countDocuments({ status: { $in: [ReadingStatus.INSTANT_QUEUE, ReadingStatus.MESSAGE_QUEUE, ReadingStatus.SCHEDULED] } }),
       // Cancelled/refunded
-      Reading.countDocuments({ status: ReadingStatus.REFUNDED })
+      Reading.countDocuments({ status: ReadingStatus.REFUNDED }),
+      // Open disputes: either the reading status is DISPUTED or there's a dispute subdocument with status 'OPEN' (case-insensitive)
+      Reading.countDocuments({
+        $or: [
+          { status: ReadingStatus.DISPUTED },
+          { 'dispute.status': { $regex: '^open$', $options: 'i' } }
+        ]
+      })
     ]);
 
   // Compute aggregated metrics from readings
@@ -108,7 +116,7 @@ export async function GET() {
       pendingReadings: pendingReadingsCount,
       cancelledReadings: refundedReadingsCount,
       pendingApprovals: pendingReaderApprovals,
-      disputesOpen: 0, // Would need dispute model
+  disputesOpen: disputesOpenCount,
   monthlyRevenue,
   prevMonthlyRevenue,
   totalRevenue,

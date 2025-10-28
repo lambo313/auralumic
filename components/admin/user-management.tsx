@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -48,6 +48,8 @@ import {
   XCircle,
   AlertTriangle,
   Users,
+  ChevronUp,
+  ChevronDown,
   UserCheck,
   UserX,
 } from "lucide-react";
@@ -91,6 +93,55 @@ export function UserManagement() {
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Sorting state
+  type SortKey =
+    | 'name'
+    | 'role'
+    | 'status'
+    | 'credits'
+    | 'readings'
+    | 'joined'
+    | 'rating'
+    | 'specialties'
+    | 'earnings'
+    | 'applied'
+    | null;
+
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = useCallback((key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }, [sortKey]);
+
+  const renderHeader = (label: string, key: SortKey) => {
+    return (
+      <button
+        type="button"
+        onClick={() => toggleSort(key)}
+        className="flex items-center gap-2"
+      >
+        <span>{label}</span>
+        {sortKey === key ? (
+          sortDir === 'asc' ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )
+        ) : (
+          <span className="opacity-40">
+            <ChevronUp className="h-3 w-3" />
+          </span>
+        )}
+      </button>
+    );
+  };
 
   const formatDate = (date: Date | string) => {
     if (typeof date === 'string') {
@@ -276,6 +327,99 @@ export function UserManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  // Memoized sorted arrays based on sortKey/sortDir
+  const sortedUsers = useMemo(() => {
+    const copy = [...filteredUsers];
+    if (!sortKey) return copy;
+
+    copy.sort((a, b) => {
+      let av: any = '';
+      let bv: any = '';
+      switch (sortKey) {
+        case 'name':
+          av = `${a.firstName} ${a.lastName}`;
+          bv = `${b.firstName} ${b.lastName}`;
+          break;
+        case 'role':
+          av = a.role;
+          bv = b.role;
+          break;
+        case 'status':
+          av = a.isActive ? 1 : 0;
+          bv = b.isActive ? 1 : 0;
+          break;
+        case 'credits':
+          av = a.credits ?? 0;
+          bv = b.credits ?? 0;
+          break;
+        case 'readings':
+          av = a.totalReadings ?? 0;
+          bv = b.totalReadings ?? 0;
+          break;
+        case 'joined':
+          av = new Date(a.joinDate).getTime();
+          bv = new Date(b.joinDate).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      let res = 0;
+      if (typeof av === 'number' && typeof bv === 'number') res = av - bv;
+      else res = String(av).localeCompare(String(bv));
+
+      return sortDir === 'asc' ? res : -res;
+    });
+
+    return copy;
+  }, [filteredUsers, sortKey, sortDir]);
+
+  const sortedReaders = useMemo(() => {
+    const copy = [...filteredReaders];
+    if (!sortKey) return copy;
+
+    copy.sort((a, b) => {
+      let av: any = '';
+      let bv: any = '';
+      switch (sortKey) {
+        case 'name':
+          av = `${a.firstName} ${a.lastName}`;
+          bv = `${b.firstName} ${b.lastName}`;
+          break;
+        case 'status':
+          av = a.verificationStatus || '';
+          bv = b.verificationStatus || '';
+          break;
+        case 'rating':
+          av = a.rating ?? 0;
+          bv = b.rating ?? 0;
+          break;
+        case 'specialties':
+          av = a.specialties?.length ?? 0;
+          bv = b.specialties?.length ?? 0;
+          break;
+        case 'earnings':
+          av = a.totalEarnings ?? 0;
+          bv = b.totalEarnings ?? 0;
+          break;
+        case 'applied':
+          av = new Date(a.joinDate).getTime();
+          bv = new Date(b.joinDate).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      let res = 0;
+      if (typeof av === 'number' && typeof bv === 'number') res = av - bv;
+      else res = String(av).localeCompare(String(bv));
+
+      return sortDir === 'asc' ? res : -res;
+    });
+
+    return copy;
+  }, [filteredReaders, sortKey, sortDir]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -341,17 +485,17 @@ export function UserManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Credits</TableHead>
-                    <TableHead>Readings</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <TableHead>{renderHeader('User', 'name')}</TableHead>
+                    <TableHead>{renderHeader('Role', 'role')}</TableHead>
+                    <TableHead>{renderHeader('Status', 'status')}</TableHead>
+                    <TableHead>{renderHeader('Credits', 'credits')}</TableHead>
+                    <TableHead>{renderHeader('Readings', 'readings')}</TableHead>
+                    <TableHead>{renderHeader('Joined', 'joined')}</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {sortedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div>
@@ -433,17 +577,17 @@ export function UserManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Reader</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Specialties</TableHead>
-                    <TableHead>Earnings</TableHead>
-                    <TableHead>Applied</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
+                      <TableHead>{renderHeader('Reader', 'name')}</TableHead>
+                      <TableHead>{renderHeader('Status', 'status')}</TableHead>
+                      <TableHead>{renderHeader('Rating', 'rating')}</TableHead>
+                      <TableHead>{renderHeader('Specialties', 'specialties')}</TableHead>
+                      <TableHead>{renderHeader('Earnings', 'earnings')}</TableHead>
+                      <TableHead>{renderHeader('Applied', 'applied')}</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredReaders.map((reader) => (
+                  {sortedReaders.map((reader) => (
                     <TableRow key={reader.id}>
                       <TableCell>
                         <div>

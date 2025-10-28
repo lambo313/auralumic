@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import dbConnect from '@/lib/database';
 import { User, UserRole } from '@/models/User';
 import Reader from '@/models/Reader';
-import Review from '@/models/Review';
+import Reading from '@/models/Reading';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,13 +52,14 @@ export async function GET(request: NextRequest) {
     const users = await User.find({ clerkId: { $in: userIds } }).lean();
     const userMap = new Map(users.map(u => [u.clerkId, u]));
 
-    // Get review counts for readers
+    // Aggregate ratings and review counts from the readings collection
     const readerIds = readers.map(r => r.userId);
-    const reviewCounts = await Review.aggregate([
-      { $match: { readerId: { $in: readerIds } } },
-      { $group: { _id: '$readerId', count: { $sum: 1 } } }
+    const ratingAgg = await Reading.aggregate([
+      { $match: { readerId: { $in: readerIds }, 'review.rating': { $exists: true } } },
+      { $group: { _id: '$readerId', avgRating: { $avg: '$review.rating' }, count: { $sum: 1 } } }
     ]);
-    const reviewCountMap = new Map(reviewCounts.map(rc => [rc._id, rc.count]));
+    const ratingMap = new Map(ratingAgg.map((r: any) => [r._id, r.avgRating]));
+    const reviewCountMap = new Map(ratingAgg.map((r: any) => [r._id, r.count]));
 
     // Merge reader and user data
     let readerData = readers.map(reader => {
@@ -84,8 +85,9 @@ export async function GET(request: NextRequest) {
         isOnline: reader.isOnline,
         credits: user?.credits || 0,
         totalReadings: reader.stats?.totalReadings || 0,
-        rating: reader.stats?.averageRating || 0,
-        reviewCount: reviewCountMap.get(reader.userId) || 0,
+  // Prefer aggregated rating from readings, fall back to stored stats if available
+  rating: ratingMap.get(reader.userId) ?? reader.stats?.averageRating ?? 0,
+  reviewCount: reviewCountMap.get(reader.userId) || 0,
         totalEarnings: reader.stats?.totalEarnings || 0,
         specialties,
         verificationStatus,

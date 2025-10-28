@@ -38,7 +38,7 @@ export function ReaderCard({ reader, showRequestReading = true, onRequestReading
 
   return (
       <Card
-        className="flex flex-col group transition-all duration-300 hover:shadow-aura-lg "
+        className="flex flex-col group transition-all duration-300 hover:shadow-aura-lg"
       >
       <CardHeader className="flex flex-row gap-4 space-y-0 cursor-pointer"
       onClick={onSelectReader}

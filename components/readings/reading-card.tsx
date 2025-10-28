@@ -19,10 +19,11 @@ interface ReadingCardProps {
     id: string
     topic: string
     description: string
-    status: "pending" | "inProgress" | "cancelled" | "completed"
+    status: "pending" | "inProgress" | "cancelled" | "completed" | "disputed"
     duration: number
     credits: number
     createdAt: Date
+    updatedAt?: Date | string
     readerId: string
     clientId: string
     title?: string // Added optional title property
@@ -106,8 +107,27 @@ export function ReadingCard({
         return "bg-green-500"
       case "refunded":
         return "bg-red-500"
+      case "disputed":
+        return "bg-yellow-500"
       default:
         return "bg-gray-500"
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Pending"
+      case "inProgress":
+        return "In Progress"
+      case "archived":
+        return "Archived"
+      case "refunded":
+        return "Refunded"
+      case "disputed":
+        return "Disputed"
+      default:
+        return "Unknown"
     }
   }
 
@@ -148,13 +168,18 @@ export function ReadingCard({
             {reading.topic}
             {reading.title ? ` • ${reading.title}` : ''}
           </CardTitle>
-          <CardDescription>
-            {formatDate(reading.createdAt)} • {reading.duration} minutes •{" "}
-            {reading.credits} credits
+          <CardDescription className="flex flex-col">
+            <span>
+              {reading.duration} minutes •{" "}
+              {reading.credits} credits
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Last updated on {formatDate(fullReading?.updatedAt ? new Date(fullReading.updatedAt as any) : reading.updatedAt ? new Date(reading.updatedAt as any) : reading.createdAt)}
+            </span>
           </CardDescription>
         </div>
         <Badge className={getStatusColor(reading.status)}>
-          {reading.status.charAt(0).toUpperCase() + reading.status.slice(1)}
+          {getStatusLabel(reading.status)}
         </Badge>
       </CardHeader>
       <CardContent>

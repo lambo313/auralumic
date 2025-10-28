@@ -19,8 +19,8 @@ interface Dispute {
   clientId: string;
   readerId: string;
   reason: string;
-  status: "OPEN" | "RESOLVED" | "CLOSED";
-  createdAt: Date;
+  status: string;
+  createdAt: string;
   resolution?: string;
 }
 
@@ -29,28 +29,21 @@ export function DisputeResolver() {
   const [loading, setLoading] = useState(true);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [resolution, setResolution] = useState("");
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadDisputes = useCallback(async () => {
+    setLoading(true);
     try {
       const data = await adminService.getDisputes();
-      if (Array.isArray(data)) {
-        setDisputes(data);
-      } else {
-        console.error("Invalid response format:", data);
-        toast({
-          title: "Error",
-          description: "Failed to load disputes - invalid response format",
-          variant: "destructive",
-        });
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid disputes response");
       }
-    } catch (error) {
-      console.error("Error loading disputes:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load disputes. Please try again later.",
-        variant: "destructive",
-      });
+      const normalized = data.map((d: any) => ({ ...d, createdAt: String(d.createdAt) }));
+      setDisputes(normalized);
+    } catch (err) {
+      console.error("Error loading disputes:", err);
+      toast({ title: "Error", description: "Failed to load disputes.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -60,74 +53,63 @@ export function DisputeResolver() {
     loadDisputes();
   }, [loadDisputes]);
 
-  const handleResolve = async (disputeId: string) => {
+  async function handleResolve(disputeId: string) {
     if (!resolution.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a resolution",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Please provide a resolution", variant: "destructive" });
       return;
     }
 
     try {
+      setResolvingId(disputeId);
       await adminService.resolveDispute(disputeId, resolution);
-      toast({
-        title: "Success",
-        description: "Dispute resolved successfully",
-      });
+      toast({ title: "Success", description: "Dispute resolved successfully" });
+      setDisputes((prev) => prev.filter((d) => d.id !== disputeId));
       setResolution("");
       setSelectedDispute(null);
+    } catch (err) {
+      console.error("Error resolving dispute:", err);
+      toast({ title: "Error", description: "Failed to resolve dispute", variant: "destructive" });
+    } finally {
+      setResolvingId(null);
+      // reload to ensure server state is reflected
       loadDisputes();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to resolve dispute",
-        variant: "destructive",
-      });
     }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
   }
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="space-y-4">
-      <ScrollArea className="h-[600px]">
+      <ScrollArea className="">
         {disputes.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            No open disputes
-          </p>
+          <p className="text-center text-muted-foreground">No open disputes</p>
         ) : (
-          disputes.map((dispute) => (
-            <Card key={dispute.id} className="mb-4">
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Reading #{dispute.readingId}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-semibold">Reason:</p>
-                    <p className="text-muted-foreground">{dispute.reason}</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(dispute.createdAt).toLocaleDateString()}
+          disputes.map((dispute) => {
+            const isOpen = String(dispute.status).toUpperCase() === "OPEN";
+            return (
+              <Card key={dispute.id} className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg">Reading #{dispute.readingId}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-semibold">Reason:</p>
+                      <p className="text-muted-foreground">{dispute.reason}</p>
                     </div>
-                    <Button
-                      onClick={() => setSelectedDispute(dispute)}
-                      variant="outline"
-                    >
-                      Resolve
-                    </Button>
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(dispute.createdAt).toLocaleString()}
+                      </div>
+                      <Button onClick={() => setSelectedDispute(dispute)} variant="outline" disabled={!isOpen}>
+                        Resolve
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </ScrollArea>
 
@@ -138,20 +120,12 @@ export function DisputeResolver() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <Textarea
-                placeholder="Enter resolution..."
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                rows={4}
-              />
+              <Textarea placeholder="Enter resolution..." value={resolution} onChange={(e) => setResolution(e.target.value)} rows={4} />
               <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedDispute(null)}
-                >
+                <Button variant="outline" onClick={() => setSelectedDispute(null)}>
                   Cancel
                 </Button>
-                <Button onClick={() => handleResolve(selectedDispute.id)}>
+                <Button onClick={() => handleResolve(selectedDispute.id)} disabled={!!resolvingId}>
                   Submit Resolution
                 </Button>
               </div>

@@ -62,6 +62,14 @@ const readingSchema = new mongoose.Schema({
     rating: { type: Number },
     review: { type: String }
   },
+  dispute: {
+    reason: { type: String },
+    status: { type: String }, // OPEN, RESOLVED
+    clientId: { type: String },
+    adminResponse: { type: String },
+    createdAt: Date,
+    resolvedAt: Date
+  },
   createdAt: { type: Date, default: Date.now },
   completedDate: Date
 }, {

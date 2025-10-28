@@ -52,11 +52,14 @@ import {
   Clock,
   Star,
   TrendingUp,
+  ChevronUp,
+  ChevronDown,
   Calendar,
   DollarSign,
   Users,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { adminService } from "@/services/api";
 import type { Reading, ReadingStatus } from "@/types/readings";
 
 interface ReadingWithDetails extends Reading {
@@ -72,6 +75,13 @@ interface ReadingWithDetails extends Reading {
   timeZone?: string;
   scheduledFor?: Date;
   completedAt?: Date;
+  dispute?: {
+    reason: string;
+    status: string;
+    createdAt: Date;
+    adminResponse?: string;
+    resolvedAt?: Date;
+  };
 }
 
 interface ReadingStats {
@@ -118,6 +128,11 @@ export function ReadingManagement() {
     loadReadings();
     loadStats();
   }, []);
+
+  // Sorting state for the table
+  type SortKey = 'topic' | 'client' | 'reader' | 'status' | 'credits' | 'date' | null;
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const loadReadings = async () => {
     try {
@@ -274,16 +289,145 @@ export function ReadingManagement() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+  // Apply sorting to the filtered readings according to sortKey and sortDir
+  const sortedReadings = (() => {
+    if (!sortKey) return filteredReadings;
+    const copy = [...filteredReadings];
+    copy.sort((a, b) => {
+      const getClientName = (r: ReadingWithDetails) => clientMap[r.clientId ?? '']?.username ?? r.clientName ?? '';
+      const getReaderName = (r: ReadingWithDetails) => readerMap[r.readerId ?? '']?.username ?? r.readerName ?? '';
+
+      let av: string | number | Date = '';
+      let bv: string | number | Date = '';
+
+      switch (sortKey) {
+        case 'topic':
+          av = (a.topic || '').toString();
+          bv = (b.topic || '').toString();
+          break;
+        case 'client':
+          av = getClientName(a);
+          bv = getClientName(b);
+          break;
+        case 'reader':
+          av = getReaderName(a);
+          bv = getReaderName(b);
+          break;
+        case 'status':
+          av = a.status || '';
+          bv = b.status || '';
+          break;
+        case 'credits':
+          av = a.credits ?? 0;
+          bv = b.credits ?? 0;
+          break;
+        case 'date':
+          av = a.createdAt || new Date(0);
+          bv = b.createdAt || new Date(0);
+          break;
+        default:
+          av = '';
+          bv = '';
+      }
+
+      let res = 0;
+      if (av instanceof Date && bv instanceof Date) {
+        res = av.getTime() - bv.getTime();
+      } else if (typeof av === 'number' && typeof bv === 'number') {
+        res = av - bv;
+      } else {
+        res = String(av).localeCompare(String(bv));
+      }
+
+      return sortDir === 'asc' ? res : -res;
+    });
+    return copy;
+  })();
+
   const updateReadingStatus = async (readingId: string, newStatus: ReadingStatus) => {
     try {
-      // API call would go here
+      // Try admin API first (admin endpoint should allow updating any reading's status)
+      const res = await fetch(`/api/admin/readings/${readingId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        // Fallback: attempt generic readings endpoint
+        console.warn('Admin status update failed, falling back to /api/readings/:id');
+        const res2 = await fetch(`/api/readings/${readingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!res2.ok) throw new Error('Failed to update reading status via fallback');
+      }
+
+      // Update local state optimistically based on successful API call
       setReadings(prev => prev.map(reading =>
         reading.id === readingId ? { ...reading, status: newStatus, updatedAt: new Date() } : reading
       ));
+
+      // Business rules: adjust reader status when reading goes in_progress or archived
+      const updated = readings.find(r => r.id === readingId) || null;
+      const readerId = updated?.readerId;
+      if (readerId) {
+        try {
+          if (newStatus === 'in_progress') {
+            // Set reader to busy
+            await fetch(`/api/admin/readers/${readerId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'busy' }),
+            });
+          }
+
+          if (newStatus === 'archived') {
+            // Check if reader has any other in_progress readings; if none, set reader available
+            const otherInProgress = readings.some(r => r.readerId === readerId && r.id !== readingId && r.status === 'in_progress');
+            if (!otherInProgress) {
+              await fetch(`/api/admin/readers/${readerId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'available' }),
+              });
+            }
+          }
+        } catch (err) {
+          // Non-fatal: log and continue
+          console.error('Failed to update reader status after reading status change:', err);
+        }
+      }
+
     } catch (error) {
       console.error("Error updating reading status:", error);
+      throw error;
     }
   };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const renderHeader = (label: string, key: SortKey) => (
+    <button
+      type="button"
+      onClick={() => toggleSort(key)}
+      className="flex items-center gap-2 text-sm font-medium"
+    >
+      <span>{label}</span>
+      <span className="flex flex-col">
+        <ChevronUp className={`h-3 w-3 ${sortKey === key && sortDir === 'asc' ? 'opacity-100' : 'opacity-30'}`} />
+        <ChevronDown className={`h-3 w-3 -mt-1 ${sortKey === key && sortDir === 'desc' ? 'opacity-100' : 'opacity-30'}`} />
+      </span>
+    </button>
+  );
 
   return (
     <div className="space-y-6">
@@ -492,12 +636,12 @@ export function ReadingManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Reading</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Reader</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Credits</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>{renderHeader('Reading', 'topic')}</TableHead>
+                  <TableHead>{renderHeader('Client', 'client')}</TableHead>
+                  <TableHead>{renderHeader('Reader', 'reader')}</TableHead>
+                  <TableHead>{renderHeader('Status', 'status')}</TableHead>
+                  <TableHead>{renderHeader('Credits', 'credits')}</TableHead>
+                  <TableHead>{renderHeader('Date', 'date')}</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -514,14 +658,14 @@ export function ReadingManagement() {
                       <TableCell><div className="h-4 w-16 animate-pulse rounded bg-muted"></div></TableCell>
                     </TableRow>
                   ))
-                ) : filteredReadings.length === 0 ? (
+                ) : sortedReadings.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No readings found matching your filters
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredReadings.map((reading) => (
+                  sortedReadings.map((reading) => (
                     <TableRow key={reading.id}>
                       <TableCell>
                         <div>
@@ -574,7 +718,7 @@ export function ReadingManagement() {
         {/* Active Tab */}
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
-            {filteredReadings
+            {sortedReadings
               .filter(reading => reading.status === "in_progress" )
               .map((reading) => (
                 <Card key={reading.id}>
@@ -709,6 +853,9 @@ function ReadingDetailsDialog({
   const [newStatus, setNewStatus] = useState<ReadingStatus>(reading.status);
   const [clientUser, setClientUser] = useState<{ username?: string; profileImage?: string } | null>(null);
   const [readerUser, setReaderUser] = useState<{ username?: string; profileImage?: string } | null>(null);
+  const [adminResponse, setAdminResponse] = useState<string | null>(reading.dispute?.adminResponse ?? null);
+  const [responseText, setResponseText] = useState<string>("");
+  const [submittingResponse, setSubmittingResponse] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchNames = async () => {
@@ -758,7 +905,7 @@ function ReadingDetailsDialog({
         </DialogHeader>
         
         <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-2">
             <div>
               <Label className="text-sm font-medium">Topic</Label>
               <p className="text-sm mt-1">{reading.topic}</p>
@@ -787,7 +934,7 @@ function ReadingDetailsDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-2">
             <div>
               <Label className="text-sm font-medium">Client</Label>
               <div className="flex items-center gap-3 mt-2">
@@ -852,6 +999,62 @@ function ReadingDetailsDialog({
             </div>
           )}
 
+          {reading.dispute && (
+            <>
+              <div>
+                <Label className="text-sm font-medium">Client Dispute •{" "} 
+                  <Badge className="mt-1">{reading.dispute?.status}</Badge>
+                </Label>
+                <div className="mt-2 p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground mt-1">{reading.dispute?.reason}</p>
+                </div>
+              </div>
+
+              {/* Show existing admin response if present (prefer local state), otherwise show input to submit one */}
+              {(adminResponse || reading.dispute?.adminResponse) ? (
+                <div className="mt-4">
+                  <Label className="text-sm font-medium">Admin Response</Label>
+                  <div className="mt-2 p-3 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground mt-1">{adminResponse ?? reading.dispute?.adminResponse}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <Label className="text-sm font-medium">Admin Response</Label>
+                  <Textarea
+                    placeholder="Write a response to the client..."
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    rows={4}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" onClick={() => { setResponseText(""); }} disabled={submittingResponse}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        if (!responseText.trim()) return;
+                        try {
+                          setSubmittingResponse(true);
+                          const res = await adminService.resolveDispute(reading.id, responseText.trim());
+                          // On success, show the response and hide the input
+                          setAdminResponse(responseText.trim());
+                        } catch (err) {
+                          console.error('Failed to submit admin response', err);
+                        } finally {
+                          setSubmittingResponse(false);
+                        }
+                      }}
+                      disabled={submittingResponse || !responseText.trim()}
+                    >
+                      Submit Response
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           <div>
             <Label className="text-sm font-medium">Update Status</Label>
             <Select value={newStatus} onValueChange={(value: ReadingStatus) => setNewStatus(value)}>
@@ -862,7 +1065,7 @@ function ReadingDetailsDialog({
                 <SelectItem value="instant_queue">Instant Queue</SelectItem>
                 <SelectItem value="scheduled">Scheduled</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
                 <SelectItem value="message_queue">Message Queue</SelectItem>
                 <SelectItem value="disputed">Disputed</SelectItem>
                 <SelectItem value="refunded">Refunded</SelectItem>

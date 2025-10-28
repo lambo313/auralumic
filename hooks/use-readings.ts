@@ -11,6 +11,8 @@ interface ReadingsData {
   messageQueueReadings: Reading[];
   suggestedReadings: Reading[];
   archivedReadings: Reading[];
+  disputedReadings: Reading[];
+  refundedReadings: Reading[];
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
@@ -25,6 +27,8 @@ export function useReadings(): ReadingsData {
     messageQueueReadings: [],
     suggestedReadings: [],
     archivedReadings: [],
+    disputedReadings: [],
+    refundedReadings: [],
     loading: true,
     error: null,
   });
@@ -56,10 +60,17 @@ export function useReadings(): ReadingsData {
         messageQueue: Reading[];
         suggested: Reading[];
         archived: Reading[];
+        disputed: Reading[];
+        refunded: Reading[];
       }>(
         (acc, reading) => {
-          if (reading.status === 'completed' || reading.status === 'disputed' || reading.status === 'refunded' || reading.status === 'archived') {
+          // Keep archived, disputed and refunded separate so UI can show them independently
+          if (reading.status === 'archived' || reading.status === 'completed') {
             acc.archived.push(reading);
+          } else if (reading.status === 'disputed') {
+            acc.disputed.push(reading);
+          } else if (reading.status === 'refunded') {
+            acc.refunded.push(reading);
           } else if (reading.status === 'in_progress') {
             acc.inProgress.push(reading);
           } else if (reading.status === 'instant_queue') {
@@ -73,7 +84,7 @@ export function useReadings(): ReadingsData {
           }
           return acc;
         },
-        { inProgress: [], instantQueue: [], scheduled: [], messageQueue: [], suggested: [], archived: [] }
+        { inProgress: [], instantQueue: [], scheduled: [], messageQueue: [], suggested: [], archived: [], disputed: [], refunded: [] }
       );
 
       setData({
@@ -83,6 +94,8 @@ export function useReadings(): ReadingsData {
         messageQueueReadings: sorted.messageQueue,
         suggestedReadings: sorted.suggested,
         archivedReadings: sorted.archived,
+        disputedReadings: sorted.disputed,
+        refundedReadings: sorted.refunded,
         loading: false,
         error: null,
       });

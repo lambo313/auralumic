@@ -168,6 +168,16 @@ export function ReadingDetailsModal({
           setReviewRating(serverReview.rating ?? null);
           setReviewText(serverReview.review ?? "");
         }
+        // If the reading has a dispute object, initialize dispute UI
+        const serverDispute = (data as any).dispute;
+        if (serverDispute) {
+          setDisputeData(serverDispute);
+          setDisputeSubmitted(Boolean(serverDispute && serverDispute.status));
+          // if dispute is open or resolved, disable review inputs
+          if (serverDispute.status) {
+            setDisputeMode(true);
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch review:', err);
       }
@@ -175,6 +185,13 @@ export function ReadingDetailsModal({
 
     fetchReview();
   }, [activeTab, reading.id]);
+
+  // Dispute state
+  const [disputeMode, setDisputeMode] = useState<boolean>(false); // true when open dispute flow active or dispute exists
+  const [disputeReason, setDisputeReason] = useState<string>((reading as any)?.dispute?.reason || "");
+  const [disputeSubmitting, setDisputeSubmitting] = useState<boolean>(false);
+  const [disputeSubmitted, setDisputeSubmitted] = useState<boolean>(Boolean((reading as any)?.dispute));
+  const [disputeData, setDisputeData] = useState<any>((reading as any)?.dispute ?? null);
 
   const selectedOption = readingOptions.find(opt => opt.value === editedData.readingOption);
   
@@ -470,18 +487,18 @@ export function ReadingDetailsModal({
         <DialogHeader className="mt-4">
           <DialogTitle className="flex items-center justify-between">
             <span>Reading Details</span>
-            <Badge className="bg-muted/30 text-muted-foreground border-color-muted">
-              {statusInfo.icon} {statusInfo.label}
+            <Badge className={`bg-ring text-foreground border-color-muted`}>
+              {statusInfo.icon} {statusInfo.label} 
             </Badge>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="details">Reading Details</TabsTrigger>
-            <TabsTrigger value="notes">Reading Notes</TabsTrigger>
-            {reading.status === 'archived' && userRole === 'client' && (
-              <TabsTrigger value="review">Reading Review</TabsTrigger>
+          <TabsList className="w-full flex space-x-2 border-b">
+            <TabsTrigger value="details" className="flex-1">Reading Details</TabsTrigger>
+            <TabsTrigger value="notes" className="flex-1">Reading Notes</TabsTrigger>
+            {(reading.status === 'archived' || reading.status === 'disputed' || reading.status === 'refunded') && (userRole === 'client' || userRole === 'reader') && (
+              <TabsTrigger value="review" className="flex-1">Reading Review</TabsTrigger>
             )}
           </TabsList>
 
@@ -860,19 +877,28 @@ export function ReadingDetailsModal({
             </div>
           </TabsContent>
 
-            {reading.status === 'archived' && userRole === 'client' && (
+            {(reading.status === 'archived' || reading.status === 'disputed' || reading.status === 'refunded') && (userRole === 'client' || userRole === 'reader') && (
               <TabsContent value="review" className="space-y-6 mt-6">
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Rating</Label>
                     <div className="flex items-center gap-2 mt-2">
                       {[1,2,3,4,5].map((n) => (
+                        // If viewer is a reader, render stars read-only (disabled buttons)
                         <Button
                           key={n}
                           variant={reviewRating && reviewRating >= n ? "secondary" : "ghost"}
                           size="sm"
-                          onClick={() => setReviewRating(n)}
+                          onClick={() => {
+                            if (userRole === 'client') {
+                              // Prevent changing rating while a dispute flow is active or submitted
+                              if (disputeMode || disputeSubmitted) return;
+                              setReviewRating(n);
+                            }
+                          }}
+                          disabled={userRole === 'reader' || disputeMode || disputeSubmitted}
                           aria-label={`Rate ${n} stars`}
+                          title={userRole === 'reader' ? 'Read-only: clients can submit ratings' : (disputeMode || disputeSubmitted ? 'Rating disabled while dispute is open' : undefined)}
                         >
                           <Star className="h-4 w-4" />
                         </Button>
@@ -883,48 +909,140 @@ export function ReadingDetailsModal({
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Review</Label>
                     <Textarea
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                      placeholder="Write your review..."
-                      className="mt-1 min-h-32"
+                        value={reviewText}
+                        onChange={(e) => userRole === 'client' && setReviewText(e.target.value)}
+                        placeholder="Write your review..."
+                        className="mt-1 min-h-32"
+                        disabled={userRole === 'reader' || disputeMode}
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-col">
                     <div className="flex-1" />
-                    <Button
-                      onClick={async () => {
-                        if (!reviewRating) {
-                          toast({ title: "Please provide a rating", variant: "destructive" });
-                          return;
-                        }
-                        setIsSubmitting(true);
-                        try {
-                          const response = await fetch(`/api/readings/${reading.id}/review`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ rating: reviewRating, review: reviewText }),
-                          });
 
-                          if (!response.ok) {
-                            const errorBody = await response.json().catch(() => ({}));
-                            console.error("Failed to submit review:", errorBody);
-                            throw new Error("Failed to submit review");
+                    {/* Dispute controls: show disclaimer and Open Dispute flow */}
+                    <div className="text-sm text-muted-foreground mr-4">
+                      <div>
+                        Note: A rating below 4 stars indicates you may want to file a dispute. If you'd like to open a dispute instead of submitting a review, click "Open Dispute".
+                      </div>
+                    </div>
+
+                    {/* Only allow clients to open disputes or submit reviews */}
+                    {userRole === 'client' && !disputeMode && !disputeSubmitted && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => setDisputeMode(true)}
+                        size="sm"
+                      >
+                        Open Dispute
+                      </Button>
+                    )}
+
+                    {userRole === 'client' && !disputeMode && !disputeSubmitted && (
+                      <Button
+                        onClick={async () => {
+                          if (!reviewRating) {
+                            toast({ title: "Please provide a rating", variant: "destructive" });
+                            return;
                           }
+                          setIsSubmitting(true);
+                          try {
+                            const response = await fetch(`/api/readings/${reading.id}/review`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ rating: reviewRating, review: reviewText }),
+                            });
 
-                          toast({ title: "Review submitted", description: "Thank you for your feedback!" });
-                          onReadingUpdated?.();
-                        } catch (err) {
-                          console.error(err);
-                          toast({ title: "Error", description: "Failed to submit review. Please try again.", variant: "destructive" });
-                        } finally {
-                          setIsSubmitting(false);
-                        }
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Submitting..." : "Submit Review"}
-                    </Button>
+                            if (!response.ok) {
+                              const errorBody = await response.json().catch(() => ({}));
+                              console.error("Failed to submit review:", errorBody);
+                              throw new Error("Failed to submit review");
+                            }
+
+                            toast({ title: "Review submitted", description: "Thank you for your feedback!" });
+                            onReadingUpdated?.();
+                          } catch (err) {
+                            console.error(err);
+                            toast({ title: "Error", description: "Failed to submit review. Please try again.", variant: "destructive" });
+                          } finally {
+                            setIsSubmitting(false);
+                          }
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Submitting..." : "Submit Review"}
+                      </Button>
+                    )}
+
+                    {/* Dispute input when in disputeMode or already submitted */}
+                    {disputeMode && !disputeSubmitted && (
+                      <div className="flex flex-wrap items-start gap-2 w-full min-w-80">
+                        <Textarea
+                          value={disputeReason}
+                          onChange={(e) => setDisputeReason(e.target.value)}
+                          placeholder="Explain why you are disputing this reading (required)"
+                          className="min-h-24 w-full"
+                        />
+                        <div className="flex-shrink-0">
+                          <Button
+                            onClick={async () => {
+                            if (!disputeReason || disputeReason.trim().length < 5) {
+                              toast({ title: "Please provide a reason (5+ chars)", variant: "destructive" });
+                              return;
+                            }
+                            setDisputeSubmitting(true);
+                            try {
+                              const resp = await fetch(`/api/readings/${reading.id}/dispute`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ reason: disputeReason })
+                              });
+                              if (!resp.ok) {
+                                const body = await resp.json().catch(() => ({}));
+                                console.error('Failed to file dispute', body);
+                                throw new Error('Failed to file dispute');
+                              }
+                              const body = await resp.json();
+                              setDisputeData(body.dispute ?? { reason: disputeReason, status: 'OPEN', createdAt: new Date().toISOString() });
+                              setDisputeSubmitted(true);
+                              // lock review inputs
+                              setDisputeMode(true);
+                              toast({ title: 'Dispute filed', description: 'An admin will review your dispute and respond here.' });
+                              onReadingUpdated?.();
+                            } catch (err) {
+                              console.error(err);
+                              toast({ title: 'Error', description: 'Failed to file dispute. Please try again.', variant: 'destructive' });
+                            } finally {
+                              setDisputeSubmitting(false);
+                            }
+                          }}
+                            disabled={disputeSubmitting}
+                          >
+                            {disputeSubmitting ? 'Filing...' : 'File Dispute'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* If dispute exists, show admin response and disable inputs */}
+                    {disputeSubmitted && disputeData && (
+                      <div className="ml-4">
+                        <div className="text-sm font-medium">Dispute</div>
+                        <div className="text-sm text-muted-foreground text-yellow-500">Status: {disputeData.status}</div>
+                        <div className="mt-2 p-3 bg-muted/20 rounded">
+                          <span className="text-yellow-500">Dispute reason: {" "}</span>
+                          {disputeData.reason}
+                        </div>
+                        {disputeData.adminResponse ? (
+                          <div className="mt-2 p-3 bg-muted/20 rounded">
+                            <span className="text-yellow-500">Admin response: {" "}</span>
+                            {disputeData.adminResponse}
+                            </div>
+                        ) : (
+                          <div className="mt-2 text-sm text-muted-foreground">Awaiting admin response</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>

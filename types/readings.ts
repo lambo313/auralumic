@@ -29,6 +29,11 @@ export interface Reading {
     rating: number;
     review?: string;
   };
+  dispute?: {
+    reason: string;
+    status: string;
+    createdAt: Date;
+  };
 }
 
 // UI state for reading request form

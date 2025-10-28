@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserRole } from '@/lib/auth';
+import dbConnect from '@/lib/database';
+import Reading from '@/models/Reading';
 
 export async function POST(
   request: NextRequest,
@@ -34,21 +36,34 @@ export async function POST(
       );
     }
 
-    // In a real application, you would:
-    // 1. Update the dispute in the database
-    // 2. Send notifications to relevant parties
-    // 3. Process any refunds if applicable
-    // 4. Log the resolution for audit purposes
+    // Connect to DB and persist the admin response on the Reading.dispute subdocument
+    await dbConnect();
 
-    // For now, we'll just return a success response
-    console.log(`Resolving dispute ${disputeId} with resolution: ${resolution}`);
+    const updated = await Reading.findByIdAndUpdate(
+      disputeId,
+      {
+        $set: {
+          'dispute.adminResponse': resolution,
+          'dispute.status': 'RESOLVED',
+          'dispute.resolvedAt': new Date(),
+        }
+      },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Reading not found' }, { status: 404 });
+    }
+
+    // Optionally: send notifications or take other actions here
 
     return NextResponse.json({
       success: true,
       disputeId,
       resolution,
       resolvedAt: new Date().toISOString(),
-      resolvedBy: userRole.id
+      resolvedBy: userRole.id,
+      reading: updated,
     });
 
   } catch (error) {

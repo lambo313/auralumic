@@ -50,6 +50,7 @@ export function ReadingList({ readings, loading, currentCredits, onReadingUpdate
         // Map ReadingStatus to the expected status values for ReadingCard
         const mapStatus = (status: string) => {
           switch (status) {
+            case 'disputed': return 'disputed' as const; // show disputed readings in the completed list UI
             case 'instant_queue': return 'pending' as const;
             case 'scheduled': return 'pending' as const; 
             case 'message_queue': return 'pending' as const;

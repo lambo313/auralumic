@@ -1,32 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getUserRole } from '@/lib/auth';
-
-// Mock data for disputes - in a real app, this would come from a database
-const mockDisputes = [
-  {
-    id: "dispute-1",
-    readingId: "reading-123",
-    clientId: "user-456",
-    readerId: "reader-789",
-    reason: "The reading was not accurate and did not address my questions properly.",
-    status: "OPEN" as const,
-    createdAt: new Date("2024-01-15T10:30:00Z"),
-  },
-  {
-    id: "dispute-2",
-    readingId: "reading-124",
-    clientId: "user-457",
-    readerId: "reader-790",
-    reason: "Reader was late to the session and rushed through the reading.",
-    status: "OPEN" as const,
-    createdAt: new Date("2024-01-16T14:20:00Z"),
-  }
-];
+import dbConnect from '@/lib/database';
+import Reading, { ReadingStatus } from '@/models/Reading';
 
 export async function GET() {
   try {
     const userRole = await getUserRole();
-    
+
     console.log('[Admin Disputes API] User role:', userRole);
 
     if (!userRole) {
@@ -46,11 +26,36 @@ export async function GET() {
       );
     }
 
-    console.log('[Admin Disputes API] Admin access granted, returning disputes');
-    // Return only open disputes for now
-    const openDisputes = mockDisputes.filter(dispute => dispute.status === 'OPEN');
+    // Connect to DB
+    await dbConnect();
 
-    return NextResponse.json(openDisputes);
+    // Find readings that represent open disputes. We treat a reading as a dispute if either:
+    // - reading.status === ReadingStatus.DISPUTED
+    // - or dispute.status === 'OPEN' (case-insensitive)
+    const readings = await Reading.find({
+      $or: [
+        { status: ReadingStatus.DISPUTED },
+        { 'dispute.status': { $regex: '^open$', $options: 'i' } }
+      ]
+    }).select('clientId readerId dispute status updatedAt createdAt').lean();
+
+    // Map into the shape expected by the admin UI
+    const disputes = readings.map((r: any) => {
+      const dispute = r.dispute || {};
+      const createdAt = dispute.createdAt ? new Date(dispute.createdAt) : (r.updatedAt || r.createdAt);
+
+      return {
+        id: String(r._id),
+        readingId: String(r._id),
+        clientId: r.clientId,
+        readerId: r.readerId,
+        reason: dispute.reason || '',
+        status: dispute.status || r.status,
+        createdAt: createdAt ? new Date(createdAt).toISOString() : new Date().toISOString(),
+      };
+    });
+
+    return NextResponse.json(disputes);
   } catch (error) {
     console.error('Error fetching disputes:', error);
     return NextResponse.json(
