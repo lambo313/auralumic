@@ -477,28 +477,6 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
         />
         <FormField
           control={readerForm.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <LocationSelector
-                  value={field.value}
-                  onChange={(location, detectedTimezone) => {
-                    field.onChange(location);
-                    setTimezone(detectedTimezone);
-                  }}
-                />
-              </FormControl>
-              <FormDescription>
-                Select your country and state/province. This will automatically set your timezone.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={readerForm.control}
           name="aboutMe"
           render={({ field }) => (
             <FormItem>
@@ -568,6 +546,124 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           </div>
           <FormDescription>
             Select up to 3 abilities, 3 tools, and 1 style that best describe your reading approach.
+          </FormDescription>
+        </div>
+
+        {/* Languages selector (up to 3, primary first) */}
+        <div className="space-y-2">
+          <FormLabel>Languages <span className="text-xs text-muted-foreground">(primary first, up to 3)</span></FormLabel>
+          <div className="space-y-2">
+            {languages.length === 0 && (
+              <div className="text-sm text-muted-foreground">No languages set yet</div>
+            )}
+            {languages.map((lang, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <select
+                  className="flex-1 border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+                  value={lang}
+                  onChange={(e) => updateLanguageAt(idx, e.target.value)}
+                >
+                  <option value="">-- Select language --</option>
+                  {languageOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <Button type="button" variant="ghost" onClick={() => removeLanguage(idx)} size="sm">Remove</Button>
+              </div>
+            ))}
+            <div>
+              <Button type="button" onClick={addLanguage} disabled={languages.length >= 3} size="sm">
+                {languages.length === 0 ? 'Add primary language' : 'Add another language'}
+              </Button>
+            </div>
+          </div>
+          <FormDescription>
+            List the languages you can read in. Primary language should be first.
+          </FormDescription>
+        </div>
+
+        <FormField
+          control={readerForm.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <LocationSelector
+                  value={field.value}
+                  onChange={(location, detectedTimezone) => {
+                    field.onChange(location);
+                    setTimezone(detectedTimezone);
+                  }}
+                />
+              </FormControl>
+              <FormDescription>
+                Select your country and state/province. This will automatically set your timezone.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Timezone dropdown */}
+        <div className="space-y-2">
+          <FormLabel>Timezone</FormLabel>
+          <div className="space-y-3">
+            <select
+              className="w-full border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+              value={timezone}
+              onChange={e => {
+                const value = e.target.value;
+                if (value === 'show-all') {
+                  setShowAllTimezones(true);
+                } else if (value === 'show-common') {
+                  setShowAllTimezones(false);
+                } else {
+                  setTimezone(value);
+                }
+              }}
+            >
+              {!showAllTimezones ? (
+                <>
+                  <optgroup label="Common Timezones">
+                    {commonTimezones.map(tz => (
+                      <option key={tz.value} value={tz.value}>
+                        {formatTimezoneLabel(tz)}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="show-all">── Show All Timezones ──</option>
+                </>
+              ) : (
+                <>
+                  <option value="show-common">── Show Common Only ──</option>
+                  {timezoneGroups.map(group => (
+                    <optgroup key={group.region} label={group.region}>
+                      {group.timezones.map(tz => (
+                        <option key={tz.value} value={tz.value}>
+                          {formatTimezoneLabel(tz)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </>
+              )}
+            </select>
+            
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllTimezones(!showAllTimezones)}
+                className="text-xs"
+              >
+                {showAllTimezones ? 'Show Common Only' : 'Show All Timezones'}
+              </Button>
+            </div>
+          </div>
+          <FormDescription>
+            Select your timezone for accurate scheduling. The timezone will be automatically detected based on your selected location.
           </FormDescription>
         </div>
 
@@ -642,100 +738,6 @@ export function ReaderProfileForm({ reader }: ReaderProfileFormProps) {
           </div>
           <FormDescription>
             Select the days you are available and set specific hours for each day. You can edit these times later.
-          </FormDescription>
-        </div>
-        {/* Timezone dropdown */}
-        <div className="space-y-2">
-          <FormLabel>Timezone</FormLabel>
-          <div className="space-y-3">
-            <select
-              className="w-full border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-              value={timezone}
-              onChange={e => {
-                const value = e.target.value;
-                if (value === 'show-all') {
-                  setShowAllTimezones(true);
-                } else if (value === 'show-common') {
-                  setShowAllTimezones(false);
-                } else {
-                  setTimezone(value);
-                }
-              }}
-            >
-              {!showAllTimezones ? (
-                <>
-                  <optgroup label="Common Timezones">
-                    {commonTimezones.map(tz => (
-                      <option key={tz.value} value={tz.value}>
-                        {formatTimezoneLabel(tz)}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <option value="show-all">── Show All Timezones ──</option>
-                </>
-              ) : (
-                <>
-                  <option value="show-common">── Show Common Only ──</option>
-                  {timezoneGroups.map(group => (
-                    <optgroup key={group.region} label={group.region}>
-                      {group.timezones.map(tz => (
-                        <option key={tz.value} value={tz.value}>
-                          {formatTimezoneLabel(tz)}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </>
-              )}
-            </select>
-            
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAllTimezones(!showAllTimezones)}
-                className="text-xs"
-              >
-                {showAllTimezones ? 'Show Common Only' : 'Show All Timezones'}
-              </Button>
-            </div>
-          </div>
-          <FormDescription>
-            Select your timezone for accurate scheduling. The timezone will be automatically detected based on your selected location.
-          </FormDescription>
-        </div>
-
-        {/* Languages selector (up to 3, primary first) */}
-        <div className="space-y-2">
-          <FormLabel>Languages <span className="text-xs text-muted-foreground">(primary first, up to 3)</span></FormLabel>
-          <div className="space-y-2">
-            {languages.length === 0 && (
-              <div className="text-sm text-muted-foreground">No languages set yet</div>
-            )}
-            {languages.map((lang, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <select
-                  className="flex-1 border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
-                  value={lang}
-                  onChange={(e) => updateLanguageAt(idx, e.target.value)}
-                >
-                  <option value="">-- Select language --</option>
-                  {languageOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-                <Button type="button" variant="ghost" onClick={() => removeLanguage(idx)} size="sm">Remove</Button>
-              </div>
-            ))}
-            <div>
-              <Button type="button" onClick={addLanguage} disabled={languages.length >= 3} size="sm">
-                {languages.length === 0 ? 'Add primary language' : 'Add another language'}
-              </Button>
-            </div>
-          </div>
-          <FormDescription>
-            List the languages you can read in. Primary language should be first.
           </FormDescription>
         </div>
 

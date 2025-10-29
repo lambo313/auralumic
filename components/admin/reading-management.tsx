@@ -519,7 +519,7 @@ export function ReadingManagement() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Completed</span>
+                    <span className="text-sm">Archived</span>
                   </div>
                   <div className="text-sm font-medium">
                     {stats.completedReadings}
@@ -559,7 +559,7 @@ export function ReadingManagement() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 bg-red-500 rounded-full"></div>
-                    <span className="text-sm">Cancelled</span>
+                    <span className="text-sm">Refunded</span>
                   </div>
                   <div className="text-sm font-medium">
                     {stats.cancelledReadings}

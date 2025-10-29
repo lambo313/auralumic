@@ -494,11 +494,11 @@ export function ReadingDetailsModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex space-x-2 border-b">
-            <TabsTrigger value="details" className="flex-1">Reading Details</TabsTrigger>
-            <TabsTrigger value="notes" className="flex-1">Reading Notes</TabsTrigger>
+          <TabsList className="w-full flex flex-wrap gap-2 border-b bg-background">
+            <TabsTrigger value="details" className="flex-1 bg-muted">Reading Details</TabsTrigger>
+            <TabsTrigger value="notes" className="flex-1 bg-muted">Reading Notes</TabsTrigger>
             {(reading.status === 'archived' || reading.status === 'disputed' || reading.status === 'refunded') && (userRole === 'client' || userRole === 'reader') && (
-              <TabsTrigger value="review" className="flex-1">Reading Review</TabsTrigger>
+              <TabsTrigger value="review" className="flex-1 bg-muted">Reading Review</TabsTrigger>
             )}
           </TabsList>
 
@@ -1026,20 +1026,22 @@ export function ReadingDetailsModal({
 
                     {/* If dispute exists, show admin response and disable inputs */}
                     {disputeSubmitted && disputeData && (
-                      <div className="ml-4">
-                        <div className="text-sm font-medium">Dispute</div>
-                        <div className="text-sm text-muted-foreground text-yellow-500">Status: {disputeData.status}</div>
-                        <div className="mt-2 p-3 bg-muted/20 rounded">
-                          <span className="text-yellow-500">Dispute reason: {" "}</span>
+                      <div className="ml-4 p-1 bg-muted rounded-lg">
+                        <Label className="text-sm font-medium">Dispute •{" "} 
+                          <Badge className="mt-1">{reading.dispute?.status}</Badge>
+                        </Label>
+                        {/* <div className="text-sm text-muted-foreground text-yellow-700 dark:text-yellow-500">Status: {disputeData.status}</div> */}
+                        <div className="p-3 bg-muted/20 rounded">
+                          <span className="text-yellow-700 dark:text-yellow-500">Dispute reason: {" "}</span>
                           {disputeData.reason}
                         </div>
                         {disputeData.adminResponse ? (
-                          <div className="mt-2 p-3 bg-muted/20 rounded">
-                            <span className="text-yellow-500">Admin response: {" "}</span>
+                          <div className="p-3 bg-muted/20 rounded">
+                            <span className="text-yellow-700 dark:text-yellow-500">Admin response: {" "}</span>
                             {disputeData.adminResponse}
                             </div>
                         ) : (
-                          <div className="mt-2 text-sm text-muted-foreground">Awaiting admin response</div>
+                          <div className="text-sm text-muted-foreground">Awaiting admin response</div>
                         )}
                       </div>
                     )}
