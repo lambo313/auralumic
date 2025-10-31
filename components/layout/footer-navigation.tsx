@@ -145,7 +145,7 @@ export function FooterNavigation({
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-top-md",
+        "fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-aura-accent-1/5 dark:bg-aura-accent-1/10 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-top-md",
         className
       )}
     >
@@ -159,7 +159,7 @@ export function FooterNavigation({
               asChild
               className={cn(
                 "h-full rounded-xl transition-all duration-200 hover:bg-primary/10 hover:scale-105 group",
-                isActive && "bg-primary/15 border border-primary/20 shadow-aura-sm"
+                isActive && "bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-primary/20 shadow-aura-sm"
               )}
             >
             <a

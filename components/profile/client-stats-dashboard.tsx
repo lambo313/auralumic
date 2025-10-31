@@ -78,15 +78,15 @@ export function ClientStatsDashboard({ user }: ClientStatsDashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Available Credits</div>
           <div className="mt-2 text-2xl font-bold">{credits ?? user?.credits ?? 0}</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Subscription</div>
           <div className="mt-2 text-2xl font-bold">{subscriptionStatus}</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Pending Reviews</div>
           <div className="mt-2 text-2xl font-bold">{(pendingReviews && pendingReviews.length) ?? 0}</div>
         </div>

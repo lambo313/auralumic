@@ -219,7 +219,7 @@ function ReaderProfilePage() {
 
       <div className="space-y-8">
         {/* Profile Header */}
-        <Card className="relative overflow-hidden  shadow-aura-lg">
+        <Card className="relative overflow-hidden shadow-aura-md">
           {readerData.backgroundImage && (
             <div 
               className="h-40 md:h-48 bg-cover bg-center relative"

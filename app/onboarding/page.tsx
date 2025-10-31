@@ -46,12 +46,12 @@ export default function OnboardingPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Button
-                    className="w-full h-auto p-6 group border border-[#7878FF]/40 hover:bg-[#7878FF]/20 hover:border-[#7878FF]"
+                    className="w-full h-auto p-6 group border border-[#7878FF]/40 bg-background hover:bg-[#7878FF]/10 hover:border-[#7878FF] text-background hover:text-[#7878FF]"
                     onClick={() => router.push("/onboarding/role-selection?role=client")}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-full bg-[#7878FF]/10 group-hover:bg-[#7878FF]/20">
-                        <BookHeart className="w-6 h-6 text-[#7878FF]" />
+                      <div className="p-3 rounded-full bg-background group-hover:bg-[#7878FF]/20">
+                        <BookHeart className="w-6 h-6" />
                       </div>
                       <div className="text-left">
                         <div className="font-semibold text-lg text-[#F8F8FF]">I want to get readings</div>
@@ -68,12 +68,12 @@ export default function OnboardingPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Button
-                    className="w-full h-auto p-6 group border border-[#7878FF]/40 hover:bg-[#7878FF]/10 hover:border-[#7878FF]"
+                    className="w-full h-auto p-6 group border border-[#7878FF]/40 bg-background hover:bg-[#7878FF]/10 hover:border-[#7878FF] text-background hover:text-[#7878FF]"
                     onClick={() => router.push("/onboarding/role-selection?role=reader")}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-full bg-[#7878FF]/10 group-hover:bg-[#7878FF]/20">
-                        <Sparkles className="w-6 h-6 text-[#7878FF]" />
+                      <div className="p-3 rounded-full bg-background group-hover:bg-[#7878FF]/20">
+                        <Sparkles className="w-6 h-6" />
                       </div>
                       <div className="text-left">
                         <div className="font-semibold text-lg text-[#F8F8FF]">I want to provide readings</div>

@@ -222,7 +222,7 @@ export default function ReaderReadingsPage() {
             aria-label="Search readings"
           />
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => setSortAsc(s => !s)}
             title={sortAsc ? 'Sort by oldest first' : 'Sort by newest first'}

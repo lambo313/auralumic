@@ -57,7 +57,7 @@ export function ClientConnect() {
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card rounded-lg border p-4">
+        <div className="shadow-aura bg-aura-accent-1/5 dark:bg-aura-accent-1/10 rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-blue-500" />
             <div>
@@ -66,7 +66,7 @@ export function ClientConnect() {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg border p-4">
+        <div className="shadow-aura bg-aura-accent-1/5 dark:bg-aura-accent-1/10 rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-green-500" />
             <div>
@@ -75,7 +75,7 @@ export function ClientConnect() {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg border p-4">
+        <div className="shadow-aura bg-aura-accent-1/5 dark:bg-aura-accent-1/10 rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-purple-500" />
             <div>

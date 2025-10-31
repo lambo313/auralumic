@@ -95,7 +95,7 @@ function ReaderDashboardPage() {
       </div>
       <Separator />
       <div className="mt-6">
-        {readerProfile ? (
+        {(readerProfile && readerProfile.isApproved) ? (
           <ReaderStatsDashboard user={readerProfile} />
         ) : (
           <Card className="p-6">

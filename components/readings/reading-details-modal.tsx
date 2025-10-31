@@ -493,16 +493,18 @@ export function ReadingDetailsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex flex-wrap gap-2 border-b bg-background">
-            <TabsTrigger value="details" className="flex-1 bg-muted">Reading Details</TabsTrigger>
-            <TabsTrigger value="notes" className="flex-1 bg-muted">Reading Notes</TabsTrigger>
-            {(reading.status === 'archived' || reading.status === 'disputed' || reading.status === 'refunded') && (userRole === 'client' || userRole === 'reader') && (
-              <TabsTrigger value="review" className="flex-1 bg-muted">Reading Review</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col gap-2">
+          <TabsList className="w-full flex flex-wrap gap-2 border">
+            <TabsTrigger value="details" className="flex-1">Reading Details</TabsTrigger>
+            {(reading.status === 'in_progress' || reading.status === 'archived') && (
+              <TabsTrigger value="notes" className="flex-1">Reading Notes</TabsTrigger>
+            )}
+            {(reading.status === 'archived' || reading.status === 'disputed' || (reading.status === 'refunded' && disputeSubmitted)) && (userRole === 'client' || userRole === 'reader') && (
+              <TabsTrigger value="review" className="flex-1">Reading Review</TabsTrigger>
             )}
           </TabsList>
 
-          <TabsContent value="details" className="space-y-6 mt-6">
+          <TabsContent value="details" className="space-y-6">
             {/* Reader/Client Info */}
             <div className="bg-muted/30 rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -877,7 +879,7 @@ export function ReadingDetailsModal({
             </div>
           </TabsContent>
 
-            {(reading.status === 'archived' || reading.status === 'disputed' || reading.status === 'refunded') && (userRole === 'client' || userRole === 'reader') && (
+            {(reading.status === 'archived' || reading.status === 'disputed' || (reading.status === 'refunded' && disputeSubmitted)) && (userRole === 'client' || userRole === 'reader') && (
               <TabsContent value="review" className="space-y-6 mt-6">
                 <div className="space-y-4">
                   <div>

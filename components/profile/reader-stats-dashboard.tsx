@@ -52,30 +52,30 @@ export function ReaderStatsDashboard({ user }: ReaderStatsDashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Total Readings</div>
           <div className="mt-2 text-2xl font-bold">{stats.totalReadings}</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Completed</div>
           <div className="mt-2 text-2xl font-bold">{stats.completedReadings}</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Average Rating</div>
           <div className="mt-2 text-2xl font-bold">{stats.averageRating}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Total Earnings</div>
           <div className="mt-2 text-2xl font-bold">{stats.totalEarnings}</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Completion Rate</div>
           <div className="mt-2 text-2xl font-bold">{stats.completionRate}%</div>
         </div>
-        <div className="p-4  dark:bg-slate-900/50 rounded-lg shadow-aura border">
+        <div className="p-4 bg-background rounded-lg shadow-aura border">
           <div className="text-sm text-muted-foreground">Repeat Clients</div>
           <div className="mt-2 text-2xl font-bold">{stats.repeatClientCount}</div>
         </div>

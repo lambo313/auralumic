@@ -49,12 +49,28 @@ export async function POST(req: Request) {
       await user.save();
     } else {
       // Create new user if doesn't exist
-      user = await User.create({
-        clerkId: userId,
-        email,
-        username,
-        role: role || UserRole.CLIENT,
-      });
+      try {
+        user = await User.create({
+          clerkId: userId,
+          email,
+          username,
+          role: role || UserRole.CLIENT,
+        });
+      } catch (err: unknown) {
+        // Handle duplicate-key (email) error: fetch existing record and continue onboarding
+        // Mongo duplicate key code is 11000
+        const mongoErr = err as any;
+        if (mongoErr && mongoErr.code === 11000 && mongoErr.keyValue?.email) {
+          console.warn("[USERS_POST] Duplicate email detected, returning existing user:", mongoErr.keyValue.email);
+          const existing = await User.findOne({ email: mongoErr.keyValue.email }).lean();
+          if (existing) {
+            // Return existing user so onboarding can continue
+            return NextResponse.json(existing);
+          }
+        }
+        // Re-throw for other errors
+        throw err;
+      }
     }
 
     return NextResponse.json(user);

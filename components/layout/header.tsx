@@ -8,6 +8,7 @@ import { useTheme } from '@/context/theme-context'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -36,7 +37,7 @@ export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) 
 
   return (
     <header className={cn(
-      "fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-md",
+      "fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-aura-accent-1/5 dark:bg-aura-accent-1/10 backdrop-blur-lg supports-[backdrop-filter]:bg-card/80 md:hidden shadow-aura-md",
       className
     )}>
       <div className="container flex h-16 items-center justify-between pr-6">
@@ -92,12 +93,10 @@ export function Header({ baseRole, showAdminFeatures, className }: HeaderProps) 
               </>
             )} */}
             
-            <DropdownMenuItem asChild>
-              <div className="flex items-center justify-between w-full">
-                <span>Theme</span>
-                <ThemeToggle />
-              </div>
-            </DropdownMenuItem>
+            <DropdownMenuLabel className="flex items-center justify-between w-full">
+              <span>Theme</span>
+              <ThemeToggle />
+            </DropdownMenuLabel>
             
             <DropdownMenuSeparator />
             

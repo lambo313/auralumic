@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import dbConnect from '@/lib/database';
 import { User } from '@/models/User';
 import { NextResponse } from 'next/server';
@@ -17,7 +17,9 @@ export async function GET() {
     const user = await User.findOne({ clerkId: userId });
     
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      // If user doesn't exist yet (new signup flow), return a safe default
+      // so client-side onboarding can continue and assume the 'client' role.
+      return NextResponse.json({ role: 'client' });
     }
 
     return NextResponse.json(user);
@@ -52,8 +54,33 @@ export async function PATCH(req: Request) {
 
     await dbConnect();
 
-  const user = await User.findOne({ clerkId: userId });
+    let user = await User.findOne({ clerkId: userId });
     
+    // If no user exists with this clerkId, try to find by the Clerk user's primary email
+    // This handles the case where an existing user was created earlier with the same email
+    // but without a clerkId (duplicate-email scenario). In that case link the record.
+    if (!user) {
+      try {
+        const clerk = await clerkClient();
+        const clerkUser = await clerk.users.getUser(userId);
+        const primaryEmail = clerkUser.emailAddresses?.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress
+          || clerkUser.emailAddresses?.[0]?.emailAddress;
+
+        if (primaryEmail) {
+          const existing = await User.findOne({ email: primaryEmail });
+          if (existing) {
+            // link existing record to this clerkId and continue
+            existing.clerkId = userId;
+            existing.updatedAt = new Date();
+            await existing.save();
+            user = existing;
+          }
+        }
+      } catch (err) {
+        console.error('[API][/api/users/me][PATCH] Failed to fetch Clerk user to resolve existing record:', err);
+      }
+    }
+
     if (!user) {
       return new NextResponse("User not found", { status: 404 });
     }

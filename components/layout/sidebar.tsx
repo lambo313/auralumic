@@ -172,7 +172,7 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
   return (
     <div
       className={cn(
-        "hidden border-r border-border bg-card backdrop-blur-sm md:fixed md:inset-y-0 md:left-0 md:z-50 md:flex md:w-64 md:flex-col shadow-aura-md",
+        "hidden border-r border-border shadow-aura bg-aura-accent-1/5 dark:bg-aura-accent-1/10 backdrop-blur-sm md:fixed md:inset-y-0 md:left-0 md:z-50 md:flex md:w-64 md:flex-col shadow-aura-md",
         className
       )}
     >
@@ -230,7 +230,7 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
                 variant="ghost"
                 className={cn(
                   "w-full justify-start h-[54px] rounded-xl transition-all duration-200 hover:bg-primary/10 hover:scale-[1.02] hover:shadow-aura-sm group",
-                  isActive && "bg-primary/15 border border-primary/20 shadow-aura-sm"
+                  isActive && "bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 border border-primary/20 backdrop-blur-lg shadow-aura-sm"
                 )}
               >
                 <a href={item.href} className="flex items-center space-x-4 px-4 w-full">
@@ -259,7 +259,7 @@ export function Sidebar({ userRole, baseRole, showAdminFeatures, notifications, 
         <div className="mt-auto">
           {baseRole === "admin" && (
             <div className="mt-6 mx-2">
-              <div className="rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 border border-purple-200/20">
+              <div className="rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 border border-ring backdrop-blur-lg shadow-aura-md">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="h-4 w-4 text-purple-600" />
                   <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">

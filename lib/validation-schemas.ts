@@ -56,10 +56,10 @@ export const weeklyScheduleSchema = z.object({
 
 export const readerApplicationSchema = z.object({
   username: z.string().min(1).max(50),
-  profileImage: z.string().url(),
+  // Accept any string for profileImage (URL, data URI, blob URL, or empty) to support various upload flows
+  profileImage: z.string().optional(),
   tagline: z.string().min(1).max(200),
   location: z.string().min(1).max(100),
-  experience: z.string().max(1000).optional(),
   additionalInfo: z.string().max(1000).optional(),
   languages: z.array(z.string()).max(10).default([]),
   attributes: z.object({

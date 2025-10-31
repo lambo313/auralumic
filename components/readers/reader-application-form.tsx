@@ -23,17 +23,20 @@ import attributesData from "@/data/attributes.json";
 import { uploadFile, FILE_UPLOAD_CONFIG, isValidFileType, isValidFileSize } from "@/lib/upload";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/hooks/use-auth";
+import { LocationSelector } from "@/components/ui/location-selector";
+import { timezoneGroups, getCommonTimezones, formatTimezoneLabel } from "@/lib/timezone-utils";
 
 const readerApplicationSchema = z.object({
   username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be less than 20 characters")
-    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
-  profileImage: z.string().optional(),
-  tagline: z.string().min(10, "Tagline must be at least 10 characters").max(100, "Tagline must be less than 100 characters"),
-  location: z.string().min(1, "Please specify your location"),
-  experience: z.string().min(1, "Please describe your experience"),
-  additionalInfo: z.string().optional(),
+      .min(3, "Username must be at least 3 characters")
+      .max(20, "Username must be less than 20 characters")
+      .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+    profileImage: z.string().optional(),
+    tagline: z.string().min(10, "Tagline must be at least 10 characters").max(100, "Tagline must be less than 100 characters"),
+    location: z.string().min(1, "Please select your location"),
+    aboutMe: z.string().optional(),
+    additionalInfo: z.string().optional(),
+    languages: z.array(z.string()).max(3).optional(),
 });
 
 type ReaderApplicationData = z.infer<typeof readerApplicationSchema>;
@@ -60,6 +63,35 @@ export function ReaderApplicationForm() {
   const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [timezone, setTimezone] = useState<string>("UTC");
+  const [showAllTimezones, setShowAllTimezones] = useState(false);
+  const commonTimezones = getCommonTimezones();
+  const [scheduleHours, setScheduleHours] = useState<Record<string, { start: string; end: string }>>({});
+  const [instantBooking, setInstantBooking] = useState<boolean>(false);
+
+  // Languages: primary first, up to 3
+  const languageOptions = [
+    "English",
+    "Spanish",
+    "French",
+    "German",
+    "Portuguese",
+    "Italian",
+    "Dutch",
+    "Russian",
+    "Chinese (Mandarin)",
+    "Japanese",
+    "Korean",
+    "Arabic",
+    "Hindi",
+    "Bengali",
+    "Turkish",
+    "Vietnamese",
+    "Polish",
+    "Swedish",
+    "Norwegian",
+    "Danish",
+  ];
+  const [languages, setLanguages] = useState<string[]>([]);
 
   // Toggle logic
   const toggleAbility = (name: string) => {
@@ -99,30 +131,38 @@ export function ReaderApplicationForm() {
       profileImage: "",
       tagline: "",
       location: "",
-      experience: "",
+      aboutMe: "",
       additionalInfo: "",
     },
   });
 
+  
+
   async function onSubmit(data: ReaderApplicationData) {
+    console.log('[ReaderApplicationForm] onSubmit called', { data, selectedAbilities, selectedTools, selectedStyle, availableDays, timezone, scheduleHours, instantBooking, languages });
     // Build attributes object
     const attributes = {
       abilities: selectedAbilities,
       tools: selectedTools,
       style: selectedStyle || ""
     };
-    // Build schedule object (full day for selected days)
+    // Build schedule object with specific times for selected days
     const schedule: Record<string, { start: string; end: string }[]> = {};
     daysOfWeek.forEach(day => {
-      schedule[day] = availableDays.includes(day)
-        ? [{ start: "00:00", end: "23:59" }] // available all day
-        : [];
+      if (availableDays.includes(day) && scheduleHours[day]) {
+        schedule[day] = [{
+          start: scheduleHours[day].start,
+          end: scheduleHours[day].end
+        }];
+      } else {
+        schedule[day] = [];
+      }
     });
     // Build availability object
     const availability = {
       schedule,
       timezone,
-      instantBooking: false // default, can be added to form later
+      instantBooking
     };
     // Get app user ID from user object (from database)
     const appUserId = user?.id;
@@ -160,11 +200,13 @@ export function ReaderApplicationForm() {
         username: data.username,
         profileImage: profileImageUrl,
         tagline: data.tagline,
+        aboutMe: data.aboutMe,
         location: data.location,
         attributes,
-        availability,
-        experience: data.experience,
+        // server expects availability to be a JSON string for this endpoint
+        availability: JSON.stringify(availability),
         additionalInfo: data.additionalInfo,
+        languages,
       };
       const response = await fetch("/api/readers/apply", {
         method: "POST",
@@ -175,7 +217,19 @@ export function ReaderApplicationForm() {
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to submit application");
+        // try to parse json errors
+        let parsed = errorText;
+        try {
+          parsed = JSON.parse(errorText);
+        } catch (e) {
+          // keep raw text
+        }
+        toast({
+          title: "Application Error",
+          description: typeof parsed === 'string' ? parsed : JSON.stringify(parsed),
+          variant: "destructive",
+        });
+        throw new Error(typeof parsed === 'string' ? parsed : JSON.stringify(parsed));
       }
       const result = await response.json();
       toast({
@@ -231,6 +285,17 @@ export function ReaderApplicationForm() {
       form.setValue("profileImage", ""); // Clear URL field when file is selected
     };
     reader.readAsDataURL(file);
+  };
+
+  // Languages helpers (primary first, up to 3)
+  const addLanguage = () => {
+    setLanguages(prev => (prev.length < 3 ? [...prev, ""] : prev));
+  };
+  const removeLanguage = (index: number) => {
+    setLanguages(prev => prev.filter((_, i) => i !== index));
+  };
+  const updateLanguageAt = (index: number, value: string) => {
+    setLanguages(prev => prev.map((l, i) => i === index ? value : l));
   };
 
   // Watch username field for real-time validation
@@ -372,9 +437,6 @@ export function ReaderApplicationForm() {
               <FormControl>
                 <Input placeholder="e.g., Intuitive Tarot Reader with 10+ years experience" {...field} />
               </FormControl>
-              <FormDescription>
-                A brief, compelling description of what you offer (10-100 characters)
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -382,15 +444,15 @@ export function ReaderApplicationForm() {
 
         <FormField
           control={form.control}
-          name="location"
+          name="aboutMe"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel>About Me Video</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., New York, NY or London, UK" {...field} />
+                <Input placeholder="e.g., https://youtube.com/embed/your-video-id" {...field} />
               </FormControl>
               <FormDescription>
-                Your city and country/state
+                Provide a link to a video where you introduce yourself to potential clients (YouTube embed link, Vimeo embed link, etc.)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -454,66 +516,215 @@ export function ReaderApplicationForm() {
           </FormDescription>
         </div>
 
+        {/* Languages selector (up to 3, primary first) */}
+        <div className="space-y-2">
+          <FormLabel>Languages <span className="text-xs text-muted-foreground">(primary first, up to 3)</span></FormLabel>
+          <div className="space-y-2">
+            {languages.length === 0 && (
+              <div className="text-sm text-muted-foreground">No languages set yet</div>
+            )}
+            {languages.map((lang, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <select
+                  className="flex-1 border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+                  value={lang}
+                  onChange={(e) => updateLanguageAt(idx, e.target.value)}
+                >
+                  <option value="">-- Select language --</option>
+                  {languageOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <Button type="button" variant="ghost" onClick={() => removeLanguage(idx)} size="sm">Remove</Button>
+              </div>
+            ))}
+            <div>
+              <Button type="button" onClick={addLanguage} disabled={languages.length >= 3} size="sm">
+                {languages.length === 0 ? 'Add primary language' : 'Add another language'}
+              </Button>
+            </div>
+          </div>
+          <FormDescription>
+            List the languages you can read in. Primary language should be first.
+          </FormDescription>
+        </div>
+
         <FormField
           control={form.control}
-          name="experience"
+          name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Experience</FormLabel>
+              <FormLabel>Location</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Tell us about your experience as a reader..."
-                  className="min-h-[100px]"
-                  {...field}
+                <LocationSelector
+                  value={field.value}
+                  onChange={(location, detectedTimezone) => {
+                    field.onChange(location);
+                    setTimezone(detectedTimezone || timezone);
+                  }}
                 />
               </FormControl>
               <FormDescription>
-                Include how long you&apos;ve been reading and any relevant certifications
+                Select your country and state/province. This will automatically set your timezone.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Availability: Days of week checkboxes */}
-        <div className="space-y-2">
-          <FormLabel>General Availability</FormLabel>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {daysOfWeek.map(day => (
-              <label key={day} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={availableDays.includes(day)}
-                  onChange={e => {
-                    setAvailableDays(prev =>
-                      e.target.checked
-                        ? [...prev, day]
-                        : prev.filter(d => d !== day)
-                    );
-                  }}
-                />
-                <span className="capitalize">{day}</span>
-              </label>
-            ))}
-          </div>
-          <FormDescription>
-            Select the days you are generally available. (You&apos;ll be able to set specific hours later)
-          </FormDescription>
-        </div>
         {/* Timezone dropdown */}
         <div className="space-y-2">
           <FormLabel>Timezone</FormLabel>
-          <select
-            className="border rounded px-2 py-1 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-            value={timezone}
-            onChange={e => setTimezone(e.target.value)}
-          >
-            {timezoneOptions.map(tz => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
+          <div className="space-y-3">
+            <select
+              className="w-full border rounded-md px-3 py-2 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+              value={timezone}
+              onChange={e => {
+                const value = e.target.value;
+                if (value === 'show-all') {
+                  setShowAllTimezones(true);
+                } else if (value === 'show-common') {
+                  setShowAllTimezones(false);
+                } else {
+                  setTimezone(value);
+                }
+              }}
+            >
+              {!showAllTimezones ? (
+                <>
+                  <optgroup label="Common Timezones">
+                    {commonTimezones.map(tz => (
+                      <option key={tz.value} value={tz.value}>
+                        {formatTimezoneLabel(tz)}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="show-all">── Show All Timezones ──</option>
+                </>
+              ) : (
+                <>
+                  <option value="show-common">── Show Common Only ──</option>
+                  {timezoneGroups.map(group => (
+                    <optgroup key={group.region} label={group.region}>
+                      {group.timezones.map(tz => (
+                        <option key={tz.value} value={tz.value}>
+                          {formatTimezoneLabel(tz)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </>
+              )}
+            </select>
+            
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllTimezones(!showAllTimezones)}
+                className="text-xs"
+              >
+                {showAllTimezones ? 'Show Common Only' : 'Show All Timezones'}
+              </Button>
+            </div>
+          </div>
           <FormDescription>
-            Select your timezone for accurate scheduling.
+            Select your timezone for accurate scheduling. The timezone will be automatically detected based on your selected location.
+          </FormDescription>
+        </div>
+
+        {/* Availability: Days of week with detailed time settings */}
+        <div className="space-y-4">
+          <FormLabel>Detailed Availability Schedule</FormLabel>
+          <div className="space-y-3">
+            {daysOfWeek.map(day => (
+              <div key={day} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={availableDays.includes(day)}
+                      onChange={e => {
+                        setAvailableDays(prev =>
+                          e.target.checked
+                            ? [...prev, day]
+                            : prev.filter(d => d !== day)
+                        );
+                        if (e.target.checked && !scheduleHours[day]) {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: { start: "09:00", end: "17:00" }
+                          }));
+                        }
+                      }}
+                    />
+                    <span className="capitalize font-medium">{day}</span>
+                  </label>
+                </div>
+                {availableDays.includes(day) && (
+                  <div className="grid grid-cols-2 gap-4 ml-6">
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm">Start Time</FormLabel>
+                      <Input
+                        type="time"
+                        value={scheduleHours[day]?.start || "09:00"}
+                        onChange={e => {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: {
+                              ...prev[day],
+                              start: e.target.value
+                            }
+                          }));
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm">End Time</FormLabel>
+                      <Input
+                        type="time"
+                        value={scheduleHours[day]?.end || "17:00"}
+                        onChange={e => {
+                          setScheduleHours(prev => ({
+                            ...prev,
+                            [day]: {
+                              ...prev[day],
+                              end: e.target.value
+                            }
+                          }));
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <FormDescription>
+            Select the days you are available and set specific hours for each day. You can edit these times later.
+          </FormDescription>
+        </div>
+
+        {/* Instant Booking Toggle */}
+        <div className="space-y-2">
+          <FormLabel>Instant Booking</FormLabel>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="instantBooking"
+              checked={instantBooking}
+              onChange={(e) => setInstantBooking(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="instantBooking" className="text-sm font-medium">
+              Enable instant booking for phone and video calls
+            </label>
+          </div>
+          <FormDescription>
+            When enabled, clients can choose between instant readings or scheduled readings for phone and video calls. Video messages are always queued regardless of this setting.
           </FormDescription>
         </div>
 
@@ -535,13 +746,18 @@ export function ReaderApplicationForm() {
           )}
         />
 
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || isUploading || usernameStatus.available === false} 
-          className="w-full"
-        >
-          {isUploading ? "Uploading..." : isSubmitting ? "Submitting..." : "Submit Application"}
-        </Button>
+        <div>
+          {languages.length === 0 && (
+            <div className="text-sm text-red-600 mb-2">Please select at least one language (primary first).</div>
+          )}
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || isUploading || usernameStatus.available === false || languages.length === 0} 
+            className="w-full"
+          >
+            {isUploading ? "Uploading..." : isSubmitting ? "Submitting..." : "Submit Application"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
